@@ -1,0 +1,303 @@
+<html>
+<head>
+<title>Shortest Paths in Directed Graphs</title>
+<link type="text/css" rel="stylesheet" href="main.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+</head>
+<body bgcolor=ffffff>
+<h1>Shortest Paths</h1>
+
+Let $G = (V,E)$ be a directed graph and let <i>length</i> be a
+real-valued function on $E$.
+The <i>length of a directed path</i> in $G$ is defined to be the sum of the 
+lengths of its edges. So for example, the
+length of the path $c$, $a$, $b$, $g$ in the example below is 14.
+<p>
+<div  style="text-align:center;">
+<img width="300" src="figs/spath.png"><br>
+</div>
+<p>
+
+A <i>shortest path</i> joining a pair of vertices $u$ and $v$ is defined
+as a path of minimum length among all paths from $u$ to $v$.
+So for example, the highlighted path $a$, $e$, $d$, $f$ in the example above
+is a shortest path from $a$ to $f$, but the path $a$, $b$, $g$, $f$ is not.
+<p>
+The shortest path problem has many applications. For example, it is used
+to determine the best way to forward packets in the internet, and by
+mapping applications, to determine the shortest driving distance between
+two locations. It also arises in less obvious forms, and often appears as
+a subproblem within other problems.
+<p>
+Note that we allow edges to have negative lengths, which means that
+shortest paths may have negative lengths as well.
+This allows the possibility that a graph might contain a cycle of negative
+length, in which case shortest paths are not well-defined (since we
+can get a path of arbitrarily small length by traversing a negative
+cycle multiple times). This means that we have to take extra care when
+dealing with graphs that have negative edge lengths.
+<p>
+You might well wonder why we would want to allow negative edge lengths.
+While many applications of shortest paths do not require negative edge lengths,
+there are other applications where they are useful or even essential.
+Indeed, shortest path computations are used in algorithms for the
+<i>min cost flow</i> problem and in this context, negative edge lengths
+are an unavoidable feature of the problem.
+<p>
+We note that if there is no negative cycle on any path from $s$ to $t$
+in a graph, then there must be a <i>simple path</i> of minimum length,
+since we can always remove a simple cycle of non-negative length from
+a path without increasing its length. So in the example below,
+the shortest path $s$, $a$, $b$, $c$, $t$ can
+be replaced with the simple shortest path $s$, $a$, $t$ by removing the
+non-negative cycle $a$, $b$, $c$.
+<p>
+<div  style="text-align:center;">
+<img width="200" src="figs/simplePath.png"><br>
+</div>
+<p>
+These observations yield the following basic theorem.
+<p>
+<i>Theorem 1</i>.
+Let $G$ be digraph with a path from $s$ to $t$. 
+There is a shortest path from $s$ to $t$ if and only if no path from $s$ to $t$ that contains a negative cycle.
+If there is a shortest path from $s$ to $t$, there is one that is simple.
+<p>
+There are several variants of the shortest path problem. The simplest is the
+<i>single pair problem</i>, in which we are given a source vertex
+$s$ and a sink vertex $t$  and our objective is find a shortest path
+from $s$ to $t$.
+In the <i>single source problem</i>, we are given a source vertex $s$, and
+our objective is to find shortest paths from $s$ to every other vertex in $G$.
+In the <i>single sink problem</i>, we are given a sink vertex $t$, and
+our objective is to find shortest paths to $t$ from every other vertex in $G$.
+Finally, in the <i>all pairs problem</i>, our objective is to
+find shortest paths between every pair of vertices.
+<p>
+It turns out that solving the single pair problem generally requires solving
+a single source (or single sink) problem.
+Also, the single source and single sink problems are essentially the same,
+and the all pairs problem can be solved by solving the single source problem
+multiple times.
+Hence, it makes sense to focus most of our attention on the single source
+version of the problem.
+<p>
+Solutions to the single source problem can be expressed conveniently using
+a <i>shortest path tree</i>. A <i>directed spanning tree</i> of a graph is a
+directed subtree of the graph that includes a directed path from the root
+to every vertex.
+A shortest path tree is a directed spanning tree rooted at the source vertex $s$, in which all paths are shortest paths. So for example, the heavy weight
+edges in the example below form a shortest path tree rooted at $a$.
+<p>
+<div  style="text-align:center;">
+<img width="300" src="figs/sptree.png"><br>
+</div>
+<p>
+The following theorem characterizes the existence of shortest paths in terms of shortest path trees.
+<p>
+<i>Theorem 2</i>.
+$G$ contains shortest paths from $s$ to every other vertex if and only if it contains a shortest path tree with root $s$. 
+<p>
+The proof of this will be deferred until later.
+<p>
+Next, we describe a key property of shortest path trees.
+If $T$ is a spanning tree of $G$ with root $s$, define $\textit{distance}(v)$
+to be the length of the path from $s$ to $v$ in $T$.
+<p>
+Consider an edge $(v,w)$ in $G$ that is not in $T$ and note that that
+if $\textit{distance}(w)>\textit{distance}(v)+\textit{length}(v,w)$,
+then the tree path from $s$ to $w$ is not a shortest path.
+<p>
+<div  style="text-align:center;">
+<img width="300" src="figs/sptProp.png"><br>
+</div>
+<p>
+Hence, if $T$ is a shortest path tree, then we must have
+$\textit{distance}(w)\leq\textit{distance}(v)+\textit{length}(v,w)$
+for all edges $(v,w)$ in $G$. 
+<p>
+What about the converse? That is, can we say that if
+$\textit{distance}(w)\leq\textit{distance}(v)+\textit{length}(v,w)$
+for all edges $(v,w)$ in $G$, that all paths in $T$ are shortest paths?
+<p>
+To prove this, we must show that for any path $p$ in $G$ from $s$
+to a vertex $x$, $\textit{distance}(x)\leq\textit{length}(p)$.
+Note that if $p$ consists of a single edge $(s,x)$, then
+$$
+\textit{length}(p)=\textit{distance}(s)+\textit{length}(s,x)\geq \textit{distance}(x)
+$$
+<p>
+So, let's try to prove the general result using induction on the number of
+edges in $p$.
+Assume then that $p$ has $k+1$ edges and that 
+for all vertices $x'$ and all paths $p'$ with $k$ edges,
+$\textit{distance}(x')\leq \textit{length}(p')$.
+Now, let $q$ be the path consisting of the first $k$ edges of $p$
+and let $y$ be the last vertex in $q$.
+<p>
+<div  style="text-align:center;">
+<img width="400" src="figs/sptProof.png"><br>
+</div>
+<p>
+Then,
+\begin{eqnarray*}
+\textit{distance}(x)&\leq&\textit{distance}(y)+\textit{length}(y,x) \\
+&\leq&\textit{length}(q)+\textit{length}(y,x) \\
+&=&\textit{length}(p)
+\end{eqnarray*}
+This gives us the following theorem.
+<p>
+<i>Theorem 3</i>.
+Let $T$ is a spanning tree of $G$ with root $s$, and
+let $\textit{distance}(v)$ be the length of the path from $s$ to $v$ in $T$.
+$T$ is a shortest path tree if and only if, 
+$\textit{distance}(w)\leq\textit{distance}(v)+\textit{length}(v,w)$
+for all edges $(v,w)$ in $G$.
+<p>
+The property described in Theorem 3 is called the
+<i>shortest path tree property</i> and is the basis for
+a fundamental method for solving the shortest path problem.
+
+<h2>The Labeling Method</h2>
+The <i>labeling method</i> builds a directed spanning tree incrementally
+and transforms it to a shortest path tree by identifying edges that
+violate the shortest path property, then modifying the tree to eliminate
+those violations.
+It uses two arrays, a <i>parent</i> array that maps a vertex $u$ to $p(u)$,
+its tentative parent in a partial shortest path tree, and a 
+<i>distance</i> array that maps vertex $u$ to $\textit{dist}(u)$,
+the distance from the source vertex to $u$ in the current partial tree.
+Initially, $p(u)=\textbf{null}$ for all $v$ and $\textit{dist}(u)=\infty$
+for all $u$ except the source vertex $s$, for which $\textit{dist}(s)=0$.
+It then repeatedly applies the following labelling step.
+<p style="padding-left:5%;">
+Select an edge $(u,v)$ with
+$\textit{dist}(v) > \textit{dist}(u) + \textit{length}(u,v)$;
+let $p(v) = u$ and
+$\textit{dist}(v) = \textit{dist}(u) + \textit{length}(u,v)$.
+<p>
+
+
+
+
+
+
+<p>
+At this point we're ready for a nearly complete
+implementation of the algorithm.
+<p style="padding-left:5%;margin-top:0;margin-bottom:0">
+<b>functon</b> prim(<b>graph</b> $G=(V,E)) \Rightarrow$
+    <p style="padding-left:10%;margin-top:0;margin-bottom:0">
+    <b>graph</b> $T=(W,F);\; \textbf{set}\;B;$<br>
+    select $s \in V;\;W=W\cup\{s\};$<br>
+    <b>for</b> $e=\{s,u\} \in E \Rightarrow
+		B=B\cup e;\;\textit{light}(u) := e\;$ <b>rof</b><br>
+    <b>do</b> $B \not = \{\} \Rightarrow$<br>
+        <p style="padding-left:15%;margin-top:0;margin-bottom:0">
+        select $u \in B$ with the lightest edge $\textit{light}(u)$<br>
+        $B := B \setminus \{u\};\;
+			W=W \cup \{u\};\; F := F \cup \{\textit{light}(u)\}$<br>
+        <b>for</b> $e=\{u,v\} \in E \Rightarrow$
+            <p style="padding-left:20%;margin-top:0;margin-bottom:0">
+            <b>if</b> $v \not\in W \cup B \Rightarrow$
+                <p style="padding-left:25%;margin-top:0;margin-bottom:0">
+                $B := B + \{v\}; \;\textit{light}(v) := e$
+            <p style="padding-left:20%;margin-top:0;margin-bottom:0">
+            $|\;\;v \in B \land
+				\textit{weight}(e) < \textit{weight}(\textit{light}(v))
+				\Rightarrow$<br>
+                <p style="padding-left:25%;margin-top:0;margin-bottom:0">
+                $\textit{light}(v) := e$<br>
+            <p style="padding-left:20%;margin-top:0;margin-bottom:0">
+            <b>fi</b>
+        <p style="padding-left:15%;margin-top:0;margin-bottom:0">
+        <b>rof</b>
+    <p style="padding-left:10%;margin-top:0;margin-bottom:0">
+    <b>od</b><br>
+    <b>return</b> $T$
+<p style="padding-left:5%;margin-top:0;">
+<b>end</b>
+<p>
+<p>
+<textarea id="components" rows="15" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+/** @file mst_prim.mjs
+ *
+ *  @author Jon Turner
+ *  @date 2021
+ *  This is open source software licensed under the Apache 2.0 license.
+ *  See http://www.apache.org/licenses/LICENSE-2.0 for details.
+ */
+
+import List from '../../dataStructures/basic/List.mjs';
+import Dsets from '../../dataStructures/basic/Dsets.mjs';
+import Dheap from '../../dataStructures/heaps/Dheap.mjs';
+import Graph_w from '../../dataStructures/graphs/Graph_w.mjs';
+
+/** Compute min spanning tree of a graph using Prim's algorithm.
+ *  @param g is weighted graph
+ *  @param trace controls the amount of trace output produced, larger
+ *  values produce more output
+ *  @return a list of edges that defines an mst in g or a minimum
+ *  spanning forest, if g is not connected; also a trace string
+ *  and a statistics object
+ */
+export default function mst_prim(g, trace=0) {
+    let elist = []; let traceString = '';
+    let light = new Array(g.n+1).fill(0);
+    let h = new Dheap(g.n, 2+Math.floor(g.m/g.n));
+
+    if (trace) traceString += g + '\n';
+    let mark = new Array(g.n).fill(false);
+    for (let s = 1; s <= g.n; s++) {
+        if (mark[s]) continue;
+        mark[s] = true;
+        for (let e = g.firstAt(s); e != 0; e = g.nextAt(s,e)) {
+            let u = g.mate(s,e); h.insert(u, g.weight(e)); light[u] = e;
+        }
+        light[s] = 1;    // dummy value, anything non-zero will do
+        while (!h.empty()) {
+            if (trace) {
+                let u = h.findmin();
+                traceString += g.index2string(u) + ' ' +
+                               g.edge2string(light[u]) + ' ' +
+                               g.elist2string(elist) + '\n' + h +'\n\n';
+            }
+            let u = h.deletemin(); elist.push(light[u]);
+            for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
+                let v = g.mate(u,e); mark[v] = true;
+                if (h.contains(v) && g.weight(e) < h.key(v)) {
+                    h.changekey(v, g.weight(e)); light[v] = e;
+                } else if (!h.contains(v) && light[v] == 0) {
+                    h.insert(v, g.weight(e)); light[v] = e;
+                }
+            }
+        }
+    }
+    return [elist, traceString, h.getStats() ];
+}
+</textarea>
+<p>
+
+<h2>References</h2>
+<dl>
+<dt> Tarjan87
+<dd> <i>Network Algorithms and Data Structures</i> by Robert E. Tarjan.
+     Society for Industrial and Applied Mathematics, 1987.
+</dl>
+</body>
+</html>

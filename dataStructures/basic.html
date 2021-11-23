@@ -1,0 +1,1672 @@
+<html>
+<head>
+<title>xxIntroduction</title>
+<link type="text/css" rel="stylesheet" href="../main.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+</head>
+<body bgcolor=ffffff>
+<h1>Basic Data Structures</h1>
+<p>
+This page describes a number of basic data structures used by the
+various algorithms and as building blocks within more complex data structures.
+
+<h2>Introduction</h2>
+
+Many of the algorithms described on this site here require multiple
+data structures that address different aspects of the problem being solved.
+Because the data structures are closely related, there must be a way to
+maintain correspondences among them.
+One simple way to do this is
+with <i>index-based data structures</i>.
+Here is an example of an index-based list used to represent the list
+of distinct integers $[7,5,3,8,2]$. In general, an index list
+can be used to represent any list of distinct positive integers within a bounded
+range, in this case, 1 to 10.
+<p>
+<div  style="text-align:center;">
+<img width="550" src="figs/indexList.png"><br>
+</div>
+<p>
+The list is represented by a vector $\textit{next}$, which identifies the next
+item in the list. So for example $\textit{next}[7] = 5$ as you would expect.
+Notice that $\textit{next}[2] = 0$ to indicate the end of the list. For the
+integers in $1\ldots 10$ that are not in the list,
+the value of $\textit{next}$ is $-1$.
+This allows us to implement a constant-time test to determine if a given
+value is in the list. A list like this could be used to represent a queue
+containing some of the vertices in a graph. The linked representation allows
+us to easily remove the first element or add a new element to the end,
+while the constant-time membership test allows us to quickly determine if
+a given vertex is in the queue.
+<p>
+Here is another example of an index-based data structure, which defines a
+collection of disjoint lists that partition the index set $1\ldots 12$ into
+the six subsets $\{[1, 6, 3], [4], [2, 7], [8], [11, 9], [5, 12, 10]\}$. This list is doubly-linked with the <code>next</code> and <code>prev</code>
+arrays defining the neighbors of each list item.
+<p>
+<div  style="text-align:center;">
+<img width="600" src="figs/dlists.png"><br>
+</div>
+<p>
+Observe that the colors highlight items in the same list.
+Also, note that the $\textit{next}$ value for the last item on each list is 0 to mark
+the end of the list. However, the $\textit{prev}$ value of the first
+item on each list is not 0. Instead, it points to the last item in the list.
+
+All the algorithms and data structures described on the site have been
+implemented as <i>javascript</i> modules.
+Here is an example of one of the basic algorithms that is available.
+It uses the index list data structure and the disjoint lists data structure,
+as well as a data structure for an undirected graph.
+Note that the code below is enclosed in a scrollable text area.
+<p>
+<textarea rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+import List from '../../dataStructures/basic/List.mjs';
+import Dlists from '../../dataStructures/basic/Dlists.mjs';
+import Graph from '../../dataStructures/graphs/Graph.mjs';
+
+/** Identify the connected components of an undirected graph.
+ *  @param g is a graph object
+ *  @param trace is an optional argument that controls production of trace
+ *  information; when zero, no trace information is provided
+ *  @return a pair [k, comps, traceString] where k is the number of components
+ *  in g and comps is a disjoint lists (Dlists) object that partitions
+ *  the vertices into subsets that define each component and traceString
+ *  contains trace information.
+ */
+export default function components(g, trace=0) {
+    let k = 0; let traceString = '';
+    if (trace) traceString += g + '\n';
+    let comps = new Dlists(g.n);
+    let q = new List(g.n);
+    if (trace)
+        traceString += 'selected vertex, queue, components\n'
+    for (let s = 1; s <= g.n; s++) {
+        if (!comps.singleton(s)) continue;
+        k++; q.enq(s);
+        while (!q.empty()) {
+            let u = q.deq();
+            for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
+                let v = g.mate(u,e);
+                if (comps.singleton(v)) {
+                    comps.join(s, v); q.enq(v);
+                }
+            }
+            if (trace)
+                traceString += `${g.index2string(u)} ${q} ${comps}\n`
+        }
+    }
+    comps.sort();
+    return [k, comps, traceString];
+}
+</textarea>
+<p>
+The function <code>components</code> identifies the individual
+connected components of a graph and returns the number of components,
+a <code>Dlists</code> object that has a separate list for the vertices
+in each component and a <i>trace string</i> that captures trace information
+detailing the steps in the function's execution.
+The tracing feature is enabled by the optional <i>trace</i> argument.
+Most of the provided code modules include a similar trace feature.
+<p>
+The <code>Dlists</code> object <code>comps</code> is defined on the integers
+1 to <code>g.n</code>, where <code>g.n</code>
+is the number of vertices in the <code>graph</code> object <code>g</code>.
+The outer loop scans the set of vertices looking for a vertex <code>s</code>
+which is not
+in any component already identified, while the inner loop implements
+a breadth-first search over the component containing <code>s</code>,
+combining all of its vertices into a single list in <code>Dlists</code>.
+The <code>singleton()</code> method returns true if its argument is the
+only item in its list.
+The <code>enq()</code> and <code>deq()</code> methods are used to add
+an item to the end of a list or remove the first item.
+The <code>firstAt()</code> and <code>nextAt()</code> methods are used to
+traverse an adjacency list of a graph, while <code>g.mate(u,e)</code>
+returns the endpoint of edge <code>e</code> that is not <code>u</code>.
+<p>
+There is a simple web application that allows you to examine the
+code for any of the provided modules and run the code in a browser.
+<p>
+<div  style="text-align:center;">
+<img width="800" src="figs/grafalgoApp.png"><br>
+</div>
+<p>
+When the app is first opened, the top text area is available
+as a scratch pad that you can use to enter and run programs.
+To run the <code>components</code> module first enter the following text
+in the top window.
+<pre style="padding-left:5%">
+let g = new Graph(10);
+g.fromString('{a[b d e] b[a c f] c[b d f] d[a c e] e[a d] f[b c] ' +
+             'g[h] h[g i] i[h]}');
+log(g);
+let [ count, comps ] = components(g)
+log(count + ' ' + comps);
+</pre>
+The <code>fromString</code> method initializes the graph object <code>g</code>
+from a string, which specifies the graph as a set of adjacency
+lists.
+So for example, the initial portion of the provided argument,
+(<code>a[b d e]</code>) specifies edges from <code>a</code>
+to <code>b</code>, <code>d</code> and <code>e</code>.
+The <code>log()</code> method can be viewed as a shorthand for
+<code>console.log()</code>. Its output appears in the bottom window.
+If you click on the <i>run</i> button at right, the following text
+will appear in the lower window.
+<pre style="padding-left:5%">
+{a[b d e] b[a c f] c[b d f] d[a c e] e[a d] f[b c] g[h] h[g i] i[h] j[]}
+3 [(a b d e c f), (g h i)]
+</pre>
+The first line shows the graph as a string. Note that an empty
+adjacency list appears for vertex <code>j</code>, which
+is included in <code>g</code>, since <code>g</code> was declared to
+have 10 vertices.
+Also note that 3 components are reported, but only the two non-singleton
+components are shown explicitly,
+since the <code>toString</code> method of the
+<code>Dlists</code> object omits singleton lists for brevity.
+The missing component is the isolated vertex <code>j</code>.
+<p>
+If you replace the last three lines in the top window with
+<pre style="padding-left:5%">
+let [,,ts] = components(g,1)
+log(ts);
+</pre>
+and click on the <i>run</i> button agin, you will get
+<p>
+<textarea rows="13" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+{a[b d e] b[a c f] c[b d f] d[a c e] e[a d] f[b c] g[h] h[g i] i[h] j[]}
+selected vertex, queue, components
+a [b d e] [(a b d e)]
+b [d e c f] [(a b d e c f)]
+d [e c f] [(a b d e c f)]
+e [c f] [(a b d e c f)]
+c [f] [(a b d e c f)]
+f [] [(a b d e c f)]
+g [h] [(a b d e c f), (g h)]
+h [i] [(a b d e c f), (g h i)]
+i [] [(a b d e c f), (g h i)]
+j [] [(a b d e c f), (g h i)]
+</textarea>
+<p>
+The menus at the top right provide access to all the available code
+modules. The first two menus list the data structures
+and unit tests for each.
+The next two list the algorithms that use those data structures,
+along with their unit tests.
+When a unit test is displayed, you can run it using the <code>run</code> button.
+The last menu provides access to some common code modules.
+You can <i>activate</i> a menu by clicking on the button to its
+left, causing the selected item to be displayed.
+Selecting an item from a different menu activates that menu.
+Go back to the scratch pad by clicking on its button.
+<p>
+If you load the unit test for the components module,
+you can run it by clicking on the <i>run</i> button,
+The lines
+<pre style="padding-left:5%">
+let [k, dl, ts] = components(g,1);
+assert(k, 3, 'a1');
+assert(dl, '[(a b c d e f), (g h i)]', 'a2');
+</pre>
+run the <code>components</code> function and verify its output.
+The <code>assert</code> function verifies that its first two
+arguments are equal and prints an error message if they are not.
+The error message includes string versions of the
+first two arguments so that you can
+see why the <code>assert</code> failed.
+The third argument is a tag that appears in the error message so
+you can more easily identify which call to
+<code>assert</code> triggered a given message.
+If <code>assert</code> is called with just two argments, the first
+is assumed to be a boolean expression.
+A failed call to <code>assert</code> also triggers an exception
+which terminates the test.
+For example, if you change the 3 in the first <code>assert</code>
+statement to 2, you will get the message
+<pre style="padding-left:5%">
+AssertError: a1 3 2 
+</pre>
+<p>
+If you spend some time reviewing the code for the <code>List</code>
+and <code>Dlist</code> modules,
+you will be able to see for yourself how the data structures are
+implemented. You will also find that they share some common methods.
+For example, both have <code>toString</code>, <code>fromString</code>
+and <code>equals</code>
+methods and some underlying machinery to expand the required
+storage space as needed.
+<p>
+The application, is available at
+<pre style="padding-left:5%">
+www.cse.wustl.edu/~jon.turner/grafalgo/js
+</pre>
+The provided code is also available as part of the <i>Grafalgo</i>
+library, which can be downloaded from
+<pre style="padding-left:5%">
+https://github.com/jonturner53/grafalgo
+</pre>
+The library includes <i>C</i>++ implementations of the code described here,
+in addition to the <i>javascript</i> version.
+The <i>C</i>++ version pre-dates the <i>javascript</i> version.
+Do not expect them to fully consistent.
+There is also the beginnings of a <i>java</i> version, which may (or may not)
+be completed at some point.
+<h2>Common Methods</h2>
+All the provided data structure have a common super-class <code>Adt</code>,
+which defines an index range $1\ldots n$ for some integer $n$ and provides
+the following methods.
+<ul>
+<li> <code>constructor(n=5)</code> constructs an object with an index range
+    of <code>n</code>.
+<li> <code>n</code> returns the index range of the object.
+<li> <code>valid(i)</code> returns true if <code>i</code> is a valid
+    index (that is, falls within the index range, or is zero).
+<li> <code>toString()</code> is a dummy method which every sub-class
+    instantiates. It returns a string representation of the object.
+    Many also support two boolean arguments, <code>details</code>,
+    <code>pretty</code> and a function argument <code>label</code>.
+    These are used to modify the default string that is displayed.
+<li> <code>equals(a)</code> returns true if <code>this</code> object
+    is equal to the argument <code>a</code>. Most classes define their
+    own version of this method, but a default is provided, which compares
+    the string representations of the two objects and returns true when
+    they are identical. Where class-specific versions are provided,
+    they typically support comparison of <code>this</code> object to
+    a string argument. In this case, the string is used to
+    construct an object, which is then compared to <code>this</code>.
+<li> <code>index2string(i, label)</code> creates a string
+    representation of the index $i$. Label is an optional function argument.
+	If present, it is used to generate the string.
+	The default label function uses a lower-case letter in place of the integer
+	index value, whenever the index range is $\leq 26$.
+	To force numeric values in all cases, use
+	<code>index2string(i, x => x)</code>. To use a string from an array
+	of tags, use<code>index2string(i, x => tag[x])</code>.
+</ul>
+Most classes also define the following methods.
+<ul>
+<li> <code>fromString(s)</code> instantiates an object based on the
+    string <code>s</code>.
+<li> <code>reset(n, capacity=n)</code> discards the contents of the current
+    object and allocates space for for an object with an index range of $n$.
+    The optional capacity argument allows extra space to be allocated,
+    so that the index range can be increased later, without additional space
+    allocation.
+<li> <code>expand(n)</code> increases the index range to $n$ and if necessary,
+    allocates additional space. The value of the object is preserved.
+    To limit the frequency of allocation operations, when a space expansion
+    is needed, the space is increased by at least a constant factor of 25%.
+<li> <code>assign(x)</code> assigns the value of object <code>x</code> to
+    <code>this</code> by copying its contents.
+<li> <code>xfer(x)</code> assigns the value of object <code>x</code> to
+    <code>this</code> by transferring its contents.
+    This effectively destroys <code>x</code>.
+<li> <code>clear()</code> clears the value of the object (so for example,
+    in the case of a list, the list becomes empty).
+</ul>
+
+<a id=list><h2>List and List_d</h2></a>
+The <code>List</code> class defines a list of distinct integers in
+a limited range $1\ldots n$ and supports the following methods.
+<ul>
+<li> <code>constructor(n, cap=n)</code> constructs a <code>List</code> object
+    with an index range of <code>n</code> and capacity of <code>cap</code>.
+    Both arguments may be omitted.
+    Initially, the list is empty.
+<li> <code>first()</code> returns the first item on the list, or 0 if the list
+    is empty.
+<li> <code>last()</code> returns the last item on the list, or 0 if the list
+    is empty.
+<li> <code>next(i)</code> returns the next item in the list following
+    <code>i</code> or 0 if <code>i</code> is the last item on the list.
+<li> <code>length</code> returns the number of items in the list.
+<li> <code>empty()</code> returns true if the list is empty, else false.
+<li> <code>at(i)</code> returns the item at position <code>i</code>
+    in the list, or 0 if there is no such item.
+<li> <code>contains(i)</code> returns true if the list contains <code>i</code>,
+    else false.
+<li> <code>insert(i, j)</code> inserts item <code>i</code> after item
+    <code>j</code>. If <code>j</code> is zero, <code>i</code> is inserted
+    before the first item in the list.
+<li> <code>deleteNext(i)</code> removes the item following <code>i</code>;
+    if <code>i</code> is zero, it deletes the first item;
+    the deleted item is returned.
+<li> <code>push(i)</code> is an alias for <code>insert(i, 0)</code>.
+<li> <code>pop()</code> is an alias for <code>deleteNext(0)</code>.
+<li> <code>top()</code> is an alias for <code>first()</code>.
+<li> <code>enq(i)</code> is an alias for <code>insert(i, last())</code>.
+<li> <code>deq()</code> is an alias for <code>deleteNext(0)</code>.
+</ul>
+The <code>List</code> is implemented using a single <code>next</code>
+array, linking successive list items; items not on the list have 
+<code>next</code> values of $-1$.
+The <code>at(i)</code> method takes time proportional to the index value.
+All others listed above take constant time.
+The core methods for the <code>List</code> class are shown below.
+<p>
+<textarea rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+import Adt from '../Adt.mjs';
+import { assert } from '../../common/Errors.mjs';
+import Scanner from './Scanner.mjs';
+
+/** Data structure representing a list of unique integers.
+ *
+ *  Used to represent a list of integers from a defined range 1..n,
+ *  where each integer may appear on the list at most one time.
+ *  Allows fast membership tests in addition to the usual list
+ *  operations. Less general than generic lists but useful when
+ *  underlying index set is shared by multiple data structures.
+ */
+export default class List extends Adt {
+    #first;       ///< first item in list
+    #last;        ///< last item in list
+    #length;      ///< number of items in list
+    #next;        ///< #next[i] is successor of i in list
+    
+    /** Constructor for List object.
+     *  @param n is the range for the list
+     *  @param capacity is the max range to allocate space for
+     */
+    constructor(n, capacity=n) {
+        super(n); this.#init(capacity);
+    }
+
+    #init(capacity) {
+        assert(capacity >= this.n);
+        this.#next = new Array(capacity+1).fill(-1, 1, this.n+1);
+        this.#next[0] = this.#first = this.#last = this.#length = 0;
+    }
+
+    /** Remove all elements from list. O(length) */
+    clear() { while (!this.empty()) this.pop(); }
+
+    /** Get the number of items in the list. */
+    get length() { return this.#length; }
+    
+    /** Get the next item in a list. O(1)
+     *  @param i is an item on the list
+     *  @return the item that follows i, or 0 if there is no next item
+     */
+    next(i) { return this.#next[i]; }
+    
+    /** Get first item on list. O(1)
+     *  @return the first item on the list or 0 if the list is empty
+     */
+    first() { return this.#first; }
+    top() { return this.#first; }
+    
+    /** Get the last item on list. O(1)
+     *  @return the last item on the list or 0 if the list is empty
+     */
+    last() { return this.#last; }
+
+    /** Get an item based on its position in the list.
+     *  @param i is position of index to be returned; must be between
+     *  1 and n
+     *  @return index at position i, or 0 if no such index
+     */
+    at(i) {
+        assert(this.valid(i) && i != 0);
+        for (let j = this.first(); j != 0; j = this.next(j)) {
+            if (--i == 0) return j;
+        }
+        return 0;
+    }
+    
+    /** Test if list is empty. O(1)
+     *  @return true if list is empty, else false.
+     */
+    empty() { return this.length == 0; }
+    
+    /** Test if an item is in the list. O(1)
+     *  @param i is an item
+     *  @return true if i is in the list, else false
+     */
+    contains(i) { return this.valid(i) && (i != 0 && this.#next[i] != -1); } 
+    
+    /** Insert an item into the list, relative to another. O(1)
+     *  @param i is item to insert
+     *  @param j is item after which i is to be inserted;
+     *  if zero, i is inserted at the front of the list
+     */
+    insert(i, j) {
+        assert(this.valid(i) && i != 0 && !this.contains(i) &&
+                       (j == 0 || this.contains(j)));
+        if (j == 0) {
+            if (this.empty()) this.#last = i;
+            this.#next[i] = this.#first; this.#first = i; this.#length++;
+            return;
+        }
+        this.#next[i] = this.#next[j]; this.#next[j] = i; this.#length++;
+        if (this.#last == j) this.#last = i;
+        return;
+    }
+    
+    /** Remove the item following a specified item. O(1)
+     *  @param i is item whose successor is to be deleted;
+     *  if zero, the first item is deleted
+     *  @return the deleted item
+     */
+    deleteNext(i) {
+        assert(i == 0 || this.contains(i));
+        if (i == this.last()) return;
+        let j;
+        if (i == 0) { j = this.#first;   this.#first = this.#next[j]; }
+        else        { j = this.#next[i]; this.#next[i] = this.#next[j]; }
+        if (this.#last == j) this.#last = i;
+        this.#next[j] = -1; this.#length--;
+        return j;
+    }
+    
+    /** Push item onto front of a list. O(1)
+     *  @param item to be added.
+     */
+    push(i) { this.insert(i, 0); }
+    
+    /** Remove the first item in the list. O(1)
+     *  @return the item removed, or 0
+     */
+    pop() { return this.deleteNext(0); }
+    
+    /** Add item to the end of the list. O(1)
+     *  @param item to be added.
+     *  @return true if the list was modified, else false
+     */
+    enq(i) { this.insert(i, this.last()); }
+    
+    /** Remove the first item in the list. O(1)
+     *  @return the item removed, or 0
+     */
+    deq() { return this.pop(); }
+}
+</textarea>
+<p>
+The <code>List_d</code> class extends the <code>List</code> class and
+includes the following methods, in addition to those that it inherits.
+<ul>
+<li> <code>prev(i)</code> is the predecessor of item <code>i</code> in the list.
+<li> <code>delete(i)</code> deletes <code>i</code> from the list.
+<li> <code>at(i)</code> returns the item at position <code>i</code>, with
+    negative integers used to identify items relative to the end of the list.
+</ul>
+
+<a id=listPair><h2>ListPair</h2></a>
+The <code>ListPair</code> class defines two complementary lists over
+the same index range. One is referred to as the <code>in-list</code>,
+the other as the <code>out-list</code>.
+<ul>
+<li> <code>constructor(n, cap=n)</code> constructs a <code>ListPair</code>
+    object with an index range of <code>n</code> and capacity of
+    <code>cap</code>. Both arguments may be omitted.
+    Initially, all items are in the <code>out-list</code>.
+<li> <code>isIn(i)</code> returns true if <code>i</code> is in the 
+    in-list.
+<li> <code>isOut(i)</code> returns true if <code>i</code> is in the 
+    out-list.
+<li> <code>firstIn()</code> returns the first item in the
+    in-list or 0 if the list is empty.
+<li> <code>firstOut()</code> returns the first item in the
+    out-list or 0 if the list is empty.
+<li> <code>lastIn()</code> returns the last item in the
+    in-list or 0 if the list is empty.
+<li> <code>lastOut()</code> returns the last item in the
+    out-list or 0 if the list is empty.
+<li> <code>nextIn(i)</code> returns the next item in the
+    in-list following <code>i</code> or 0 if <code>i</code> is the last item.
+<li> <code>nextOut(i)</code> returns the next item in the
+    out-list following <code>i</code> or 0 if <code>i</code> is the last item.
+<li> <code>prevIn(i)</code> returns the previous item in the
+    in-list following <code>i</code> or 0 if <code>i</code> is the first item.
+<li> <code>prevOut(i)</code> returns the previous item in the
+    out-list following <code>i</code> or 0 if <code>i</code> is the first item.
+<li> <code>swap(i)</code> transfers <code>i</code> from its current list to
+    the other.
+</ul>
+<code>ListPair</code> implements both lists using shared <code>next</code>
+and <code>prev</code> arrays. For items in the out-list, the
+<code>next</code> and <code>prev</code> values are negative integers.
+All operations listed above take constant time.
+The core methods for the <code>ListPair</code> class are shown below.
+<p>
+<textarea rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+import Adt from '../Adt.mjs';
+import { assert } from '../../common/Errors.mjs';
+import Scanner from './Scanner.mjs';
+
+/** Data structure that represents a pair of complementary index lists.
+ *  The index values have a limited range 1..n and each index is
+ *  always in one of the two lists.  The lists are referred to as
+ *  "in" and "out" and can be accessed using the provided methods.
+ *  The only way to modify the data structure is to move an item
+ *  from one list to the other, using the swap method.
+ *  Initially, all items are in the out list.
+ */
+export default class ListPair extends Adt {
+    #nIn;         ///< number of items in in-list
+    #nOut;        ///< number of items in out-list
+
+    #firstIn;     ///< first item in the in-list
+    #lastIn;      ///< last item in the in-list
+    #firstOut;    ///< first item in the out-list
+    #lastOut      ///< last item in the out-list
+    #next;        ///< #next[i] defines next item after i
+                  ///< in items use positive #next values
+                  ///< out items use negative #next values
+    #prev;        ///< #prev[i] defines item preceding i
+                  ///< in items use positive #prev values
+                ///< out items use negative #prev values
+    
+    /** Constructor for list pair.
+     *  @param n specifies the range of integer values
+     *  @param capacity specifies the maximum range to provide space for
+     */
+    constructor(n, capacity=n) { super(n); this.#init(capacity); }
+
+    /** Allocate space and initialize.
+     *  @param capacity is the maximum range
+     */
+    #init(capacity) {
+        assert(this.n <= capacity);
+        this.#next = new Array(capacity+1);
+        this.#prev = new Array(capacity+1);
+        this.#firstIn = this.#lastIn = 0;
+        this.#firstOut = 1; this.#lastOut = this.n;
+        for (let i = 1; i <= this.n; i++) {
+            this.#next[i] = -(i+1); this.#prev[i] = -(i-1);
+        }
+        this.#next[this.n] = this.#prev[1] = 0;
+        this.#next[0] = this.#prev[0] = 0;
+        this.#nIn = 0; this.#nOut = this.n;
+    }
+    
+    /** Determine if an item belongs to the "in-list".
+     *  @param i is a valid list item
+     *  @param return true if i is a member of the "in-list", else false.
+     */
+    isIn(i) {
+        assert(this.valid(i));
+        return this.#next[i] > 0 || i == this.#lastIn;
+    }
+    
+    /** Determine if an int belongs to the "out-list".
+     *  @param i is a valid list item
+     *  @param return true if i is a member of the "out-list", else false.
+     */
+    isOut(i) {
+        assert(this.valid(i));
+        return this.#next[i] < 0 || i == this.#lastOut;
+    }
+    
+    /** Get the number of elements in the "in-list".  */
+    nIn() { return this.#nIn; }
+    
+    /** Get the number of elements in the "in-list".  */
+    nOut() { return this.#nOut; }
+    
+    /** Get the first item in the in-list.
+     *  @return the first value on the in-list or 0 if the list is empty.
+     */
+    firstIn() { return this.#firstIn; }
+    
+    /** Get the first item in the out-list.
+     *  @return the first value on the out-list or 0 if the list is empty.
+     */
+    firstOut() { return this.#firstOut; }
+    
+    /** Get the last item in the in-list.
+     *  @return the last value on the in-list or 0 if the list is empty.
+     */
+    lastIn() { return this.#lastIn; }
+    
+    /** Get the first item in the out-list.
+     *  @return the last value on the out-list or 0 if the list is empty.
+     */
+    lastOut() { return this.#lastOut; }
+    
+    /** Get the next item in the inlist.
+     *  @param i is the "current" value
+     *  @return the next int on the in-list or 0 if no more values
+     */
+    nextIn(i) {
+        assert(this.isIn(i)); return this.#next[i];
+    }
+    
+    /** Get the next value in the outlist.
+     *  @param i is the "current" value
+     *  @return the next value on the out-list or 0 if no more values
+     */
+    nextOut(i) {
+        assert(this.isOut(i)); return -this.#next[i];
+    }
+    
+    /** Get the previous value in the inlist.
+     *  @param i is the "current" value
+     *  @return the previous value on the in-list or 0 if no more values
+     */
+    prevIn(i) {
+        assert(this.isIn(i)); return this.#prev[i];
+    }
+    
+    /** Get the previous value in the outlist.
+     *  @param i is the "current" value
+     *  @return the previous value on the out-list or 0 if no more values
+     */
+    prevOut(i) {
+        assert(this.isOut(i)); return -this.#prev[i];
+    }
+    
+    /** Remove all elements from inSet. */
+    clear() { while (this.firstIn() != 0) this.swap(this.firstIn()); }
+    
+    /** Move an item from one list to the other.
+     *  Inserts swapped item at end of the other list
+     *  @param i is the index of item to be swapped
+     *  @param j is a list item in the "other" list; i is inserted
+     *  into the other list, following item j, or at the start if j=0.
+     */
+    swap(i, j=-1) {
+        if (j < 0) j = this.isIn(i) ? this.lastOut() : this.lastIn();
+
+        assert(this.valid(i) && i != 0 && this.valid(j));
+        assert((this.isIn(i)  && (j == 0 || this.isOut(j))) ||
+               (this.isOut(i) && (j == 0 || this.isIn(j))));
+
+        if (this.isIn(i)) {
+            // first remove i from in-list
+            if (i == this.lastIn()) this.#lastIn = this.#prev[i];
+            else this.#prev[this.#next[i]] = this.#prev[i];
+            if (i == this.firstIn()) this.#firstIn = this.#next[i];
+            else this.#next[this.#prev[i]] = this.#next[i];
+    
+            // now add i to out-list
+            if (this.#nOut == 0) {
+                this.#next[i] = this.#prev[i] = 0;
+                this.#firstOut = this.#lastOut = i;
+            } else if (j == 0) {
+                this.#next[i] = -this.#firstOut; this.#prev[i] = 0;
+                this.#prev[this.#firstOut] = -i; this.#firstOut = i;
+            } else if (j == this.#lastOut) {
+                this.#next[j] = -i; this.#prev[i] = -j;
+                this.#next[i] = 0; this.#lastOut = i;
+            } else {
+                this.#next[i] = this.#next[j]; this.#prev[i] = -j; 
+                this.#prev[-this.#next[j]] = -i; this.#next[j] = -i;
+            }
+            this.#nIn--; this.#nOut++;
+        } else {
+            // first remove i from out-list
+            if (i == this.lastOut()) this.#lastOut = -this.#prev[i];
+            else this.#prev[-this.#next[i]] = this.#prev[i];
+            if (i == this.firstOut()) this.#firstOut = -this.#next[i];
+            else this.#next[-this.#prev[i]] = this.#next[i];
+    
+            // now add i to in-list
+            if (this.#nIn == 0) {
+                this.#next[i] = this.#prev[i] = 0;
+                this.#firstIn = this.#lastIn = i;
+            } else if (j == 0) {
+                this.#next[i] = this.#firstIn; this.#prev[i] = 0;
+                this.#prev[this.#firstIn] = i; this.#firstIn = i;
+            } else if (j == this.#lastIn) {
+                this.#next[j] = i; this.#prev[i] = j;
+                this.#next[i] = 0; this.#lastIn = i;
+            } else {
+                this.#next[i] = this.#next[j]; this.#prev[i] = j; 
+                this.#prev[this.#next[j]] = i; this.#next[j] = i;
+            }
+            this.#nIn++; this.#nOut--;
+        }
+        return;
+    }
+}
+</textarea>
+<p>
+
+<a id=dlists><h2>Dlists and Dlists_r</h2></a>
+The <code>Dlists</code> class implements a collection of disjoint
+lists on a common index set $1\ldots n$.
+Each list in the collection is identified by its first list item.
+The provided methods are listed below.
+<ul>
+<li> <code>constructor(n, cap=n)</code> constructs a <code>Dlists</code> object
+    with an index range of <code>n</code> and capacity of <code>cap</code>.
+    Both arguments may be omitted.
+    Initially, each item forms a singleton list.
+<li>    <code>isFirst(i)</code> returns true if item <code>i</code> is
+        the first item in some list.
+<li>    <code>singleton(i)</code> returns true if item <code>i</code> is
+        the only item in its list.
+<li>    <code>last(i)</code> is the last item in the list identified by
+        <code>i</code> (that is, <code>i</code> is the first list item).
+<li>    <code>next(i)</code> is the next item on the list containing
+        <code>i</code> or 0 if <code>i</code> is the last item.
+<li>    <code>prev(i)</code> is the previous item on the list containing
+        <code>i</code> or 0 if <code>i</code> is the first item.
+<li>    <code>findList(i)</code> returns the first item in the list containing
+        <code>i</code>.
+<li>    <code>rotate(f, i)</code> rotates the list identfied by <code>f</code>
+        to make <code>i</code> the first list item. That is, the portion
+        of the list that precedes <code>i</code> is moved to the end of
+        the list. It returns <code>i</code>.
+<li>    <code>delete(i, f)</code> removes <code>i</code> from the list
+        identified by <code>f</code>. The identifier of the
+        modified list is returned.
+<li>    <code>join(f1, f2)</code> combine the lists identified by 
+        <code>f1</code> and <code>f2</code> and return the identifier of
+        the new list. The new list is the concatenation of the two lists.
+        If either argument is 0, the other is returned.
+<li>    <code>sort()</code> sorts the items on all lists.
+</ul>
+<code>Dlists</code> is implemented using shared <code>next</code> and
+<code>prev</code> arrays.
+The <code>findList(i)</code> method takes time proportional to the
+position of item <code>i</code> in the list and the <code>sort</code>
+method takes $O(n log n)$ time. All others listed above take
+constant time.
+The core methods for the <code>Dlists</code> class are shown below.
+<p>
+<textarea rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+import Adt from '../Adt.mjs';
+import { assert } from '../../common/Errors.mjs';
+import Scanner from './Scanner.mjs';
+
+/** The Dlists class maintains a collection of disjoint lists defined
+ *  over a set of integers 1..n. Each list in the collection is identified
+ *  by its first item.
+ */
+export default class Dlists extends Adt {
+    _next;        // _next[i] is next item on list or 0 for last item
+    _prev;        // _prev[i] is previous item on list or last for first item,
+                  // where last is the last item on the list
+
+    constructor(n, capacity=n) {
+        super(n); this.#init(capacity);
+    }
+
+    #init(capacity) {
+        assert(this.n <= capacity);
+        this._next = new Array(capacity+1);
+        this._prev = new Array(capacity+1);
+        // initialize to singleton lists
+        for (let i = 0; i <= this.n; i++) {
+            this._next[i] = 0; this._prev[i] = i;
+        }
+        this._prev[0] = 0;
+    }
+    
+    /** Clear the data structure, moving all items into single node lists.
+    */
+    clear() {
+        for (let i = 1; i <= this.n; i++) {
+            this._next[i] = 0; this._prev[i] = i;
+        }
+    }
+
+    isFirst(i) { assert(this.valid(i)); return this._next[this._prev[i]] == 0; }
+    
+    /** Get the last item in a list.
+     *  @param f is the first item on a list.
+     *  @return the last item in the list
+     */
+    last(f) {
+        assert(this.isFirst(f));
+        return this._prev[f];
+    }
+
+    /** Get the next list item.
+     *  @param i is a list item
+     *  @return the item that follows i in its list
+     */
+    next(i) {
+        assert(this.valid(i)); return this._next[i];
+    }
+    
+    /** Get the previous list item.
+     *  @param i is a list item
+     *  @return the item that precedes i in its list
+     */
+    prev(i) {
+        return (this.isFirst(i) ? 0 : this._prev[i]);
+    }
+
+    /** Determine if an item is in a singleton list.
+     *  @param i is the index of an item
+     *  @return true if it is the only item in its list, else false
+     */
+    singleton(i) {
+        assert(this.valid(i));
+        return this._prev[i] == i;
+    }
+    
+    /** Find the start of a list.
+     *  @param i is an item on some list
+     *  @return the first item on the list
+     */
+    findList(i) {
+        assert(this.valid(i));
+        while (this.prev(i) != 0) i = this.prev(i);
+        return i;
+    }
+
+    /** Rotate list l to make i it's first item.
+     *  @param f is the first item on a list.
+     *  @param i is another item on the same list
+     *  @return the modified list
+     */
+    rotate(f, i) {
+        if (i == f) return i;
+        this._next[this.last(f)] = f;
+        this._prev[f] = this._prev[f];
+        this._next[this._prev[i]] = 0;
+        return i;
+    }
+    
+    /** Remove an item from its list.
+     *  This method turns the deleted item into a singleton list.
+     *  @param i is an item in a list
+     *  @param f is the first item of a list
+     *  @return the first item of the modified list, or 0 if f was a singleton
+     */
+    delete(i, f) {
+        assert(this.valid(i) && this.valid(f) && this.isFirst(f));
+        if (this.singleton(f)) return 0;
+        let l = this.last(f); let nf = this.next(f);
+        let pi = this.prev(i); let ni = this.next(i);
+        if (i == f) {
+            this._prev[nf] = this._prev[f]; f = nf;
+        } else if (i == l) {
+            this._prev[f] = pi; this._next[pi] = 0;
+        } else {
+            this._prev[ni] = pi; this._next[pi] = ni;
+        }
+        this._next[i] = 0; this._prev[i] = i;
+        return f;
+    }
+    
+    /** Join two lists together.
+     *  @param f1 is the first item on a list
+     *  @param f2 is the first item on another list
+     *  @return the id of the list formed by joining the two lists;
+     *  defined to be f1, for non-zero f1
+     */
+    join(f1, f2) {
+        assert(this.valid(f1) && this.valid(f2));
+        if (f2 == 0 || f1 == f2) return f1;
+        if (f1 == 0) return f2;
+        assert(this.isFirst(f1) && this.isFirst(f2));
+        let l1 = this.last(f1); let l2 = this.last(f2);
+        this._next[l1] = f2;
+        this._prev[f2] = l1;
+        this._prev[f1] = l2
+        return f1;
+    }
+}
+</textarea>
+<p>
+The <code>Dlists_r</code> class extends the <code>Dlists</code>
+class, making the lists efficiently <i>reversible</i>.
+It provides the following methods.
+<ul>
+<li>    <code>isFirst(i)</code> returns true if item <code>i</code> is
+        the first item in some list.
+<li>    <code>singleton(i)</code> returns true if item <code>i</code> is
+        the only item in its list.
+<li>    <code>last(i)</code> is the last item in the list identified by
+        <code>i</code> (that is, <code>i</code> is the first list item).
+<li>    <code>next(i, j)</code> returns the next item on the list containing
+        <code>i</code> or 0 if <code>i</code> is the last item.
+        The second argument <code>j</code> is the predecessor of <code>i</code>
+        in the list, or 0 if <code>i</code> is the first item.
+<li>    <code>prev(i, j)</code> returns the previous item on the list containing
+        <code>i</code> or 0 if <code>i</code> is the first item.
+        The second argument <code>j</code> is the successor of <code>i</code>
+        in the list, or 0 if <code>i</code> is the last item.
+<li>    <code>findList(i)</code> returns the first item in the list containing
+        <code>i</code>.
+<li>    <code>rotate(f, i)</code> rotates the list identfied by <code>f</code>
+        to make <code>i</code> the first list item. That is, the portion
+        of the list that precedes <code>i</code> is moved to the end of
+        the list. It returns <code>i</code>.
+<li>    <code>delete(i, f)</code> removes <code>i</code> from the list
+        identified by <code>f</code>. The identifier of the
+        modified list is returned.
+<li>    <code>pop(f)</code> is an alias for  <code>delete(f, f)</code>.
+<li>    <code>join(f1, f2)</code> combine the lists identified by 
+        <code>f1</code> and <code>f2</code> and return the identifier of
+        the new list. The new list is the concatenation of the two lists.
+        If either argument is 0, the other is returned.
+<li>    <code>reverse(f)</code> reverses the list identified by <code>f</code>.
+        Returns the first item in the reversed list.
+</ul>
+<code>Dlists_r</code> re-purposes the <code>next</code> and <code>prev</code>
+arrays of the <code>Dlists</code> class, using them to represent neighboring
+list items, <code>nabor1</code> and <code>nabor2</code>.
+If the list predecessor of an item <code>i</code> is known, its
+successor can be identified by examining <code>nabor1[i]</code>
+and <code>nabor2[i]</code> and selecting the one that does not point
+back to the predecessor.
+If <code>i</code> is the first item on a list, one of <code>nabor1[i]</code> 
+and  <code>nabor2[i]</code> is positive, while the other is negative.
+The positive value identifies  <code>i</code>'s successor on the list,
+while the negative value identifies the last item on the list.
+The list can be reversed by modifying the <code>nabor</code> values
+for the first and last items on the list.
+The time required for the <code>findList</code> method is proportional
+to the length of the list. All other operations take constant time.
+
+<a id=dsets><h2>Dsets</h2></a>
+
+The <code>Dsets</code> class defines a collection of <i>disjoint sets</i>
+over the index set $1\ldots n$ and provides methods to efficiently identify
+the subset containing a given item and to combine subsets.
+Each subset is identified by one of its members.
+It provides the following methods.
+<ul>
+<li> <code>constructor(n, cap=n)</code> constructs a <code>Dsets</code> object
+    with an index range of <code>n</code> and capacity of <code>cap</code>.
+    Both arguments may be omitted.
+    Initially, every item defines a singleton subset.
+<li> <code>find(i)</code> returns the item in the set containing
+    <code>i</code> that serves as its identifier.
+<li> <code>link(i, j)</code> combines the two sets identified by
+    items <code>i</code> and <code>j</code> and returns the item
+    that identifies the combined set.
+</ul>
+Each subset in the <code>Dsets</code> object is implemented as a tree,
+defined using <i>parent pointers</i>. That is, $p(i)$ identifies the
+parent of $i$ in its tree and the root of the tree serves as its
+identfier. If $i$ is a root, $p(i)=i$.
+This is illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="600" src="figs/disjointSets.png"><br>
+</div>
+<p>
+The <code>find</code> method follows parent pointers up the tree to
+find the root and the <code>link</code> operation combines two trees
+by directing the parent pointer of one of the two tree roots to the other,
+essentially making one tree a subtree of the other's root.
+<p>
+Two heuristics are used to make the data structure efficient.
+The <i>link-by-rank</i> heuristic defines a
+property $rank(i)$ for each item $i$ and uses it when combining
+trees to limit the depth of the trees.
+Initially, the $rank$ values are 0 and when two trees are linked,
+the parent pointer of the tree root with the smaller rank is directed 
+to the other root. If the two roots have equal ranks, the rank of
+the new root (chosen arbitrarily) is incremented.
+This procedure ensures that the maximum depth of a node is
+$\lg n$ and that the running time for the <code>find</code> method is
+$O(\lg n)$.
+<p>
+The second heuristic is called <i>path compression</i> and is
+implemented as part of the <code>find</code> method.
+Specifically, after finding the root of a tree, the <code>find</code> method
+makes a second pass over the path, redirecting all of the parent pointers
+along the path, so that they point directly to the root.
+This speeds up subsequent calls to <code>find</code> and ensures
+that any sequence of calls to <code>find</code> and <code>link</code> takes
+essentially linear time. A detailed performance analysis is given in the
+following subsection.
+The core methods for the <code>DSets</code> class are shown below.
+<p>
+<textarea rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+import Adt from '../Adt.mjs';
+import { assert } from '../../common/Errors.mjs';
+import Dlists from './Dlists.mjs';
+import List from './List.mjs';
+import Scanner from './Scanner.mjs';
+import Digraph from '../graphs/Digraph.mjs';
+
+/** Disjoint sets data structure maintains a collection of disjoint
+ *  sets over the integers 1..N for some positive integer N. Allows
+ *  one to quickly determine if two values are in the same set and
+ *  supports constant-time union of two sets.
+ */
+export default class Dsets extends Adt {
+    _p;            ///< _p[i] is parent of i
+    _rank;         ///< _rank[i] is rank of i
+
+    _linkCount;
+    _findCount;
+    _findSteps;
+    
+    constructor(n, capacity=n) {
+        super(n); this.#init(capacity);
+    }
+
+    #init(capacity) {
+        assert(this.n <= capacity);
+        this._p = new Array(capacity+1); 
+        this._rank = new Array(capacity+1);
+        this.clear();
+    
+        this._linkCount = 0;
+        this._findCount = 0;
+        this._findSteps = 0;
+    }
+    
+    /** Return parent of a set element in the tree representation of the set.
+     *  @param i index of a set element
+     *  @return the parent of i
+     */
+    p(i) { return this._p[i]; }
+
+    /** Return rank of a set element in the tree representation of the set.
+     *  @param i index of a set element
+     *  @return the parent of i
+     */
+    rank(i) { return this._rank[i]; }
+    
+    /** Find and return the canonical element of a set.
+     *  Performs path compression as side-effect.
+     *  @param i is an index in some set
+     *  @return the canonical element of the set containing i
+     */
+    find(i) {
+        this._findCount++;
+        assert(this.valid(i));
+        let root;
+        for (root = i; this.p(root) != root; root = this.p(root)) {
+            this._findSteps++;
+        }
+        while (i != root) { let pi = this.p(i); this._p[i] = root; i = pi; }
+        return root;
+    }
+    
+    /** Combine two sets.
+     *  @param i is the canonical element of some set.
+     *  @param j is the canonical element of another (distinct) set
+     *  @return the canonical element of the set obtained by combining
+     *  the given sets
+     */
+    link(i, j) {
+        this._linkCount++;
+        assert(this.valid(i) && this.valid(j) &&
+               this.p(i) == i && this.p(j) == j && i != j);
+        if (this.rank(i) < this.rank(j)) {
+            let t = i; i = j; j = t;
+        } else if (this.rank(i) == this.rank(j)) {
+            this._rank[i]++;
+        }
+        this._p[j] = i;
+        return i;
+    }
+}
+</textarea>
+
+<h3>Performance Analysis</h3>
+(The analysis in this section is based on Chapter 2 of [Tarjan87].)
+Although the disjoint sets data structure is very simple,
+fully analyzing its performance is not.
+To make it easier to understand, the analysis is presented in several steps,
+with each successive step giving a tighter bound on the performance.
+
+<h4>Basic Analysis</h4>
+
+The initialization of the data structure takes $O(n)$ time
+and the link operation takes constant time. So, the only question
+is how much time is required for the find operations?
+This depends on the depth of the tree. We start by noting
+that the link-by-rank heuristic ensures that the rank of
+any item is strictly less than the rank of its parent.
+Consequently, $\textit{rank}(x)$ is
+an upper bound on the height of $x$ in the tree.
+So, if $x$ is a tree root, the time for a find operation
+starting within $x$'s tree is at most $\textit{rank}(x)$.
+So, an upper bound on $\textit{rank}(x)$, yields a
+bound on the running time of the find operation.
+The key to bounding $\textit{rank}(x)$ is to observe that
+the number of nodes in $x$'s subtree is at least $2^{\textit{rank}(x)}$.
+This can be proved by induction on the number of link
+operations, as illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="800" src="figs/dsetsLemma.png"><br>
+</div>
+<p>
+This implies that if a tree root has rank $k$,
+then $2^k \leq n$ and so $k \leq \lg n$.
+This implies an $O(\log n)$ bound on the time required for the find operations.
+Note that this result does not depend on the path compression heuristic.
+Also, note that some find operations can take time proportional to
+$\log n$, so there can be no better bound on the time for an
+arbitrary find operation.
+However, it is possible to get a strong bound on a
+sequence of find operations, using a more sophisticated analysis
+that takes into account the effects of path compression.
+
+<h4>A  Better Analysis</h4>
+
+As a first step in a more detailed analysis,
+let's make a few observations about the ranks.
+First, as noted earlier, the rank of a non-root node is strictly
+less than the rank of its parent. Also, the rank of a node
+can increase as a result of link operations, but it can never decrease,
+and once a node becomes a child of another node, its rank can no
+longer change.
+Finally, $rank(p(x))$ can increase (as a result of either link
+operations or find operations that change $p(x)$), but it can
+never decrease. These observations are collected in the following lemma.
+<p>
+<i>Lemma 1</i>.
+If $x$ is any node, $\textit{rank}(x) \leq rank(p(x))$ with the
+inequality strict if $p(x) \neq x$.
+The value of $\textit{rank}(x)$ is initially 0 and increases with
+time until $p(x)$ is assigned a value other than $x$.
+Subsequently, $\textit{rank}(x)$ does not change.
+The value of $rank(p(x))$ is a nondecreasing function of time.
+<p>
+To facilitate the analysis, consider each find operation as
+consisting of a series of <i>find steps</i>, one for each node
+along the path followed by the operation.
+The objective is to put an upper bound on the total number
+of find steps.
+Note that the number of find steps at root nodes is
+at most $m$, so the remaining analysis considers only find steps
+at non-root nodes.
+<p>
+Define $\Delta(x)=rank(p(x)) - \textit{rank}(x)$ and note that
+$\Delta(x) \leq \lg n$ and that
+$\Delta(x)=0$ initially and increases,
+as $x$ acquires a parent
+and participates in find operations.
+Also, define a node $x$ to be <i>dominant</i> if $\Delta(x)>2\Delta(y)$
+for all proper ancestors $y$ of $x$.
+<p>
+The analysis can be split into two cases, one covering find steps
+that occur at dominant nodes, and the other covering find steps that
+occur at non-dominant nodes.
+The analysis of the first case rests on the observation that there
+can be at most $\lg \lg n$ dominant nodes along the path from 
+any node to the root of its tree.
+Consequently, each find operation can include at most $\lg \lg n$
+find steps at dominant nodes.
+Consequently, in a sequence of $m$ find operations,
+at most $m\lg\lg n$ find steps occur at dominant nodes.
+<p>
+Proceeding to the second case, note that if $x$ is not dominant,
+then $x$ must have some proper ancestor $y$ with
+$\Delta(y) \geq \Delta(x)/2$.
+This implies that $rank(p(y))-\textit{rank}(x) \geq 1.5 \times \textit{rank}(x)$
+before the find.
+After the find completes, $x$'s parent has rank at least as large the
+original value of $rank(p(y))$.
+Consequently, the find operation causes $\Delta(x)$ to increase
+by a factor of at least 1.5.
+This is illustrated below.
+
+<p>
+<div  style="text-align:center;">
+<img width="800" src="figs/dsetsAnalysis1.png"><br>
+</div>
+<p>
+
+Since every find step that occurs at $x$ at times when $x$ is not
+dominant causes $\Delta(x)$ to increase by a factor of 1.5, there can be
+fewer than $2 \lg\lg n$ find steps at a node $x$
+when it is not dominant. Consequently, the total number
+of find steps at non-dominant nodes is $O(n \log\log n)$
+and the total number of find steps is $O((m+n)\log\log n)$.
+
+<h4>A Still Better Analysis</h4>
+
+From a practical perspective, there is little reason
+to carry the analysis further, since for any practical
+value of $n$, $\lg \lg n$ is very small. However, it is
+possible to do better and it's instructive to see how.
+<p>
+The new analysis requires some additional technical machinery.
+Rather than go straight to the final analysis, let's
+build up to it in several steps, with each step
+providing some improvement on what has gone before.
+The first step will show that the number of find steps
+is at $O(m + n\log\log n)$.
+<p>
+Start by dividing the non-negative integers
+into a series of <i>blocks</i> by defining $block(0)=[0,1]$,
+$block(1)=[2,3]$, $block(2)=[4,5,6,7]$ and in general
+for $j\geq 1$, $block(j)=[2^j,...,2^{j+1}-1]$.
+A node $x$ is said to be <i>on level 1</i> if
+there is some $block(j)$ that contains both
+$\textit{rank}(x)$ and $rank(p(x))$.
+All other nodes are on level 2.
+Note that once a node becomes a level 2 node,
+it can never again become a level 1 node
+(since $\textit{rank}(x)$ does not change once $x$ acquires
+a parent and $rank(p(x))$ never decreases).
+In the example shown below,
+nodes $a$ and $d$ are on level 1, while nodes
+$b$ and $c$ are on level 2
+A node is called <i>singular</i> if none of its proper ancestors
+is on the same level as it is.
+So in the example, $c$ and $d$ are singular.
+
+<p>
+<div  style="text-align:center;">
+<img width="600" src="figs/dsetsAnalysis2.png"><br>
+</div>
+<p>
+
+As before, the analysis divides into two cases.
+The first counts the find steps that occur at singular nodes,
+while the second counts the find steps that occur at non-singular nodes.
+For the first case, note that any path from a node to the root of its
+tree can contain at most one singular node on each of the two levels.
+Hence, each find operation includes at most two find steps at singular nodes.
+<p>
+The find steps at non-singular nodes can be divided into two
+sub-cases, one for the find steps involving level 1 nodes and another
+for the find steps involving level 2 nodes.
+Let's consider the second case first.
+Suppose $x$ is a non-singular node on level 2.
+Because $x$ is non-singular, it has some ancestor $y$ that is also
+on level 2. Because $x$ is on level 2, $rank(p(x))$ is
+in a different block than $\textit{rank}(x)$. Similarly,
+$rank(p(y))$ is in a different block than $rank(y)$.
+Consequently, if we let $z$ be the root of the tree, then
+$rank(z)$ is in a different block than $rank(p(x))$.
+After the find, $z=p(x)$, so the find operation causes
+$rank(p(x))$ to move into a different (and larger) block
+than it was in before the find.
+Since successive blocks double in size, this can happen at
+most $\lg \lg n$ times before $rank(p(x))$ exceeds $\lg n$,
+so the number of find steps that can occur at node $x$ while
+$x$ is a non-singular node on level 2 is at most $\lg \lg n$.
+Hence, the total number of find steps that occur at 
+non-singular nodes on level 2 is $O(n\log\log n)$.
+<p>
+This leaves the case of non-singular nodes on level 1.
+Let's suppose that $x$ is such a node and assume that
+$\textit{block}(j)$ is the subset of the integers that
+includes $\textit{rank}(x)$.
+A find involving $x$ will assign a new parent to $x$ causing
+$rank(p(x))$ to increase by at least 1.
+Since $\textit{block}(j)$ contains $2^j$ values, this can happen
+no more than $2^j$ times while $x$ is on level 1.
+
+To bound the total number of find steps at non-singular level 1 nodes, 
+the number of nodes in $block(j)$ must be bounded.
+This bound, can be obtained with the help of another lemma.
+<p>
+<i>Lemma 2</i>.
+For any integer $k>0$,
+the number of nodes of rank $k$ is at most $n/2^k$.
+Consequently, the number of nodes with rank $\geq k$ is
+less than $2n/2^k$.
+<p>
+<i>Proof</i>. Suppose that when a node $x$ is assigned a rank of $k$,
+all nodes in the tree with root $x$ are labeled $(x,k)$.
+By Lemma 1,
+at least $2^k$ nodes are labeled when $x$ receives a rank of $k$.
+If the root of the tree containing $x$ changes, the new root must have
+rank at least $k+1$, so no node is labeled more than once with a
+label of the form $(y,k)$ for a particular value of $k$.
+Since there are $n$ nodes, there are at most $n$ labels of
+the form $(y,k)$ for any particular $k$ and there are at least $2^k$
+such labels for each node of rank $k$.
+Hence, at most $n/2^k$ nodes can be assigned a rank of $k$. 
+Summing $n/2^j$ for all values of $j\geq k$ yields $2n/2^k$,
+so the number of nodes with rank $\geq k$ is at most $2n/2^k$.
+$\square$
+<p>
+Now, since a node with rank in $block(j)$ has rank at least $2^j$,
+the number of nodes in $block(j)$ is at most $2n/2^{2^j}$.
+Consequently, the number of find steps experienced by non-singular
+on level 1 with rank in $block(j)$ is at most
+$2^{j} \left( 2n/2^{2^j} \right)$.
+There are no non-singular nodes with rank in $\textit{block}(0)$,
+so if we sum this expression over all values of $j\geq 1$, we get
+$$
+2n\sum_{j>0} 2^j/{2^{2^j}} \leq 2n\sum_{j>0} j/{2^j} \leq 4n
+$$
+The first inequality above holds because every term in the summation
+on the left-hand side is also present in the summation on the right-hand
+side (along with many additional terms).
+The second inequality follows directly from the formula for
+an unbounded arithmetic-geometric series.
+Hence, the number of find steps at non-singular nodes on level 1 is $O(n)$.
+Combining this with the results from the other cases we get that
+the total number of find steps is $O(m+n\log\log n)$.
+<p>
+Before proceeding further, let's recap.
+In the analysis just completed, the find steps were divided
+into three categories.
+<ul>
+<li> <i>Steps at singular nodes</i>. For each find operation, there are at
+    most two of these, for a total of at most $2m$.
+<li> <i>Steps at non-singular nodes on level 1</i>. The total number
+    of these steps is $O(n)$.
+<li> <i>Steps at non-singular nodes on level 2</i>. Each vertex
+    experiences at most $\lg \lg n$ of these, for a total
+    of at most $n \lg \lg n$.
+</ul>
+To improve on this result, a better bound on the number of find
+steps in the last category is needed.
+
+<h4>An Even Better (but not quite best) Analysis</h4>
+
+The analysis from the last section can be improved by
+dividing the case of non-singular nodes on level 2 into two sub-cases.
+First let's define a second, coarser partition on
+the integers, by letting
+
+\begin{eqnarray*}
+\textit{block}(2,0)&=&[0 .. 3] \\
+\textit{block}(2,1)&=&[4 .. 15]=\left[2^2 .. 2^{2^2} -1\right] \\
+\textit{block}(2,2)&=&[16 .. 65535]=\left[2^{2^2} .. 2^{2^{2^2}} -1\right]
+\end{eqnarray*}
+and in general
+$$
+\textit{block}(2,j)=\left[2^{[j]} .. 2^{[j+1]}-1\right]
+$$
+where $2^{[1]}=2^2$ and $2^{[j]}=2^{2^{[j-1]}}$ for $j>1$.
+For notational consistency, let $\textit{block}(1,j)$ denote
+the original partition of the integers.
+<p>
+Now, a node $x$ is defined to be <i>on level 1</i> if
+there is some $\textit{block}(1,j)$ that contains both $\textit{rank}(x)$
+and $rank(p(x))$.
+Node $x$ is defined to be <i>on level 2</i> if it is not on level 1
+and there is some $block(2,j)$ that contains both $\textit{rank}(x)$
+and $rank(p(x))$.
+Nodes that are on neither level 1 nor level 2 are on level 3.
+So, in the example below, nodes $a$ and $d$ are on level 1,
+$b$ is on level 2 and $c$ is on level 3.
+As before, a node is called singular if none of its ancestors
+is on the same level that it is.
+So, in the example, nodes $b$, $c$ and $d$ are singular.
+<p>
+<div  style="text-align:center;">
+<img width="650" src="figs/dsetsAnalysis2a.png"><br>
+</div>
+<p>
+As before, the analysis uses a case analysis,
+but now, there are four cases to consider.
+<ul>
+<li> <i>Steps at singular nodes</i>. Since there are just three
+    levels, each find operation can have at most
+    three find steps at singular nodes.
+    This gives a total of at most $3m$ find steps in this category.
+<li> <i>Steps at non-singular nodes on level 1</i>. The  previous analysis
+    applies directly to this case, so as before, the number of
+    find steps for non-singular nodes on level 1 is $O(n)$.
+<li> <i>Steps at non-singular nodes on level 2</i>.
+    It is shown below that the number of find steps in this group is $O(n)$.
+<li> <i>Find steps at non-singular nodes on level 3</i>.
+    It is shown below that the number of find steps in this group
+    is $O(n\beta(n))$, where $\beta(n)$ is a very slowly growing function.
+</ul>
+
+Let's proceed with the analysis of the third case.
+Let $x$ be a non-singular node with $\textit{rank}(x)$ in $\textit{block}(2,j)$. 
+Because $x$ is on level 2, its parent's rank is in a different
+level 1 block than its rank. Because it is non-singular, it has a
+proper ancestor $y$ that is also on level 2. 
+Consequently, the root of the tree has rank that is in a
+different level 1 block than $rank(p(x))$.
+This means that a find involving $x$ causes
+$rank(p(x))$ to move to a different level 1 block.
+Hence, the number of find steps experienced by $x$ while
+it is on level 2 and non-singular is less than the
+number of level 1 blocks that intersect $block(2,j)$,
+and this at most $2^{[j]}-2^{[j-1]}<2^{[j]}$,
+as illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="700" src="figs/dsetsAnalysis3.png"><br>
+</div>
+<p>
+Since the number of nodes with rank in $block(2,j)$
+is $\leq 2n/2^{2^{[j]}} = 2n/2^{[j+1]}$ for $j>0$,
+the number of find steps at non-singular nodes
+on level 2 is at most 
+$2^{[j]} \left( 2n/2^{[j+1]} \right)$ for $j>0$.
+There can be no non-singular nodes on level 2 with
+rank in $\textit{block}(2,0)$,
+so, the total number of find steps that occur at
+non-singular nodes on level 2 is at most
+$$
+2n\sum_{j>0} 2^{[j]}/{2^{2^{[j]}}} \leq 2n\sum_{j>0} j/2^j \leq 4n
+$$
+
+That leaves just the fourth case.
+Let $x$ be a non-singular node with $\textit{rank}(x)$ in $\textit{block}(2,j)$. 
+Because $x$ is on level 3, its parent's rank is in a different
+level 2 block than its rank. Because it is non-singular, it has a
+proper ancestor $y$ that is also on level 3. 
+Consequently, the root of the tree has a rank that is in a
+different level 2 block than $rank(p(x))$.
+This means that a find involving $x$ causes
+$rank(p(x))$ to move to a different level 2 block.
+This means that the number of find steps that $x$ can experience
+while it is non-singular and on level 3 is bounded by the number
+of level 2 blocks that include values $\leq \lg n$.
+If we define $\beta(n)$ to be the smallest integer $i>0$ for which 
+$2^{[i]}> \lg n$, then the number of level 2 blocks that includes
+values $\leq \lg n$ is $\beta (n)$ and the number of find steps at
+any non-singular node on level 3 is at most $\beta(n)$.
+The function $\beta(n)$ grows extremely slowly with $n$;
+in general $\beta(2^{[k]})=k$.
+<p>
+Putting together the results from the four cases above,
+the total number of find steps is $O(m + n\beta(n))$.
+Now it turns out that even this analysis can be improved,
+by further sub-dividing the fourth case.
+
+<h4>The Final Analysis</h4>
+The key to this final analysis of the number of find steps is to
+allow the number of distinct cases to grow further. To do this,
+we define a series of partitions on the integers, $block(1,*)$,
+$block(2,*)$, $block(3,*)$, and so forth. Each partition is
+coarser than the previous one with the last partition requiring very
+few blocks to span the range up to $\lg n$.
+Specifically, for all $i>0$,
+$\textit{block}(i,0)$ starts at 0 and for all
+$j>0$, $\textit{block}(i,j)$ starts
+with $A(i,j)$, where $A$ is <i>Ackerman's function</i> and is defined as
+follows. $A(1,j)=2^j$ for all $j>0$, $A(i,1)=A(i-1,2)$ for all $i>1$ and
+$$
+A(i,j)=A(i-1,A(i,j-1))
+$$
+for all $i>1$ and $j>1$.
+Notice that with this definition, $A(2,j)=2^{[j]}$ for all $j\geq 1$.
+Consequently this definition of the blocks is consistent with the
+earlier definition of $\textit{block}(1,*)$ and $\textit{block}(2,*)$.
+Now, define a functional inverse $\alpha$ of Ackerman's function.
+$$
+\alpha(m,n)=\min \{i\geq 1 | A(i,\lfloor m/n \rfloor)>\lg n\}
+$$
+and note that $\textit{block}(\alpha(m,n),j)$ contains no values $\leq \lg n$
+for all $j \geq \lfloor m/n \rfloor$.
+<p>
+As before, blocks are used to define levels.
+Specifically, a non-root node $x$ is defined to be on level 1
+if $\textit{rank}(x)$ and $rank(p(x))$ are both in some $block(1,j)$.
+For $1 < i\leq \alpha(m,n)$, $x$ is defined to be on level $i$ if it is not
+on level $i-1$ and there is some $block(i,j)$ that contains
+both $\textit{rank}(x)$ and $rank(p(x))$.
+Finally, a node $x$ is on level $\alpha(m,n)+1$ if there is
+no $\textit{block}(\alpha(m,n),j)$ that contains both $\textit{rank}(x)$ and
+$rank(p(x))$.
+We say that $x$ is <i>singular</i> if it has no proper ancestor
+on the same level as $x$.
+<p>
+As before, the analysis can be broken down into cases.
+<ul>
+<li> <i>Steps at singular nodes</i>. Since there are $\alpha(m,n)+1$ levels,
+    the number of find steps at singular nodes is at most
+    $m(\alpha(m,n)+1)$.
+<li> <i>Steps at non-singular nodes on level 1</i>. The previous analysis
+    applies directly to this case, so the number of
+    find steps in this case is $O(n)$.
+<li> <i>Steps at non-singular nodes on level $i$ for
+    $1< i\leq \alpha(m,n)$</i>.
+    It is shown below that the number of find steps covered by
+    this case is $O(n)$.
+<li> <i>Steps at non-singular nodes on level $\alpha(m,n)+1$</i>. 
+    A node can experience at most $\lfloor m/n \rfloor$ find
+    steps while it is non-singular and on level $\alpha(m,n)+1$.
+    Hence the total number of find steps covered by this case is
+    $\leq m$.
+</ul>
+Proceeding with the analysis of the third case,
+let $x$ be a non-singular node on level $i$ ($1 < i\leq \alpha(m,n)$)
+and assume that $\textit{block}(i,j)$ includes $\textit{rank}(x)$.
+Because $x$ is on level $i$, its parent's rank is in a different
+level $i-1$ block than its rank. Because it is non-singular, it has a
+proper ancestor $y$ that is also on level $i$. 
+Consequently, the root of the tree has rank that is in a
+different level $i-1$ block than $rank(p(x))$.
+Hence, a find involving $x$ causes
+$rank(p(x))$ to move to a different level $i-1$ block.
+This means that the number of find steps that $x$ can experience
+while it is non-singular and on level $i$ is bounded by the number
+of level $i-1$ blocks that intersect $\textit{block}(i,j)$.
+Call this number $b_{i,j}$ and note that $b_{i,0}=2$ for all
+$i$ and that for $j>0$, $b_{i,j} \leq A(i,j)-A(i,j-1)< A(i,j)$,
+as illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="800" src="figs/dsetsAnalysis4.png"><br>
+</div>
+<p>
+Since the number of nodes with rank in $block(i,j)$
+is $\leq 2n/2^{A(i,j)}$, the number of find steps
+experienced by non-singular nodes on level 2 whose
+rank is in $\textit{block}(i,j)$ is at most 
+$A(i,j) \left( 2n/2^{A(i,j)}\right)$ for $j>0$.
+There are no non-singluar nodes with rank in $\textit{block}(i,0)$ for all $i$,
+so the total number of find steps experienced by non-singular nodes
+on levels 2 through $\alpha(m,n)$ is at most
+\begin{eqnarray*}
+2n \sum_{2\leq i \leq \alpha(m,n)} \sum_{j>0} A(i,j)/2^{A(i,j)}
+&\leq& 2n \sum_{2\leq i \leq \alpha(m,n)} \sum_{j>0} j/2^j \\
+&\leq& 2(\alpha(m,n)-1)n \sum_{j>0} j/2^j \\
+&\leq& 5(\alpha(m,n)-1) n
+\end{eqnarray*}
+Combining the bounds in the four cases gives $O((m+n)\alpha(m,n))$
+find steps.
+<p>
+To compare this result with the previous one,
+compare the growth rates of $\alpha$ and $\beta$.
+Note that $\alpha$ grows most quickly when $m=n$. In this case,
+$\alpha(n,n)=\min \{i\geq 1 | A(i,1)>\lg n\}$
+and applying the definition $\alpha(4,4)=1$,
+$\alpha(16,16)=\alpha(2^{[2]},2^{[2]})=2$,
+$\alpha(2^{[3]},2^{[3]})=3$ and
+$\alpha(2^{[17]},2^{[17]})=4$.
+Since $\beta(2^{[5]})=4$, we can see that although $\beta$ is a very
+slowly growing function, $\alpha$ grows even more slowly.
+Also, it's worth noting that for $m>n \lg \lg n$, $\alpha(m,n)=1$.
+So, when the number of find operations grows even a little bit faster
+than $n$, the total number of find steps is $O(m+n)$.
+
+<a id=scanner><h2>Scanner</h2></a>
+The <code>Scanner</code> class is a utility class used by the various
+data structures to implement their <code>fromString</code>  methods.
+It is initialized with a string and
+provides a variety of helper methods for incrementally parsing that string.
+It maintains a <i>cursor</i> that defines the current position
+in the string; the cursor is updated as portions of the string are parsed.
+<ul>
+<li>    <code>constructor(s)</code> initializes the object making $s$ the
+        string to be scanned and setting the cursor to 0.
+<li>    <code>reset(i=0, s=this.s)</code> resets the object; the
+        cursor is reset to <code>i</code> (default value 0)
+        and the string is optionally reset to the argument <code>s</code>
+        (if <code>s</code> is omitted, the string remains unchanged).
+<li>    <code>cursor</code> returns the position of the cursor in the string.
+<li>    <code>length</code> is the number of unscanned characters remaining.
+<li>    <code>toString()</code> returns the unparsed portion of the string.
+<li>    <code>firstNonSpace(i0=0)</code> returns the position of the
+        first non-space character starting at the cursor plus <code>i0</code>
+        characters.
+<li>    <code>skipSpace()</code> advances the cursor to the next non-space
+        character.
+<li>    <code>isdigit(c)</code> returns true if <code>c</code> is a
+        numerical digit.
+<li>    <code>islower(c)</code> returns true if <code>c</code> is a
+        lower-case letter.
+<li>    <code>isupper(c)</code> returns true if <code>c</code> is a
+        upper-case letter.
+<li>    <code>verify(s, skip=true)</code> returns true if <code>s</code>
+        is a prefix of the unscanned portion of the string. If 
+        <code>skip==true</code>, the cursor is first advanced to the
+        next non-space character. When <code>verify</code> returns true,
+        it also advances the cursor past the verified string.
+<li>    <code>nextInt()</code> scans the string for an integer
+        (possibly signed), skipping
+        past leading space characters. If it finds an integer value,
+        it returns that value and advances the cursor. Otherwise, it
+        returns NaN and leaves the cursor unchanged.
+<li>    <code>nextNumber()</code> scans the string for a number (may be
+        integer or floating point), skipping
+        past leading space characters. If it finds a number,
+        it returns its value and advances the cursor. Otherwise, it
+        returns NaN and leaves the cursor unchanged.
+<li>    <code>nextWord()</code> scans the string for a word
+        (an alphanumeric string, possibly including underscores, that
+        starts with a non-digit), skipping
+        past leading space characters. If it finds a word,
+        it returns it and advances the cursor. Otherwise, it
+        returns an empty string and leaves the cursor unchanged.
+<li>    <code>nextLine()</code> scans the string for a newline character
+        and returns the string up to and including the newline.
+        If there is no complete line remaining in the string,
+        it returns an empty string and leaves the cursor unchanged.
+<li>    <code>nextIndex()</code> scans the string for a either a single
+        lower-case letter or an integer, skipping
+        past leading space characters. If it finds a letter, it returns
+        the letter's position in the alphabet
+        (1 for $a$, 2 for $b$ and so forth) and advances the cursor.
+        If it finds an integer, it returns the integer and advances the cursor.
+        Otherwise, it returns 0 and leaves the cursor unchanged.
+<li>    <code>nextIndexList(l, ld, rd)</code> scans the string for a
+        list of index values (either lower-case letters or integers)
+        separated by spaces and delimited by the delimiter characters
+        <code>ld</code> and <code>rd</code>.
+        The argument <code>l</code> is an array used to return the
+        index values. 
+        So for example, if the next portion of the
+        string in <code>scanner</code> is
+        <code>"[ a b 5 )"</code>, then
+        <code>scanner.nextIndexList(l, '[', ')')</code>
+        returns the array <code>[1, 2, 5]</code>.
+        If a valid list is found, <code>l</code> is returned and the
+        cursor is advanced.
+        Otherwise, <code>null</code> is returned and
+        the cursor is left unchanged.
+</ul>
+
+<h2>References</h2>
+<dl>
+<dt> Tarjan87
+<dd> Tarjan, R. E., <i>Network Algorithms and Data Structures</i>.
+     Society for Industrial and Applied Mathematics, 1987.
+</dl>
+<script src="../googleAnalytics.js"></script>
+</body>
+</html>
