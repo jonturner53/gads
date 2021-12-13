@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>xxIntroduction</title>
+<title>Introduction</title>
 <link type="text/css" rel="stylesheet" href="../main.css">
 <script type="text/x-mathjax-config">
   MathJax.Hub.Config({
@@ -77,22 +77,21 @@ Note that the code below is enclosed in a scrollable text area.
 <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 import List from '../../dataStructures/basic/List.mjs';
-import Dlists from '../../dataStructures/basic/Dlists.mjs';
-import Graph from '../../dataStructures/graphs/Graph.mjs';
+import ListSet from '../../dataStructures/basic/ListSet.mjs';
 
 /** Identify the connected components of an undirected graph.
  *  @param g is a graph object
  *  @param trace is an optional argument that controls production of trace
  *  information; when zero, no trace information is provided
  *  @return a pair [k, comps, traceString] where k is the number of components
- *  in g and comps is a disjoint lists (Dlists) object that partitions
+ *  in g and comps is a ListSet object that partitions
  *  the vertices into subsets that define each component and traceString
  *  contains trace information.
  */
 export default function components(g, trace=0) {
     let k = 0; let traceString = '';
     if (trace) traceString += g + '\n';
-    let comps = new Dlists(g.n);
+    let comps = new ListSet(g.n);
     let q = new List(g.n);
     if (trace)
         traceString += 'selected vertex, queue, components\n'
@@ -118,20 +117,20 @@ export default function components(g, trace=0) {
 <p>
 The function <code>components</code> identifies the individual
 connected components of a graph and returns the number of components,
-a <code>Dlists</code> object that has a separate list for the vertices
+a <code>ListSet</code> object that contains a separate list for the vertices
 in each component and a <i>trace string</i> that captures trace information
 detailing the steps in the function's execution.
 The tracing feature is enabled by the optional <i>trace</i> argument.
 Most of the provided code modules include a similar trace feature.
 <p>
-The <code>Dlists</code> object <code>comps</code> is defined on the integers
+The <code>ListSet</code> object <code>comps</code> is defined on the integers
 1 to <code>g.n</code>, where <code>g.n</code>
 is the number of vertices in the <code>graph</code> object <code>g</code>.
 The outer loop scans the set of vertices looking for a vertex <code>s</code>
 which is not
 in any component already identified, while the inner loop implements
 a breadth-first search over the component containing <code>s</code>,
-combining all of its vertices into a single list in <code>Dlists</code>.
+combining all of its vertices into a single list in <code>ListSet</code>.
 The <code>singleton()</code> method returns true if its argument is the
 only item in its list.
 The <code>enq()</code> and <code>deq()</code> methods are used to add
@@ -180,7 +179,7 @@ have 10 vertices.
 Also note that 3 components are reported, but only the two non-singleton
 components are shown explicitly,
 since the <code>toString</code> method of the
-<code>Dlists</code> object omits singleton lists for brevity.
+<code>ListSet</code> object omits singleton lists for brevity.
 The missing component is the isolated vertex <code>j</code>.
 <p>
 If you replace the last three lines in the top window with
@@ -270,7 +269,7 @@ Do not expect them to fully consistent.
 There is also the beginnings of a <i>java</i> version, which may (or may not)
 be completed at some point.
 <h2>Common Methods</h2>
-All the provided data structure have a common super-class <code>Adt</code>,
+All the provided data structure have a common super-class <code>Top</code>,
 which defines an index range $1\ldots n$ for some integer $n$ and provides
 the following methods.
 <ul>
@@ -292,14 +291,23 @@ the following methods.
     they typically support comparison of <code>this</code> object to
     a string argument. In this case, the string is used to
     construct an object, which is then compared to <code>this</code>.
+<li> <code>matches(a)</code> is similar to <code>equals</code>,
+    but returns true if <code>this</code> object
+    contains the same list items as <code>a</code>, but not necessarily
+    in the same order.
 <li> <code>index2string(i, label)</code> creates a string
-    representation of the index $i$. Label is an optional function argument.
-	If present, it is used to generate the string.
-	The default label function uses a lower-case letter in place of the integer
-	index value, whenever the index range is $\leq 26$.
-	To force numeric values in all cases, use
-	<code>index2string(i, x => x)</code>. To use a string from an array
-	of tags, use<code>index2string(i, x => tag[x])</code>.
+    representation of the index $i$. <code>Label</code> is an optional
+    function argument.
+    If present, it is used to generate the string.
+    The default label function uses a lower-case letter in place of the integer
+    index value, whenever the index range is $\leq 26$.
+    To force numeric values in all cases, use
+    <code>index2string(i, x => x)</code>. To use a string from an array
+    of tags, use<code>index2string(i, x => tag[x])</code>.
+<li> <code>ilist2string(l, label)</code> creates a string representation
+    of a list of index values. Argument <code>l</code> is a one-dimensional
+    array of index values for the object. The <code>label</code> argument
+    is the same is in <code>index2string(i)</code>.
 </ul>
 Most classes also define the following methods.
 <ul>
@@ -323,7 +331,7 @@ Most classes also define the following methods.
     in the case of a list, the list becomes empty).
 </ul>
 
-<a id=list><h2>List and List_d</h2></a>
+<a id=list><h2>List</h2></a>
 The <code>List</code> class defines a list of distinct integers in
 a limited range $1\ldots n$ and supports the following methods.
 <ul>
@@ -355,102 +363,185 @@ a limited range $1\ldots n$ and supports the following methods.
 <li> <code>enq(i)</code> is an alias for <code>insert(i, last())</code>.
 <li> <code>deq()</code> is an alias for <code>deleteNext(0)</code>.
 </ul>
-The <code>List</code> is implemented using a single <code>next</code>
+When first constructed, a <code>List</code> uses a single <code>next</code>
 array, linking successive list items; items not on the list have 
-<code>next</code> values of $-1$.
-The <code>at(i)</code> method takes time proportional to the index value.
-All others listed above take constant time.
+<code>next</code> values of $-1$, enabling a constant time
+membership test. A <code>List</code> can be extended dynamically
+to include a separate <code>prev</code> array, using the method
+<code>addPrev()</code>, coverting it to a doubly linked list
+that can be traversed in both directions.
+With this addition, a <code>List</code> can
+support the following additional methods.
+<ul>
+<li> <code>prev(i)</code> returns the item the precedes <code>i</code>
+on the list.
+<li> <code>delete(i)</code> removes an arbitrary list item.
+<li> <code>popLast()</code> removes the last list item.
+</ul>
+In addition, the <code>at()</code> method of the extended <code>List</code>
+object supports negative arguments, specifiying items relative to the
+end of the list.
+One can extend a <code>List</code> implicitly, simply by using one of
+the methods that requries a doubly linked list.
+<p>
+The <code>List</code> object can also be extended to associate a set
+of <i>values</i> with the list items, using the method <code>addValues</code>.
+This enables the following methods.
+<ul>
+<li> <code>setValue(i, v)</code> sets the value of item <code>i</code> to
+<code>v</code>.
+<li> <code>value(i)</code> returns the value of item <code>i</code>.
+</ul>
+The assigned values are often simply numbers, but may be strings, arrays
+or objects.
+This extension can be enabled implicitly, by simply using the
+<code>setValue()</code> method.
 The core methods for the <code>List</code> class are shown below.
 <p>
 <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import Adt from '../Adt.mjs';
+import Top from '../Top.mjs';
 import { assert } from '../../common/Errors.mjs';
 import Scanner from './Scanner.mjs';
 
-/** Data structure representing a list of unique integers.
- *
- *  Used to represent a list of integers from a defined range 1..n,
- *  where each integer may appear on the list at most one time.
- *  Allows fast membership tests in addition to the usual list
- *  operations. Less general than generic lists but useful when
- *  underlying index set is shared by multiple data structures.
- */
-export default class List extends Adt {
-    #first;       ///< first item in list
-    #last;        ///< last item in list
-    #length;      ///< number of items in list
-    #next;        ///< #next[i] is successor of i in list
+export default class List extends Top {
+    #first;     ///< first item in list
+    #last;      ///< last item in list
+    #length;    ///< number of items in list
+    #next;      ///< #next[i] is successor of i in list
+    #prev;      ///< #prev[i] is predecessor of i in list
+                ///< allocated dynamically as required
+    #value;     ///< allocated dynamically as required
     
     /** Constructor for List object.
      *  @param n is the range for the list
      *  @param capacity is the max range to allocate space for
      */
     constructor(n, capacity=n) {
-        super(n); this.#init(capacity);
+        super(n);
+        if (!capacity) capacity = this.n;
+        this.#init(capacity);
     }
 
     #init(capacity) {
         assert(capacity >= this.n);
         this.#next = new Array(capacity+1).fill(-1, 1, this.n+1);
         this.#next[0] = this.#first = this.#last = this.#length = 0;
+        if (this.#prev) {
+            this.#prev = new Array(capacity+1).fill(0, 0, this.n+1);
+        }
+        if (this.#value) {
+            this.#value = new Array(capacity+1).fill(null, 0, this.n+1);
+        }
     }
 
-    /** Remove all elements from list. O(length) */
+    addPrev() {
+        this.#prev = new Array(this.#next.length).fill(0, 1, this.n+1);
+        this.#prev[this.first()] = 0;
+        for (let i = this.first(); i != 0; i = this.next(i))
+            if (this.next(i) != 0) this.#prev[this.next(i)] = i;
+    }
+
+    addValues() {
+        this.#value = new Array(this.#next.length).fill(null, 0, this.n+1);
+    }
+
+    /** Remove all elements from list. */
     clear() { while (!this.empty()) this.pop(); }
 
     /** Get the number of items in the list. */
     get length() { return this.#length; }
+
+    /** Get the capacity of the list (max number of items it has space for). */
+    get capacity() { return this.#next.length - 1; }
     
-    /** Get the next item in a list. O(1)
+    /** Get the next item in a list.
      *  @param i is an item on the list
      *  @return the item that follows i, or 0 if there is no next item
      */
     next(i) { return this.#next[i]; }
     
-    /** Get first item on list. O(1)
+    /** Get the previous item in a list.
+     *  @param i is an item on the list
+     *  @return the item that follows i, or 0 if there is no next item
+     */
+    prev(i) {
+        if (!this.#prev) this.addPrev();
+        return this.#prev[i];
+    }
+    
+    /** Get first item on list.
      *  @return the first item on the list or 0 if the list is empty
      */
     first() { return this.#first; }
     top() { return this.#first; }
     
-    /** Get the last item on list. O(1)
+    /** Get the last item on list.
      *  @return the last item on the list or 0 if the list is empty
      */
     last() { return this.#last; }
 
     /** Get an item based on its position in the list.
-     *  @param i is position of index to be returned; must be between
-     *  1 and n
-     *  @return index at position i, or 0 if no such index
+     *  @param i is position of index to be returned; negative
+     *  values are interpreted from end of list (so, at(-1) == last())
+     *  @return item at position i, or 0 if no such item
      */
     at(i) {
-        assert(this.valid(i) && i != 0);
-        for (let j = this.first(); j != 0; j = this.next(j)) {
-            if (--i == 0) return j;
+        if (i > 0) {
+            for (let j = this.first(); j != 0; j = this.next(j)) {
+                if (--i == 0) return j;
+            }
+        } else if (i < 0) {
+            if (!this.#prev) this.addPrev();
+            for (let j = this.last(); j != 0; j = this.prev(j)) {
+                if (++i == 0) return j;
+            }
         }
         return 0;
     }
     
-    /** Test if list is empty. O(1)
+    /** Test if list is empty.
      *  @return true if list is empty, else false.
      */
     empty() { return this.length == 0; }
     
-    /** Test if an item is in the list. O(1)
+    /** Test if an item is in the list. 
      *  @param i is an item
      *  @return true if i is in the list, else false
      */
-    contains(i) { return this.valid(i) && (i != 0 && this.#next[i] != -1); } 
-    
-    /** Insert an item into the list, relative to another. O(1)
+    contains(i) { return this.valid(i) && i != 0 && this.#next[i] != -1; } 
+
+    /** Get the value of an item.
+     *  @param i is an integer
+     *  @return the value of i or null if i is not a valid item or no value
+     *  has been assigned to it
+     */
+    value(i) {
+        return this.#value && this.valid(i) && this.#value[i] ?
+                    this.#value[i] : null;
+    }
+
+    /** Set the value of an item.
+     *  @param i is a list item
+     *  @param value is a for i
+     */
+    setValue(i, value) {
+        assert(this.valid(i) && i != 0);
+        if (!this.#value) this.addValues();
+        this.#value[i] = value;
+    }
+
+    /** Insert an item into the list, relative to another. 
      *  @param i is item to insert
      *  @param j is item after which i is to be inserted;
+     *  @param value is optional value for inserted item
      *  if zero, i is inserted at the front of the list
      */
-    insert(i, j) {
+    insert(i, j, value=null) {
+        if (i > this.n) this.expand(i);
         assert(this.valid(i) && i != 0 && !this.contains(i) &&
                        (j == 0 || this.contains(j)));
+        if (value) this.setValue(i, value);
         if (j == 0) {
             if (this.empty()) this.#last = i;
             this.#next[i] = this.#first; this.#first = i; this.#length++;
@@ -458,10 +549,14 @@ export default class List extends Adt {
         }
         this.#next[i] = this.#next[j]; this.#next[j] = i; this.#length++;
         if (this.#last == j) this.#last = i;
+        if (this.#prev) {
+            this.#prev[i] = j;
+            if (i != this.last()) this.#prev[this.next(i)] = i;
+        }
         return;
     }
     
-    /** Remove the item following a specified item. O(1)
+    /** Remove the item following a specified item. 
      *  @param i is item whose successor is to be deleted;
      *  if zero, the first item is deleted
      *  @return the deleted item
@@ -474,40 +569,55 @@ export default class List extends Adt {
         else        { j = this.#next[i]; this.#next[i] = this.#next[j]; }
         if (this.#last == j) this.#last = i;
         this.#next[j] = -1; this.#length--;
+        if (this.#prev && this.next(i) != 0)
+            this.#prev[this.next(i)] = i;
+        if (this.#value) this.#value[j] = null;
         return j;
     }
-    
-    /** Push item onto front of a list. O(1)
-     *  @param item to be added.
+
+    /** Remove a specified item.
+     *  @param i is an item to be removed
      */
-    push(i) { this.insert(i, 0); }
+    delete(i) {
+        assert(this.valid(i));
+        if (!this.contains(i)) return;
+        if (i == this.first()) {
+            return this.deleteNext(0);
+        } else {
+            if (!this.#prev) this.addPrev();
+            return this.deleteNext(this.prev(i));
+        }
+    }
     
-    /** Remove the first item in the list. O(1)
+    /** Push item onto front of a list. 
+     *  @param item to be added.
+     *  @param value is an optional value associated with i
+     */
+    push(i, value) { this.insert(i, 0, value); }
+    
+    /** Remove the first item in the list. 
      *  @return the item removed, or 0
      */
     pop() { return this.deleteNext(0); }
-    
-    /** Add item to the end of the list. O(1)
-     *  @param item to be added.
+
+    /** Remove the last item on the list.
      *  @return true if the list was modified, else false
      */
-    enq(i) { this.insert(i, this.last()); }
+    popLast() { this.delete(this.last()); }
     
-    /** Remove the first item in the list. O(1)
+    /** Add item to the end of the list. 
+     *  @param item to be added.
+     *  @param value is an optional value associated with i
+     *  @return true if the list was modified, else false
+     */
+    enq(i, value) { this.insert(i, this.last(), value); }
+    
+    /** Remove the first item in the list. 
      *  @return the item removed, or 0
      */
     deq() { return this.pop(); }
 }
 </textarea>
-<p>
-The <code>List_d</code> class extends the <code>List</code> class and
-includes the following methods, in addition to those that it inherits.
-<ul>
-<li> <code>prev(i)</code> is the predecessor of item <code>i</code> in the list.
-<li> <code>delete(i)</code> deletes <code>i</code> from the list.
-<li> <code>at(i)</code> returns the item at position <code>i</code>, with
-    negative integers used to identify items relative to the end of the list.
-</ul>
 
 <a id=listPair><h2>ListPair</h2></a>
 The <code>ListPair</code> class defines two complementary lists over
@@ -549,7 +659,7 @@ The core methods for the <code>ListPair</code> class are shown below.
 <p>
 <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import Adt from '../Adt.mjs';
+import Top from '../Top.mjs';
 import { assert } from '../../common/Errors.mjs';
 import Scanner from './Scanner.mjs';
 
@@ -561,7 +671,7 @@ import Scanner from './Scanner.mjs';
  *  from one list to the other, using the swap method.
  *  Initially, all items are in the out list.
  */
-export default class ListPair extends Adt {
+export default class ListPair extends Top {
     #nIn;         ///< number of items in in-list
     #nOut;        ///< number of items in out-list
 
@@ -742,13 +852,13 @@ export default class ListPair extends Adt {
 </textarea>
 <p>
 
-<a id=dlists><h2>Dlists and Dlists_r</h2></a>
-The <code>Dlists</code> class implements a collection of disjoint
+<a id=dlists><h2>ListSet</h2></a>
+The <code>ListSet</code> class implements a collection of disjoint
 lists on a common index set $1\ldots n$.
 Each list in the collection is identified by its first list item.
 The provided methods are listed below.
 <ul>
-<li> <code>constructor(n, cap=n)</code> constructs a <code>Dlists</code> object
+<li> <code>constructor(n, cap=n)</code> constructs a <code>ListSet</code> object
     with an index range of <code>n</code> and capacity of <code>cap</code>.
     Both arguments may be omitted.
     Initially, each item forms a singleton list.
@@ -777,61 +887,63 @@ The provided methods are listed below.
         If either argument is 0, the other is returned.
 <li>    <code>sort()</code> sorts the items on all lists.
 </ul>
-<code>Dlists</code> is implemented using shared <code>next</code> and
+<code>ListSet</code> is implemented using shared <code>next</code> and
 <code>prev</code> arrays.
 The <code>findList(i)</code> method takes time proportional to the
 position of item <code>i</code> in the list and the <code>sort</code>
-method takes $O(n log n)$ time. All others listed above take
+method takes $O(n \log n)$ time. All others listed above take
 constant time.
-The core methods for the <code>Dlists</code> class are shown below.
+The core methods for the <code>ListSet</code> class are shown below.
 <p>
 <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import Adt from '../Adt.mjs';
+import Top from '../Top.mjs';
 import { assert } from '../../common/Errors.mjs';
 import Scanner from './Scanner.mjs';
 
-/** The Dlists class maintains a collection of disjoint lists defined
+/** The ListSet class maintains a collection of disjoint lists defined
  *  over a set of integers 1..n. Each list in the collection is identified
  *  by its first item.
  */
-export default class Dlists extends Adt {
-    _next;        // _next[i] is next item on list or 0 for last item
-    _prev;        // _prev[i] is previous item on list or last for first item,
-                  // where last is the last item on the list
+export default class ListSet extends Top {
+    #next;        // #next[i] is next item on list or 0 for last item
+    #prev;        // #prev[i] is previous item on list or last for first item,
+                // where last is the last item on the list
 
     constructor(n, capacity=n) {
-        super(n); this.#init(capacity);
+        super(n);
+        if (!capacity) capacity = this.n;
+        this.#init(capacity);
     }
 
     #init(capacity) {
         assert(this.n <= capacity);
-        this._next = new Array(capacity+1);
-        this._prev = new Array(capacity+1);
+        this.#next = new Array(capacity+1);
+        this.#prev = new Array(capacity+1);
         // initialize to singleton lists
         for (let i = 0; i <= this.n; i++) {
-            this._next[i] = 0; this._prev[i] = i;
+            this.#next[i] = 0; this.#prev[i] = i;
         }
-        this._prev[0] = 0;
+        this.#prev[0] = 0;
     }
-    
+
     /** Clear the data structure, moving all items into single node lists.
     */
     clear() {
         for (let i = 1; i <= this.n; i++) {
-            this._next[i] = 0; this._prev[i] = i;
+            this.#next[i] = 0; this.#prev[i] = i;
         }
     }
 
-    isFirst(i) { assert(this.valid(i)); return this._next[this._prev[i]] == 0; }
+    isfirst(i) { assert(this.valid(i)); return this.#next[this.#prev[i]] == 0; }
     
     /** Get the last item in a list.
      *  @param f is the first item on a list.
      *  @return the last item in the list
      */
     last(f) {
-        assert(this.isFirst(f));
-        return this._prev[f];
+        assert(this.isfirst(f));
+        return this.#prev[f];
     }
 
     /** Get the next list item.
@@ -839,7 +951,7 @@ export default class Dlists extends Adt {
      *  @return the item that follows i in its list
      */
     next(i) {
-        assert(this.valid(i)); return this._next[i];
+        assert(this.valid(i)); return this.#next[i];
     }
     
     /** Get the previous list item.
@@ -847,7 +959,7 @@ export default class Dlists extends Adt {
      *  @return the item that precedes i in its list
      */
     prev(i) {
-        return (this.isFirst(i) ? 0 : this._prev[i]);
+        return (this.isfirst(i) ? 0 : this.#prev[i]);
     }
 
     /** Determine if an item is in a singleton list.
@@ -856,7 +968,7 @@ export default class Dlists extends Adt {
      */
     singleton(i) {
         assert(this.valid(i));
-        return this._prev[i] == i;
+        return this.#prev[i] == i;
     }
     
     /** Find the start of a list.
@@ -876,9 +988,9 @@ export default class Dlists extends Adt {
      */
     rotate(f, i) {
         if (i == f) return i;
-        this._next[this.last(f)] = f;
-        this._prev[f] = this._prev[f];
-        this._next[this._prev[i]] = 0;
+        this.#next[this.last(f)] = f;
+        this.#prev[f] = this.#prev[f];
+        this.#next[this.#prev[i]] = 0;
         return i;
     }
     
@@ -889,18 +1001,18 @@ export default class Dlists extends Adt {
      *  @return the first item of the modified list, or 0 if f was a singleton
      */
     delete(i, f) {
-        assert(this.valid(i) && this.valid(f) && this.isFirst(f));
+        assert(this.valid(i) && this.valid(f) && this.isfirst(f));
         if (this.singleton(f)) return 0;
         let l = this.last(f); let nf = this.next(f);
         let pi = this.prev(i); let ni = this.next(i);
         if (i == f) {
-            this._prev[nf] = this._prev[f]; f = nf;
+            this.#prev[nf] = this.#prev[f]; f = nf;
         } else if (i == l) {
-            this._prev[f] = pi; this._next[pi] = 0;
+            this.#prev[f] = pi; this.#next[pi] = 0;
         } else {
-            this._prev[ni] = pi; this._next[pi] = ni;
+            this.#prev[ni] = pi; this.#next[pi] = ni;
         }
-        this._next[i] = 0; this._prev[i] = i;
+        this.#next[i] = 0; this.#prev[i] = i;
         return f;
     }
     
@@ -914,76 +1026,116 @@ export default class Dlists extends Adt {
         assert(this.valid(f1) && this.valid(f2));
         if (f2 == 0 || f1 == f2) return f1;
         if (f1 == 0) return f2;
-        assert(this.isFirst(f1) && this.isFirst(f2));
+        assert(this.isfirst(f1) && this.isfirst(f2));
         let l1 = this.last(f1); let l2 = this.last(f2);
-        this._next[l1] = f2;
-        this._prev[f2] = l1;
-        this._prev[f1] = l2
+        this.#next[l1] = f2;
+        this.#prev[f2] = l1;
+        this.#prev[f1] = l2
         return f1;
+    }
+
+    /** Sort the lists by item number */
+    sort() {
+        let vec = [];
+        for (let i = 1; i <= this.n; i++) {
+            if (this.singleton(i) || !this.isfirst(i)) continue;
+            let j = i; vec.length = 0;
+            while (!this.singleton(j)) {
+                vec.push(j); j = this.delete(j, j);
+            }
+            vec.push(j);
+            vec.sort((a,b) => a-b);
+            for (j = 1; j < vec.length; j++)
+                this.join(vec[0], vec[j])
+        }
     }
 }
 </textarea>
+<h2>ReverseLists</h2>
 <p>
-The <code>Dlists_r</code> class extends the <code>Dlists</code>
-class, making the lists efficiently <i>reversible</i>.
-It provides the following methods.
+The <code>ReverseLists</code> class is similar to <code>ListSet</code> in
+that it partitions the index range into a set of lists. The distinct
+feature of the <code>ReverseLists</code> class is that its lists can
+be <i>reversed</i> in constant time.
+The new methods are listed below.
 <ul>
-<li>    <code>isFirst(i)</code> returns true if item <code>i</code> is
-        the first item in some list.
-<li>    <code>singleton(i)</code> returns true if item <code>i</code> is
-        the only item in its list.
-<li>    <code>last(i)</code> is the last item in the list identified by
-        <code>i</code> (that is, <code>i</code> is the first list item).
-<li>    <code>next(i, j)</code> returns the next item on the list containing
-        <code>i</code> or 0 if <code>i</code> is the last item.
-        The second argument <code>j</code> is the predecessor of <code>i</code>
-        in the list, or 0 if <code>i</code> is the first item.
-<li>    <code>prev(i, j)</code> returns the previous item on the list containing
-        <code>i</code> or 0 if <code>i</code> is the first item.
-        The second argument <code>j</code> is the successor of <code>i</code>
-        in the list, or 0 if <code>i</code> is the last item.
-<li>    <code>findList(i)</code> returns the first item in the list containing
-        <code>i</code>.
-<li>    <code>rotate(f, i)</code> rotates the list identfied by <code>f</code>
-        to make <code>i</code> the first list item. That is, the portion
-        of the list that precedes <code>i</code> is moved to the end of
-        the list. It returns <code>i</code>.
-<li>    <code>delete(i, f)</code> removes <code>i</code> from the list
-        identified by <code>f</code>. The identifier of the
-        modified list is returned.
-<li>    <code>pop(f)</code> is an alias for  <code>delete(f, f)</code>.
-<li>    <code>join(f1, f2)</code> combine the lists identified by 
-        <code>f1</code> and <code>f2</code> and return the identifier of
-        the new list. The new list is the concatenation of the two lists.
-        If either argument is 0, the other is returned.
 <li>    <code>reverse(f)</code> reverses the list identified by <code>f</code>.
         Returns the first item in the reversed list.
+<li>    <code>next(i, j)</code> returns the next item on the list containing
+        <code>i</code>, assuming that
+        <code>j</code> is the item just before <code>i</code>.
+        If <code>i</code> is the first item, <code>j</code> must be 0.
+        If there is no item following <code>i</code>, 0 is returned.
+<li>    <code>prev(i, j)</code> returns the previous item on the list containing
+        <code>i</code>, assuming that
+        <code>j</code> is the item that follows <code>i</code>.
+        If <code>i</code> is the last item, <code>j</code> must be 0.
+        If there is no item preceiding <code>i</code>, 0 is returned.
 </ul>
-<code>Dlists_r</code> re-purposes the <code>next</code> and <code>prev</code>
-arrays of the <code>Dlists</code> class, using them to represent neighboring
-list items, <code>nabor1</code> and <code>nabor2</code>.
-If the list predecessor of an item <code>i</code> is known, its
-successor can be identified by examining <code>nabor1[i]</code>
-and <code>nabor2[i]</code> and selecting the one that does not point
-back to the predecessor.
-If <code>i</code> is the first item on a list, one of <code>nabor1[i]</code> 
-and  <code>nabor2[i]</code> is positive, while the other is negative.
-The positive value identifies  <code>i</code>'s successor on the list,
-while the negative value identifies the last item on the list.
-The list can be reversed by modifying the <code>nabor</code> values
-for the first and last items on the list.
-The time required for the <code>findList</code> method is proportional
-to the length of the list. All other operations take constant time.
+<code>ListSet</code> replaces the <code>next</code> and <code>prev</code>
+arrays of the <code>ListSet</code> class, with arrays that represent
+neighboring list items, <code>nabor1</code> and <code>nabor2</code>.
+A list is reversed by effectively complementing a bit that determines which
+of two neighbors of the first item is the next item on the list and which is
+the last item. With this information, one can traverse the list in
+either direction using a &ldquo;trailing pointer.&rdquo;
+In the <i>Javascript</i> implementation, a positive value is used for
+the <code>nabor</code> that identifies the next list item and
+a negative value is used for the other <code>nabor</code>.
+The implementation of the new methods is shown below.
+<p>
+<textarea rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+    /** Reverse a list.
+     *  @param f is the first item on a list
+     *  @return the first item on the reversed list
+     */
+    reverse(f) {
+        if (this.singleton(f)) return f;
+        let l = this.last(f);
+        if (this.#nabor1[f] < 0)  this.#nabor1[f] = 0;
+        else                      this.#nabor2[f] = 0;
+        if (this.#nabor1[l] == 0) this.#nabor1[l] = -f;
+        else                      this.#nabor2[l] = -f;
+        return l
+    }
 
-<a id=dsets><h2>Dsets</h2></a>
+    /** Get the next list item.
+     *  @param i is a list item
+     *  @param j is the list item preceding i, or 0 if i is the first item.
+     *  @return the pair [next(i), i] where next(i) is next list item or 0.
+     */
+    next(i, j) {
+        assert(this.valid(i) && i != 0 && this.valid(j));
+        let n1 = this.#nabor1[i]; let n2 = this.#nabor2[i];
+        return [j == 0 ? (n1 >= 0 ? n1 : n2) :
+                         (j == n1 ? n2 : n1), i];
+    }
+   
+    /** Get the previous list item.
+     *  @param i is a list item
+     *  @param j is the list item following i, or 0 if i is the last item.
+     *  @return the item that precedes j on the list, or 0 if j is the first
+     *  item.
+     */
+    prev(i, j) {
+        assert(this.valid(i));
+        if (this.isFirst(i)) return [0, i];
+        let n1 = this.#nabor1[i]; let n2 = this.#nabor2[i];
+        return [j == 0 ? (n1 != 0 ? n1 : n2) :
+                         (j == n1 ? n2 : n1), i];
+    }
+</textarea>
 
-The <code>Dsets</code> class defines a collection of <i>disjoint sets</i>
+<a id=dsets><h2>Sets</h2></a>
+
+The <code>Sets</code> class defines a collection of disjoint sets
 over the index set $1\ldots n$ and provides methods to efficiently identify
 the subset containing a given item and to combine subsets.
 Each subset is identified by one of its members.
-It provides the following methods.
+The class provides the following methods.
 <ul>
-<li> <code>constructor(n, cap=n)</code> constructs a <code>Dsets</code> object
+<li> <code>constructor(n, cap=n)</code> constructs a <code>Sets</code> object
     with an index range of <code>n</code> and capacity of <code>cap</code>.
     Both arguments may be omitted.
     Initially, every item defines a singleton subset.
@@ -993,7 +1145,7 @@ It provides the following methods.
     items <code>i</code> and <code>j</code> and returns the item
     that identifies the combined set.
 </ul>
-Each subset in the <code>Dsets</code> object is implemented as a tree,
+Each subset in the <code>Sets</code> object is implemented as a tree,
 defined using <i>parent pointers</i>. That is, $p(i)$ identifies the
 parent of $i$ in its tree and the root of the tree serves as its
 identfier. If $i$ is a root, $p(i)=i$.
@@ -1029,56 +1181,52 @@ This speeds up subsequent calls to <code>find</code> and ensures
 that any sequence of calls to <code>find</code> and <code>link</code> takes
 essentially linear time. A detailed performance analysis is given in the
 following subsection.
-The core methods for the <code>DSets</code> class are shown below.
+The core methods for the <code>Sets</code> class are shown below.
 <p>
 <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import Adt from '../Adt.mjs';
+import Top from '../Top.mjs';
 import { assert } from '../../common/Errors.mjs';
-import Dlists from './Dlists.mjs';
-import List from './List.mjs';
+import ListSet from './ListSet.mjs';
 import Scanner from './Scanner.mjs';
 import Digraph from '../graphs/Digraph.mjs';
 
-/** Disjoint sets data structure maintains a collection of disjoint
- *  sets over the integers 1..N for some positive integer N. Allows
- *  one to quickly determine if two values are in the same set and
- *  supports constant-time union of two sets.
- */
-export default class Dsets extends Adt {
-    _p;            ///< _p[i] is parent of i
-    _rank;         ///< _rank[i] is rank of i
+export default class Sets extends Top {
+    #p;            ///< #p[i] is parent of i
+    #rank;         ///< #rank[i] is rank of i
 
-    _linkCount;
-    _findCount;
-    _findSteps;
+    #linkCount;
+    #findCount;
+    #findSteps;
     
     constructor(n, capacity=n) {
-        super(n); this.#init(capacity);
+        super(n);
+        if (!capacity) capacity = this.n;
+        this.#init(capacity);
     }
 
     #init(capacity) {
         assert(this.n <= capacity);
-        this._p = new Array(capacity+1); 
-        this._rank = new Array(capacity+1);
+        this.#p = new Array(capacity+1); 
+        this.#rank = new Array(capacity+1);
         this.clear();
     
-        this._linkCount = 0;
-        this._findCount = 0;
-        this._findSteps = 0;
+        this.#linkCount = 0;
+        this.#findCount = 0;
+        this.#findSteps = 0;
     }
     
     /** Return parent of a set element in the tree representation of the set.
      *  @param i index of a set element
      *  @return the parent of i
      */
-    p(i) { return this._p[i]; }
+    p(i) { return this.#p[i]; }
 
     /** Return rank of a set element in the tree representation of the set.
      *  @param i index of a set element
      *  @return the parent of i
      */
-    rank(i) { return this._rank[i]; }
+    rank(i) { return this.#rank[i]; }
     
     /** Find and return the canonical element of a set.
      *  Performs path compression as side-effect.
@@ -1086,13 +1234,13 @@ export default class Dsets extends Adt {
      *  @return the canonical element of the set containing i
      */
     find(i) {
-        this._findCount++;
+        this.#findCount++;
         assert(this.valid(i));
         let root;
         for (root = i; this.p(root) != root; root = this.p(root)) {
-            this._findSteps++;
+            this.#findSteps++;
         }
-        while (i != root) { let pi = this.p(i); this._p[i] = root; i = pi; }
+        while (i != root) { let pi = this.p(i); this.#p[i] = root; i = pi; }
         return root;
     }
     
@@ -1103,22 +1251,23 @@ export default class Dsets extends Adt {
      *  the given sets
      */
     link(i, j) {
-        this._linkCount++;
+        this.#linkCount++;
         assert(this.valid(i) && this.valid(j) &&
                this.p(i) == i && this.p(j) == j && i != j);
         if (this.rank(i) < this.rank(j)) {
             let t = i; i = j; j = t;
         } else if (this.rank(i) == this.rank(j)) {
-            this._rank[i]++;
+            this.#rank[i]++;
         }
-        this._p[j] = i;
+        this.#p[j] = i;
         return i;
     }
 }
 </textarea>
 
 <h3>Performance Analysis</h3>
-(The analysis in this section is based on Chapter 2 of [Tarjan87].)
+(The analysis in this section is an expanded version of
+the analysis in Chapter 2 of [Tarjan87].)
 Although the disjoint sets data structure is very simple,
 fully analyzing its performance is not.
 To make it easier to understand, the analysis is presented in several steps,
@@ -1154,7 +1303,7 @@ Note that this result does not depend on the path compression heuristic.
 Also, note that some find operations can take time proportional to
 $\log n$, so there can be no better bound on the time for an
 arbitrary find operation.
-However, it is possible to get a strong bound on a
+However, it is possible to get a stronger bound on a
 sequence of find operations, using a more sophisticated analysis
 that takes into account the effects of path compression.
 
@@ -1190,7 +1339,7 @@ at non-root nodes.
 <p>
 Define $\Delta(x)=rank(p(x)) - \textit{rank}(x)$ and note that
 $\Delta(x) \leq \lg n$ and that
-$\Delta(x)=0$ initially and increases,
+$\Delta(x)=0$ initially, and increases
 as $x$ acquires a parent
 and participates in find operations.
 Also, define a node $x$ to be <i>dominant</i> if $\Delta(x)>2\Delta(y)$
@@ -1237,7 +1386,6 @@ From a practical perspective, there is little reason
 to carry the analysis further, since for any practical
 value of $n$, $\lg \lg n$ is very small. However, it is
 possible to do better and it's instructive to see how.
-<p>
 The new analysis requires some additional technical machinery.
 Rather than go straight to the final analysis, let's
 build up to it in several steps, with each step
@@ -1248,7 +1396,9 @@ is at $O(m + n\log\log n)$.
 Start by dividing the non-negative integers
 into a series of <i>blocks</i> by defining $block(0)=[0,1]$,
 $block(1)=[2,3]$, $block(2)=[4,5,6,7]$ and in general
-for $j\geq 1$, $block(j)=[2^j,...,2^{j+1}-1]$.
+for $j\geq 1$, $block(j)=[2^j,\ldots,2^{j+1}-1]$.
+More simply, $block(j)$ can be written as the half-open
+interval $\left[2^j,2^{j+1}\right)$.
 A node $x$ is said to be <i>on level 1</i> if
 there is some $block(j)$ that contains both
 $\textit{rank}(x)$ and $rank(p(x))$.
@@ -1275,7 +1425,8 @@ The first counts the find steps that occur at singular nodes,
 while the second counts the find steps that occur at non-singular nodes.
 For the first case, note that any path from a node to the root of its
 tree can contain at most one singular node on each of the two levels.
-Hence, each find operation includes at most two find steps at singular nodes.
+Hence, each find operation includes at most two find steps at singular nodes
+and the total number of find steps at singular nodes is $O(m)$.
 <p>
 The find steps at non-singular nodes can be divided into two
 sub-cases, one for the find steps involving level 1 nodes and another
@@ -1286,7 +1437,7 @@ Because $x$ is non-singular, it has some ancestor $y$ that is also
 on level 2. Because $x$ is on level 2, $rank(p(x))$ is
 in a different block than $\textit{rank}(x)$. Similarly,
 $rank(p(y))$ is in a different block than $rank(y)$.
-Consequently, if we let $z$ be the root of the tree, then
+Consequently, if $z$ is the root of the tree, then
 $rank(z)$ is in a different block than $rank(p(x))$.
 After the find, $z=p(x)$, so the find operation causes
 $rank(p(x))$ to move into a different (and larger) block
@@ -1299,7 +1450,7 @@ Hence, the total number of find steps that occur at
 non-singular nodes on level 2 is $O(n\log\log n)$.
 <p>
 This leaves the case of non-singular nodes on level 1.
-Let's suppose that $x$ is such a node and assume that
+Let's suppose that $x$ is such a node and that
 $\textit{block}(j)$ is the subset of the integers that
 includes $\textit{rank}(x)$.
 A find involving $x$ will assign a new parent to $x$ causing
@@ -1334,11 +1485,11 @@ $\square$
 <p>
 Now, since a node with rank in $block(j)$ has rank at least $2^j$,
 the number of nodes in $block(j)$ is at most $2n/2^{2^j}$.
-Consequently, the number of find steps experienced by non-singular
-on level 1 with rank in $block(j)$ is at most
+Consequently, the number of find steps that occur at non-singular
+nodes on level 1 with rank in $block(j)$ is at most
 $2^{j} \left( 2n/2^{2^j} \right)$.
 There are no non-singular nodes with rank in $\textit{block}(0)$,
-so if we sum this expression over all values of $j\geq 1$, we get
+so summing this expression over all values of $j > 0$ yields
 $$
 2n\sum_{j>0} 2^j/{2^{2^j}} \leq 2n\sum_{j>0} j/{2^j} \leq 4n
 $$
@@ -1348,8 +1499,10 @@ side (along with many additional terms).
 The second inequality follows directly from the formula for
 an unbounded arithmetic-geometric series.
 Hence, the number of find steps at non-singular nodes on level 1 is $O(n)$.
-Combining this with the results from the other cases we get that
+Combining this with the results from the other cases,
 the total number of find steps is $O(m+n\log\log n)$.
+Note that for $m\geq n\lg\lg n$, the number of find steps is $O(m)$,
+so it's only possible to improve the analysis when $m< n\lg\lg n$.
 <p>
 Before proceeding further, let's recap.
 In the analysis just completed, the find steps were divided
@@ -1359,7 +1512,7 @@ into three categories.
     most two of these, for a total of at most $2m$.
 <li> <i>Steps at non-singular nodes on level 1</i>. The total number
     of these steps is $O(n)$.
-<li> <i>Steps at non-singular nodes on level 2</i>. Each vertex
+<li> <i>Steps at non-singular nodes on level 2</i>. Each node
     experiences at most $\lg \lg n$ of these, for a total
     of at most $n \lg \lg n$.
 </ul>
@@ -1374,24 +1527,24 @@ First let's define a second, coarser partition on
 the integers, by letting
 
 \begin{eqnarray*}
-\textit{block}(2,0)&=&[0 .. 3] \\
-\textit{block}(2,1)&=&[4 .. 15]=\left[2^2 .. 2^{2^2} -1\right] \\
-\textit{block}(2,2)&=&[16 .. 65535]=\left[2^{2^2} .. 2^{2^{2^2}} -1\right]
+\textit{block}_2(0)&=&[0,4) \\
+\textit{block}_2(1)&=&[4,16)=\left[2^2,2^{2^2}\right) \\
+\textit{block}_2(2)&=&[16,65536]=\left[2^{2^2},2^{2^{2^2}}\right)
 \end{eqnarray*}
 and in general
 $$
-\textit{block}(2,j)=\left[2^{[j]} .. 2^{[j+1]}-1\right]
+\textit{block}_2(j)=\left[2^{[j]},2^{[j+1]}\right)
 $$
 where $2^{[1]}=2^2$ and $2^{[j]}=2^{2^{[j-1]}}$ for $j>1$.
-For notational consistency, let $\textit{block}(1,j)$ denote
+For notational consistency, let $\textit{block}_1(j)$ denote
 the original partition of the integers.
 <p>
 Now, a node $x$ is defined to be <i>on level 1</i> if
-there is some $\textit{block}(1,j)$ that contains both $\textit{rank}(x)$
-and $rank(p(x))$.
+there is an interval defined by $\textit{block}_1$ that contains
+both $\textit{rank}(x)$ and $rank(p(x))$.
 Node $x$ is defined to be <i>on level 2</i> if it is not on level 1
-and there is some $block(2,j)$ that contains both $\textit{rank}(x)$
-and $rank(p(x))$.
+and there is an interval defined by $\textit{block}_2$ that
+contains both $\textit{rank}(x)$ and $rank(p(x))$.
 Nodes that are on neither level 1 nor level 2 are on level 3.
 So, in the example below, nodes $a$ and $d$ are on level 1,
 $b$ is on level 2 and $c$ is on level 3.
@@ -1403,8 +1556,8 @@ So, in the example, nodes $b$, $c$ and $d$ are singular.
 <img width="650" src="figs/dsetsAnalysis2a.png"><br>
 </div>
 <p>
-As before, the analysis uses a case analysis,
-but now, there are four cases to consider.
+As before, a case analysis is used,
+but now there are four cases to consider.
 <ul>
 <li> <i>Steps at singular nodes</i>. Since there are just three
     levels, each find operation can have at most
@@ -1421,17 +1574,17 @@ but now, there are four cases to consider.
 </ul>
 
 Let's proceed with the analysis of the third case.
-Let $x$ be a non-singular node with $\textit{rank}(x)$ in $\textit{block}(2,j)$. 
+Let $x$ be a non-singular node with $\textit{rank}(x)$ in $\textit{block}_2(j)$. 
 Because $x$ is on level 2, its parent's rank is in a different
-level 1 block than its rank. Because it is non-singular, it has a
+level 1 interval than its rank. Because it is non-singular, it has a
 proper ancestor $y$ that is also on level 2. 
 Consequently, the root of the tree has rank that is in a
-different level 1 block than $rank(p(x))$.
+different level 1 interval than $rank(p(x))$.
 This means that a find involving $x$ causes
-$rank(p(x))$ to move to a different level 1 block.
-Hence, the number of find steps experienced by $x$ while
-it is on level 2 and non-singular is less than the
-number of level 1 blocks that intersect $block(2,j)$,
+$rank(p(x))$ to move to a different level 1 interval.
+Hence, the number of find steps that occur at $x$ while it
+is non-singular and on level 2 is less than the
+number of level 1 intervals that intersect $block_2(j)$,
 and this at most $2^{[j]}-2^{[j-1]}<2^{[j]}$,
 as illustrated below.
 <p>
@@ -1439,13 +1592,13 @@ as illustrated below.
 <img width="700" src="figs/dsetsAnalysis3.png"><br>
 </div>
 <p>
-Since the number of nodes with rank in $block(2,j)$
+Since the number of nodes with rank in $block_2(j)$
 is $\leq 2n/2^{2^{[j]}} = 2n/2^{[j+1]}$ for $j>0$,
 the number of find steps at non-singular nodes
 on level 2 is at most 
 $2^{[j]} \left( 2n/2^{[j+1]} \right)$ for $j>0$.
 There can be no non-singular nodes on level 2 with
-rank in $\textit{block}(2,0)$,
+rank in $\textit{block}_2(0)$,
 so, the total number of find steps that occur at
 non-singular nodes on level 2 is at most
 $$
@@ -1453,19 +1606,19 @@ $$
 $$
 
 That leaves just the fourth case.
-Let $x$ be a non-singular node with $\textit{rank}(x)$ in $\textit{block}(2,j)$. 
+Let $x$ be a non-singular node with $\textit{rank}(x)$ in $\textit{block}_2(j)$.
 Because $x$ is on level 3, its parent's rank is in a different
-level 2 block than its rank. Because it is non-singular, it has a
+level 2 interval than its rank. Because it is non-singular, it has a
 proper ancestor $y$ that is also on level 3. 
 Consequently, the root of the tree has a rank that is in a
-different level 2 block than $rank(p(x))$.
+different level 2 interval than $rank(p(x))$.
 This means that a find involving $x$ causes
-$rank(p(x))$ to move to a different level 2 block.
-This means that the number of find steps that $x$ can experience
+$rank(p(x))$ to move to a different level 2 interval.
+Consequently, the number of find steps that can occur at $x$
 while it is non-singular and on level 3 is bounded by the number
-of level 2 blocks that include values $\leq \lg n$.
-If we define $\beta(n)$ to be the smallest integer $i>0$ for which 
-$2^{[i]}> \lg n$, then the number of level 2 blocks that includes
+of level 2 intervals that include values $\leq \lg n$.
+If $\beta(n)$ is defined to be the smallest integer $i>0$ for which 
+$2^{[i]}> \lg n$, then the number of level 2 intervals that includes
 values $\leq \lg n$ is $\beta (n)$ and the number of find steps at
 any non-singular node on level 3 is at most $\beta(n)$.
 The function $\beta(n)$ grows extremely slowly with $n$;
@@ -1473,116 +1626,126 @@ in general $\beta(2^{[k]})=k$.
 <p>
 Putting together the results from the four cases above,
 the total number of find steps is $O(m + n\beta(n))$.
-Now it turns out that even this analysis can be improved,
-by further sub-dividing the fourth case.
+Observe now that with this analysis, the number of find steps is $O(m)$
+whenever $m \geq n\beta(n)$, so the analysis can be improved only
+for $m < n\beta(n)$.
+This can be done by further sub-dividing the fourth case.
 
 <h4>The Final Analysis</h4>
-The key to this final analysis of the number of find steps is to
-allow the number of distinct cases to grow further. To do this,
-we define a series of partitions on the integers, $block(1,*)$,
-$block(2,*)$, $block(3,*)$, and so forth. Each partition is
-coarser than the previous one with the last partition requiring very
-few blocks to span the range up to $\lg n$.
-Specifically, for all $i>0$,
-$\textit{block}(i,0)$ starts at 0 and for all
-$j>0$, $\textit{block}(i,j)$ starts
-with $A(i,j)$, where $A$ is <i>Ackerman's function</i> and is defined as
-follows. $A(1,j)=2^j$ for all $j>0$, $A(i,1)=A(i-1,2)$ for all $i>1$ and
+The key to this final analysis is to
+allow the number of distinct cases to grow further.
+This can be done by defining a series of partitions on the
+integers, $block_1$, $block_2$, $block_3$
+and so forth, with each partition
+coarser than the previous one, and with the last partition requiring just
+a single interval to span the range up to $\lg n$.
+Specifically, for $i>0$, $\textit{block}_i(0)$ starts at 0 and for all
+$j>0$, $\textit{block}_i(j)$ starts
+with $A_i(j)$, where $A$ is <i>Ackerman's function</i> and is defined as
+follows.
 $$
-A(i,j)=A(i-1,A(i,j-1))
+A_i(j) = \left\{
+\begin{array}{ll}
+2^j & \textrm{for $i=1$, $j\geq 1$} \\
+A_{i-1}(2) & \textrm{for $i>1$, $j=1$} \\
+A_{i-1}(A_i(j-1)) & \textrm{for $i,j>1$}
+\end{array} \right.
 $$
-for all $i>1$ and $j>1$.
-Notice that with this definition, $A(2,j)=2^{[j]}$ for all $j\geq 1$.
+It can be helpful to think of Ackerman's function as a family
+of related functions $A_i$. The notation used here was chosen
+to emphasize that viewpoint.
+Notice that with this definition, $A_2(j)=2^{[j]}$ for all $j\geq 1$.
 Consequently this definition of the blocks is consistent with the
-earlier definition of $\textit{block}(1,*)$ and $\textit{block}(2,*)$.
+earlier definitions of $\textit{block}_1$ and $\textit{block}_2$.
 Now, define a functional inverse $\alpha$ of Ackerman's function.
 $$
-\alpha(m,n)=\min \{i\geq 1 | A(i,\lfloor m/n \rfloor)>\lg n\}
+\alpha(m,n)=\min \{i\geq 1 | A_i(\lceil m/n \rceil)>\lg n\}
 $$
-and note that $\textit{block}(\alpha(m,n),j)$ contains no values $\leq \lg n$
-for all $j \geq \lfloor m/n \rfloor$.
+This means that, $A_{\alpha(m,n)}$ defines at most $\lceil m/n \rceil$
+intervals that contain values $\leq \lg n$.
+The definition of $\textit{block}_{\alpha(m,n)}$ is
+simplified to include just a single interval $[0,\ldots,\lfloor \lg n \rfloor]$.
 <p>
-As before, blocks are used to define levels.
-Specifically, a non-root node $x$ is defined to be on level 1
-if $\textit{rank}(x)$ and $rank(p(x))$ are both in some $block(1,j)$.
-For $1 < i\leq \alpha(m,n)$, $x$ is defined to be on level $i$ if it is not
-on level $i-1$ and there is some $block(i,j)$ that contains
+As before, the non-root nodes are assigned to levels.
+Specifically, a node $x$ is defined to be on level 1
+if $\textit{rank}(x)$ and $rank(p(x))$ are both in some interval
+defined by $block_1)$.
+For $1 < i\leq \alpha(m,n)+1$, $x$ is defined to be on level $i$ if it is not
+on level $i-1$ and there is some interval defined by $block_i$ that contains
 both $\textit{rank}(x)$ and $rank(p(x))$.
-Finally, a node $x$ is on level $\alpha(m,n)+1$ if there is
-no $\textit{block}(\alpha(m,n),j)$ that contains both $\textit{rank}(x)$ and
-$rank(p(x))$.
-We say that $x$ is <i>singular</i> if it has no proper ancestor
+Node $x$ is called <i>singular</i> if it has no proper ancestor
 on the same level as $x$.
 <p>
 As before, the analysis can be broken down into cases.
 <ul>
 <li> <i>Steps at singular nodes</i>. Since there are $\alpha(m,n)+1$ levels,
     the number of find steps at singular nodes is at most
-    $m(\alpha(m,n)+1)$.
+    $m(\alpha(m,n)+1) = O(m\alpha(m,n))$.
 <li> <i>Steps at non-singular nodes on level 1</i>. The previous analysis
     applies directly to this case, so the number of
     find steps in this case is $O(n)$.
 <li> <i>Steps at non-singular nodes on level $i$ for
     $1< i\leq \alpha(m,n)$</i>.
     It is shown below that the number of find steps covered by
-    this case is $O(n)$.
+    this case is $O(n\alpha(m,n))$.
 <li> <i>Steps at non-singular nodes on level $\alpha(m,n)+1$</i>. 
-    A node can experience at most $\lfloor m/n \rfloor$ find
+	By the argument used previously,
+    a node can experience at most $\lceil m/n \rceil$ find
     steps while it is non-singular and on level $\alpha(m,n)+1$.
     Hence the total number of find steps covered by this case is
-    $\leq m$.
+    $\leq \lceil m/n \rceil n \leq m+n$.
 </ul>
 Proceeding with the analysis of the third case,
 let $x$ be a non-singular node on level $i$ ($1 < i\leq \alpha(m,n)$)
-and assume that $\textit{block}(i,j)$ includes $\textit{rank}(x)$.
+and assume that $\textit{block}_i(j)$ includes $\textit{rank}(x)$.
 Because $x$ is on level $i$, its parent's rank is in a different
-level $i-1$ block than its rank. Because it is non-singular, it has a
+interval on level $i-1$ than its rank. Because it is non-singular, it has a
 proper ancestor $y$ that is also on level $i$. 
 Consequently, the root of the tree has rank that is in a
-different level $i-1$ block than $rank(p(x))$.
+different interval on level $i-1$ than $rank(p(x))$.
 Hence, a find involving $x$ causes
-$rank(p(x))$ to move to a different level $i-1$ block.
+$rank(p(x))$ to move to a different interval on level $i-1$.
 This means that the number of find steps that $x$ can experience
 while it is non-singular and on level $i$ is bounded by the number
-of level $i-1$ blocks that intersect $\textit{block}(i,j)$.
-Call this number $b_{i,j}$ and note that $b_{i,0}=2$ for all
-$i$ and that for $j>0$, $b_{i,j} \leq A(i,j)-A(i,j-1)< A(i,j)$,
+of intervals on level $i-1$ that intersect $\textit{block}_i(j)$.
+Call this number $b_i(j)$ and note that $b_i(0)=2$ for all
+$i$ and that for $j>0$, $b_i(j) \leq A_i(j)-A_i(j-1)< A_i(j)$,
 as illustrated below.
 <p>
 <div  style="text-align:center;">
 <img width="800" src="figs/dsetsAnalysis4.png"><br>
 </div>
 <p>
-Since the number of nodes with rank in $block(i,j)$
-is $\leq 2n/2^{A(i,j)}$, the number of find steps
-experienced by non-singular nodes on level 2 whose
-rank is in $\textit{block}(i,j)$ is at most 
-$A(i,j) \left( 2n/2^{A(i,j)}\right)$ for $j>0$.
-There are no non-singluar nodes with rank in $\textit{block}(i,0)$ for all $i$,
+Since the number of nodes with rank in $block_i(j)$
+is $\leq 2n/2^{A_i(j)}$, the number of find steps
+experienced by non-singular nodes on level $i$ whose
+rank is in $\textit{block}_i(j)$ is at most 
+$A_i(j) \left( 2n/2^{A_i(j)}\right)$ for $j>0$.
+There are no non-singular nodes with rank in $\textit{block}_i(0)$ for all $i$,
 so the total number of find steps experienced by non-singular nodes
 on levels 2 through $\alpha(m,n)$ is at most
 \begin{eqnarray*}
-2n \sum_{2\leq i \leq \alpha(m,n)} \sum_{j>0} A(i,j)/2^{A(i,j)}
+2n \sum_{2\leq i \leq \alpha(m,n)} \sum_{j>0} A_i(j)/2^{A_i(j)}
 &\leq& 2n \sum_{2\leq i \leq \alpha(m,n)} \sum_{j>0} j/2^j \\
 &\leq& 2(\alpha(m,n)-1)n \sum_{j>0} j/2^j \\
-&\leq& 5(\alpha(m,n)-1) n
+&\leq& 4(\alpha(m,n)-1) n
 \end{eqnarray*}
 Combining the bounds in the four cases gives $O((m+n)\alpha(m,n))$
-find steps.
+for a sequence of $m$ find operations.
 <p>
 To compare this result with the previous one,
-compare the growth rates of $\alpha$ and $\beta$.
-Note that $\alpha$ grows most quickly when $m=n$. In this case,
-$\alpha(n,n)=\min \{i\geq 1 | A(i,1)>\lg n\}$
-and applying the definition $\alpha(4,4)=1$,
-$\alpha(16,16)=\alpha(2^{[2]},2^{[2]})=2$,
-$\alpha(2^{[3]},2^{[3]})=3$ and
-$\alpha(2^{[17]},2^{[17]})=4$.
-Since $\beta(2^{[5]})=4$, we can see that although $\beta$ is a very
-slowly growing function, $\alpha$ grows even more slowly.
-Also, it's worth noting that for $m>n \lg \lg n$, $\alpha(m,n)=1$.
-So, when the number of find operations grows even a little bit faster
-than $n$, the total number of find steps is $O(m+n)$.
+one must compare the growth rates of $\alpha$ and $\beta$.
+Note that $\alpha$ grows most quickly when $m\leq n$.
+In this case,
+$\alpha(m,n)=\alpha(n,n)=\min \{i\geq 1 | A_i(1)>\lg n\}$.
+For the smallest values of $n$, $\alpha(n,n)$ and $\beta(n)$
+remain fairly close, but while $\beta(2^{[5]})=5$,
+$\alpha(n)$ does not become 5 until $n$ reaches $2^{[65537]}$.
+By that point, $\beta(n)=65537$ and from there,
+$\beta$ continues to grow much faster than $\alpha$.
+Finally, it's worth noting that for $m\geq n \beta(n)$, $\alpha(m,n) \leq 2$.
+So, this is analysis is consistent with the previous analysis when
+$m\geq n \beta(n)$.
 
 <a id=scanner><h2>Scanner</h2></a>
 The <code>Scanner</code> class is a utility class used by the various

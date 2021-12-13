@@ -28,9 +28,22 @@ lengths of its edges. So for example, the
 length of the path $c$, $a$, $b$, $g$ in the example below is 14.
 <p>
 <div  style="text-align:center;">
-<img width="300" src="figs/spath.png"><br>
+<img width="200" src="figs/spath.png"><br>
 </div>
 <p>
+
+Define reachable. A directed spanning tree includes all reachable vertices.
+
+Define spt in terms of reachable vertices. A directed subtree that
+spans all reachable vertices.
+
+Spt distance lemma, with distance function infinite for non-tree vertices.
+
+Sketch how a subtree can be converted to an spt by correcting violations
+of the lemma. If the process terminates, we have an spt.
+
+
+
 
 A <i>shortest path</i> joining a pair of vertices $u$ and $v$ is defined
 as a path of minimum length among all paths from $u$ to $v$.
@@ -67,7 +80,7 @@ be replaced with the simple shortest path $s$, $a$, $t$ by removing the
 non-negative cycle $a$, $b$, $c$.
 <p>
 <div  style="text-align:center;">
-<img width="200" src="figs/simplePath.png"><br>
+<img width="150" src="figs/simplePath.png"><br>
 </div>
 <p>
 These observations yield the following basic theorem.
@@ -104,7 +117,7 @@ A shortest path tree is a directed spanning tree rooted at the source vertex $s$
 edges in the example below form a shortest path tree rooted at $a$.
 <p>
 <div  style="text-align:center;">
-<img width="300" src="figs/sptree.png"><br>
+<img width="200" src="figs/sptree.png"><br>
 </div>
 <p>
 The following theorem characterizes the existence of shortest paths in terms of shortest path trees.
@@ -123,7 +136,7 @@ if $\textit{distance}(w)>\textit{distance}(v)+\textit{length}(v,w)$,
 then the tree path from $s$ to $w$ is not a shortest path.
 <p>
 <div  style="text-align:center;">
-<img width="300" src="figs/sptProp.png"><br>
+<img width="200" src="figs/sptProp.png"><br>
 </div>
 <p>
 Hence, if $T$ is a shortest path tree, then we must have
@@ -150,7 +163,7 @@ Now, let $q$ be the path consisting of the first $k$ edges of $p$
 and let $y$ be the last vertex in $q$.
 <p>
 <div  style="text-align:center;">
-<img width="400" src="figs/sptProof.png"><br>
+<img width="300" src="figs/sptProof.png"><br>
 </div>
 <p>
 Then,

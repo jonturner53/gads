@@ -44,11 +44,13 @@ smallest key value.
 Using a suitably structured heap-ordered tree, the various operations
 can be implemented to run in $O(\log n)$ time.
 
-<a id=dheap><h2>$d$-heaps</h2></a>
-The $d$-heap is a simple version of the heap data type that
-uses a $d$-ary heap-ordered tree.
-The provided <i>javascript</i> implementation
-includes the following methods.
+<a id=dheap><h2>ArrayHeap</h2></a>
+The <i>array heap</i> (also known as $d$-heap) is a simple version
+of the heap data type that uses an array to implement a
+$d$-ary heap-ordered tree.
+The provided <i>Javascript</i> implementation
+includes the following methods in addition to the
+three standard ones mentioned earlier..
 <ul>
 <li>    <code>d</code> returns the &ldquo;arity&rdquo; of the heap-ordered tree.
 <li>    <code>m</code> returns the number of items in the heap.
@@ -57,37 +59,21 @@ includes the following methods.
 <li>    <code>contains(i)</code> returns true if item <code>i</code>
         is in the heap.
 <li>    <code>findmin()</code> returns the item with the smallest key.
-<li>    <code>deletemin()</code> deletes and returns the item with the
-        smallest key.
-<li>    <code>insert(i, k)</code> item <code>i</code> into the heap
-        with key value <code>k</code>.
 <li>    <code>delete(i)</code> deletes item <code>i</code> from the heap.
-<li>    <code>changekey(i, k)</code> changes the key of item <code>i</code>
-        to <code>k</code>.
+<li>    <code>add2keys(delta)</code> adds the value <code>delta</code>
+        to the keys of all heap items.
 <li>    <code>getStats()</code> returns a statistics object <code>stat</code>
-        containing several performance counters:<br>
-        <code>stat.insert</code> is the number of <code>insert</code> operations
-        performed,<br>
-        <code>stat.delete</code> is the number of <code>delete</code> and
-        <code>deletemin</code> operations,<br>
-        <code>stat.changekey</code> is the number of <code>changekey</code>
-        operations,<br>
-        <code>stat.siftup</code> is the number of steps in all the
-        <code>siftup</code> operations,<br>
-        <code>stat.siftdown</code> is the number of steps in all the
-        <code>siftdown</code> operations (more precisely, the number of steps
-        in the <code>minchild</code> helper function).
-<li>    <code>clearStats()</code> resets all the statistics counters.
+        containing several performance counters.
+<li>    <code>clearStats()</code> resets the statistics counters.
 </ul>
 <p>
 The web app  can be used to construct a heap from a string and
 try out its methods as shown below.
 <pre style="padding-left:5%;">
-let h = new Dheap(10);
+let h = new ArrayHeap(10);
 h.fromString('{e:1 f:2 c:5 a:5 d:2 h:7 i:7 j:8 b:6 g:4}');
 log(h.toString(1));
 let u = h.deletemin();
-log(h.toString(1));
 log(h.index2string(u), h.key(u), ''+h);
 </pre>
 This produces the output
@@ -96,17 +82,19 @@ This produces the output
 e 1 {f:2 d:2 a:5 j:8 b:6 g:4 c:5 h:7 i:7} 
 </pre>
 The first line shows a detailed view of the heap,
-before the deletemin operation.
+before the <code>deletemin</code> operation.
 Parentheses are used to indicate the tree structure.
 Specifically, each item with children in the tree is
 immediately followed by a parenthesized list of its children.
 The final line includes a more concise view of the heap,
 just listing all items and their keys, in some unspecified order.
 <p>
-The implementation of the $d$-heap stores the $m$ heap items
-in positions $1\ldots m$ of an array,
-allowing parents and children to be located without using pointers.
-This results in a <i>heap-shaped</i> tree, as illustrated in the example below.
+The implementation of the array heap stores the $m$ heap items
+in positions $1\ldots m$ of an array with the positions of items
+determining the relationship between parents and children
+in an implicit heap-ordered tree.
+This tree has a characteristic <i>heap-shape</i>,
+which is illustrated in the example below.
 <p>
 <div  style="text-align:center;">
 <img width="600" src="figs/dheap1.png"><br>
@@ -115,10 +103,10 @@ This results in a <i>heap-shaped</i> tree, as illustrated in the example below.
 The index of an item in the <i>item</i> array is referred to as
 its <i>position</i> in the heap,
 so in the example, item $b$ is at position 3. The index of a value in the
-<i>key</i> array is an item number. Here we show them as letters to make it
+<i>key</i> array is an item number. Here, they are shown as letters to make it
 easier to distinguish the items from the other numeric values.
 For a heap item $i$ stored at position $x>1$,
-the parent of $i$ is stored $\lceil (x-1)/d \rceil$.
+the parent of $i$ is stored at position $\lceil (x-1)/d \rceil$.
 Consequently, the children of $i$ (if any) are stored starting at
 position $d(x-1)+2$ and continuing consecutively from there.
 If $i$ has $d$ children its &ldquo;rightmost&rdquo; is stored at
@@ -127,7 +115,7 @@ A third array $pos$ is included to support a general <i>delete</i> method;
 $pos[i]$ gives the position of item $i$ in the <i>item</i> array.
 <p>
 To insert a new item $u$ into a heap with key $k$, start at the
-first position unused position in the item array, then go up the tree looking
+first unused position in the item array, then go up the tree looking
 for the first item with a key that is $\leq k$. The new item
 becomes a child of that item and the other items along the path
 all move down one level in the tree. So for example, inserting item $l$
@@ -166,54 +154,70 @@ The core methods for the <code>Dheap</code> class are shown below.
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 import { assert, AssertError} from '../../common/Errors.mjs';
-import Adt from '../Adt.mjs';
+import Top from '../Top.mjs';
 import Scanner from '../basic/Scanner.mjs';
 
-/** This class implements a heap data structure.
- *  The heap elements are identified by indexes in 1..n where n
- *  is specified when a heap object is constructed.
- */
-export default class Dheap extends Adt {
-    _d;            ///< base of heap
-    _m;            ///< # of items in the heap set
+export default class ArrayHeap extends Top {
+    #d;            ///< base of heap
+    #m;            ///< # of items in the heap set
 
-    _item;        ///< {_item[1],...,_item[m]} is the items in the heap
-    _pos;        ///< _pos[i] gives position of i in _item
-    _key;        ///< _key[i] is key of item i
+    #item;         ///< {#item[1],...,#item[m]} is the items in the heap
+    #pos;          ///< #pos[i] gives position of i in #item
+    #key;          ///< #key[i] is key of item i
+    #offset;       ///< offset for key values, allowing all to shift at once
 
-    _insertCount;        // calls to insert
-    _deleteCount;        // calls to delete
-    _changekeyCount;    // calls to changekey
-    _siftupSteps;        // steps taken by siftup
-    _siftdownSteps;        // steps taken by siftdown
+    #insertCount;       // calls to insert
+    #deleteCount;       // calls to delete
+    #changekeyCount;    // calls to changekey
+    #siftupSteps;       // steps taken by siftup
+    #siftdownSteps;     // steps taken by siftdown
 
-    /** Constructor for Dheap object.
+    /** Constructor for ArrayHeap object.
      *  @param n is index range for object
      *  @parm d is the base of the heap (defaults to 4)
      *  @param capacity is maximum index range (defaults to n)
      */
     constructor(n, d=4, capacity=n) { super(n); this.#init(d, capacity); }
     
-    /** Allocate space and initialize Dheap object.
+    /** Allocate space and initialize ArrayHeap object.
      *  @param d is the base of the heap.
      *  @param capacity is the maximum range
      */
     #init(d, capacity) {
-        this._item = new Array(capacity+1);
-        this._pos = new Array(capacity+1).fill(0);
-        this._key = new Array(capacity+1);
-        this._item[0] = this._m = 0; this._d = d;
-
+        this.#item = new Array(capacity+1);
+        this.#pos = new Array(capacity+1).fill(0);
+        this.#key = new Array(capacity+1);
+        this.#item[0] = this.#m = 0; this.#d = d;
+        this.#offset = 0;
         this.clearStats();
     }
 
-    get d() { return this._d; }
-    get m() { return this._m; }
+    get d() { return this.#d; }
+
+    get m() { return this.#m; }
+
+    /** Return position of parent of a heap item.
+     *  @param p is position of item in heap
+     *  @param return position where parent would go if there were one
+     */
+    p(pos) { return Math.ceil((pos-1)/this.d); }
+
+    /** Return position of leftmost child of a heap item.
+     *  @param pos is position of item in heap
+     *  @param return position where left child would go if there were one
+     */
+    left(pos) { return this.d*(pos-1)+2; }
+
+    /** Return position of rightmost child of a heap item.
+     *  @param pos is position of item in heap
+     *  @param return position where right child would go if there were one
+     */
+    right(pos) { return this.d*pos+1; }
     
     /** Find an item in the heap with the smallest key.
      *  @return the number of an item that has the smallest key
      */
-    findmin() { return this.empty() ? 0 : this._item[1]; }
+    findmin() { return this.empty() ? 0 : this.#item[1]; }
     
     /** Delete a minimum key item from the heap and return it.
      *  @return an item of minimum key from the heap, after deleting it
@@ -221,7 +225,7 @@ export default class Dheap extends Adt {
      */
     deletemin() {
         if (this.empty()) return 0;
-        let i = this._item[1]; this.delete(i);
+        let i = this.#item[1]; this.delete(i);
         return i;
     }
     
@@ -229,13 +233,15 @@ export default class Dheap extends Adt {
      *  @param i is an item in the heap
      *  @return the value of i's key
      */
-    key(i) { return this._key[i]; }
+    key(i) { return this.#offset + this.#key[i]; }
+
+    add2keys(delta) { this.#offset += delta; }
     
     /** Determine if an item is in the heap.
      *  @param i is an item
      *  @return true if i is in the heap, else false
      */
-    contains(i) { return this._pos[i] != 0; }
+    contains(i) { return this.#pos[i] != 0; }
     
     /** Determine if the heap is empty.
      *  @return true if heap is empty, else false
@@ -248,9 +254,9 @@ export default class Dheap extends Adt {
      */
     insert(i, key) {
         assert(i > 0);
-        this._insertCount++;
-        if (i > this._capacity) this.expand(i);
-        this._key[i] = key; this._m++; this._siftup(i, this.m);
+        this.#insertCount++;
+        if (i > this.capacity) this.expand(i);
+        this.#key[i] = key - this.#offset; this.#m++; this.#siftup(i, this.m);
     }
     
     /** Remove an index from the heap.
@@ -258,15 +264,15 @@ export default class Dheap extends Adt {
      */
     delete(i) {
         assert(i > 0);
-        this._deleteCount++;
-        let j = this._item[this._m--];
+        this.#deleteCount++;
+        let j = this.#item[this.#m--];
         if (i != j) {
-            if (this._key[j] <= this._key[i])
-                this._siftup(j, this._pos[i]);
+            if (this.#key[j] <= this.#key[i])
+                this.#siftup(j, this.#pos[i]);
             else
-                this._siftdown(j, this._pos[i]);
+                this.#siftdown(j, this.#pos[i]);
         }
-        this._pos[i] = 0;
+        this.#pos[i] = 0;
     }
     
     /** Perform siftup operation to restore heap order.
@@ -274,14 +280,14 @@ export default class Dheap extends Adt {
      *  @param i is an item to be positioned in the heap
      *  @param x is a tentative position for i in the heap
      */
-    _siftup(i, x) {
-        let px = this._p(x);
-        while (x > 1 && this._key[i] < this._key[this._item[px]]) {
-            this._item[x] = this._item[px]; this._pos[this._item[x]] = x;
-            x = px; px = this._p(x);
-            this._siftupSteps++;
+    #siftup(i, x) {
+        let px = this.p(x);
+        while (x > 1 && this.#key[i] < this.#key[this.#item[px]]) {
+            this.#item[x] = this.#item[px]; this.#pos[this.#item[x]] = x;
+            x = px; px = this.p(x);
+            this.#siftupSteps++;
         }
-        this._item[x] = i; this._pos[i] = x;
+        this.#item[x] = i; this.#pos[i] = x;
     }
     
     /** Perform siftdown operation to restore heap order.
@@ -289,13 +295,13 @@ export default class Dheap extends Adt {
      *  @param i is an item to be positioned in the heap
       *  @param x is a tentative position for i in the heap
       */
-    _siftdown(i, x) {
-        let cx = this._minchild(x);
-        while (cx != 0 && this._key[this._item[cx]] < this._key[i]) {
-            this._item[x] = this._item[cx]; this._pos[this._item[x]] = x;
-            x = cx; cx = this._minchild(x);
+    #siftdown(i, x) {
+        let cx = this.#minchild(x);
+        while (cx != 0 && this.#key[this.#item[cx]] < this.#key[i]) {
+            this.#item[x] = this.#item[cx]; this.#pos[this.#item[x]] = x;
+            x = cx; cx = this.#minchild(x);
         }
-        this._item[x] = i; this._pos[i] = x;
+        this.#item[x] = i; this.#pos[i] = x;
     }
     
     /** Find the position of the child with the smallest key.
@@ -304,12 +310,12 @@ export default class Dheap extends Adt {
      *  @return the position of the child of the item at x, that has
      *  the smallest key
      */
-    _minchild(x) {
-        let minc = this._left(x);
+    #minchild(x) {
+        let minc = this.left(x);
         if (minc > this.m) return 0;
-        for (let y = minc + 1; y <= this._right(x) && y <= this.m; y++) {
-            this._siftdownSteps++;
-            if (this._key[this._item[y]] < this._key[this._item[minc]])
+        for (let y = minc + 1; y <= this.right(x) && y <= this.m; y++) {
+            this.#siftdownSteps++;
+            if (this.#key[this.#item[y]] < this.#key[this.#item[minc]])
                 minc = y;
         }
         return minc;
@@ -320,11 +326,12 @@ export default class Dheap extends Adt {
      *  @param k is a new key value for item i
      */
     changekey(i, k) {
-        this._changekeyCount++;
-        let ki = this._key[i]; this._key[i] = k;
+        this.#changekeyCount++;
+        let ki = this.#key[i] - this.#offset;
+        this.#key[i] = k - this.#offset;
         if (k == ki) return;
-        if (k < ki) this._siftup(i, this._pos[i]);
-        else this._siftdown(i, this._pos[i]);
+        if (k < ki) this.#siftup(i, this.#pos[i]);
+        else this.#siftdown(i, this.#pos[i]);
     }
 }
 </textarea>
@@ -340,21 +347,14 @@ In some applications key reductions may occur more frequently than
 other operations. In such cases, the overall performance can be
 improved by selecting a value of $d$ that makes these operations faster
 at the expense of the others.
-
-<h3>Differential $d$-Heap</h3>
-This is a variant of the $d$-heap that allows all key values in a heap
-to be shifted by a constant value in a single operation. It adds
-one new operation <code>addtokeys(offset)</code> that adds
-<code>offset</code> to the key of every item in the heap.
-It is implemented by adding a global property <code>delta</code>
-which is updated by <code>addtokeys(offset)</code>. In this version,
-the stored key values represent the difference between the
-&ldquo;true keys&rdquo; and <code>delta</code>.
+The <code>add2keys</code> is implemented by adding a value
+to a hidden offset that is used to interpret the key values.
+This allows the operation to be done in constant time.
 
 <a id=fheaps><h2>Fibonacci Heaps</h2></a>
 
 The Fibonacci heaps [FredTarj87] data structure represents a collection
-of heaps which define a partition over a common index set $1\ldots n$.
+of heaps that define a partition over a common index set $1\ldots n$.
 Each heap is identified by one of its items.
 The data structure supports an efficient <i>meld</i> operation which
 combines two heaps into a single heap.
@@ -631,87 +631,82 @@ The core methods of the <code>Fheaps</code> class are shown below.
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 import { assert, AssertError} from '../../common/Errors.mjs';
-import Adt from '../Adt.mjs';
+import Top from '../Top.mjs';
 import List from '../basic/List.mjs';
-import Dlists from '../basic/Dlists.mjs';
+import ListSet from '../basic/ListSet.mjs';
 import Scanner from '../basic/Scanner.mjs';
 
-/** This class implements a data structure consisting of a disjoint
- *  set of Fibonacci heaps.
- *  The heap elements are identified by indexes in 1..n where n
- *  is specified when an Fheaps object is constructed.
- */
-export default class Fheaps extends Adt {
-    _key;        ///< _key[i] is key of item i
-    _rank;       ///< _rank[i] gives rank of item i
-    _mark;       ///< _mark[i] is true if item i is considered marked
-    _p;          ///< _p[i] is the parent of item i in its heap
-    _c;          ///< _c[i] is some child of item i in its heap
-    _sibs;       ///< _sibs is a Dlists object containing sibling lists
+export default class FibHeaps extends Top {
+    #key;         ///< #key[i] is key of item i
+    #rank;        ///< #rank[i] gives rank of item i
+    #mark;        ///< #mark[i] is true if item i is considered marked
+    #p;           ///< #p[i] is the parent of item i in its heap
+    #c;           ///< #c[i] is some child of item i in its heap
+    #sibs;        ///< #sibs is a ListSet object containing sibling lists
 
-    _rankVec;    ///< _rankVec is an auxiliary array used during restructuring
-    _tmpq;       ///< _tmpq is a List object used as a temporary queue 
+    #rankVec;     ///< #rankVec is an auxiliary array used during restructuring
+    #tmpq;        ///< #tmpq is a List object used as a temporary queue 
 
-    _insertCount;
-    _deleteCount;
-    _changekeyCount;
-    _decreasekeySteps;
-    _mergeSteps;
+    #insertCount;
+    #deleteCount;
+    #changekeyCount;
+    #decreasekeySteps;
+    #mergeSteps;
 
-    _MAXRANK = 32;
+    #MAXRANK = 32;
 
-    /** Constructor for Fheaps object.
+    /** Constructor for FibHeaps object.
      *  @param n is index range for object
      *  @parm d is the base of the heap (defaults to 2)
      *  @param capacity is maximum index range (defaults to n)
      */
     constructor(n, capacity=n) { super(n); this.#init(capacity); }
     
-    /** Allocate space and initialize Fheaps object.
+    /** Allocate space and initialize FibHeaps object.
      *  @param nMax is the maximum range
      */
     #init(capacity) {
-        this._key = new Array(capacity+1).fill(0);
-        this._rank = new Array(capacity+1).fill(0);
-        this._mark = new Array(capacity+1).fill(false);
-        this._p = new Array(capacity+1).fill(0);
-        this._c = new Array(capacity+1).fill(0);
-        this._sibs = new Dlists(this.n, capacity);
+        this.#key = new Array(capacity+1).fill(0);
+        this.#rank = new Array(capacity+1).fill(0);
+        this.#mark = new Array(capacity+1).fill(false);
+        this.#p = new Array(capacity+1).fill(0);
+        this.#c = new Array(capacity+1).fill(0);
+        this.#sibs = new ListSet(this.n, capacity);
 
-        this._rankVec = new Array(this._MAXRANK+1).fill(0);
-        this._tmpq = new List(this.n, capacity);
+        this.#rankVec = new Array(this.#MAXRANK+1).fill(0);
+        this.#tmpq = new List(this.n, capacity);
 
-        this._insertCount = 0;
-        this._deleteCount = 0;
-        this._changekeyCount = 0;
-        this._decreasekeySteps = 0;
-        this._mergeSteps = 0;
+        this.#insertCount = 0;
+        this.#deleteCount = 0;
+        this.#changekeyCount = 0;
+        this.#decreasekeySteps = 0;
+        this.#mergeSteps = 0;
     }
 
     /** Return key of a heap item. */
-    key(i) { return this._key[i]; }
+    key(i) { return this.#key[i]; }
 
     /** Return ran k of a heap item. */
-    rank(i) { return this._rank[i]; }
+    rank(i) { return this.#rank[i]; }
 
     /** Return mark of a heap item. */
-    mark(i) { return this._mark[i]; }
+    mark(i) { return this.#mark[i]; }
 
     /** Return parent of a heap item. */
-    p(i) { return this._p[i]; }
+    p(i) { return this.#p[i]; }
 
     /** Return a child of a heap item. */
-    c(i) { return this._c[i]; }
+    c(i) { return this.#c[i]; }
 
     /** Set the key of a singleton heap item. */
-    setkey(i, k) { assert(this.singleton(i)); this._key[i] = k; }
+    setkey(i, k) { assert(this.singleton(i)); this.#key[i] = k; }
 
     /** Determine if an item is defines a singleton heap.
      *  @param i is a heap item
      *  @return true if it is a singleton.
      */
     singleton(i) {
-        return this._sibs.singleton(i) && this._p[i] == 0 && this._c[i] == 0;
+        return this.#sibs.singleton(i) && this.#p[i] == 0 && this.#c[i] == 0;
     }
 
     /** Return the item of minimum key in a heap.
@@ -725,8 +720,8 @@ export default class Fheaps extends Adt {
                (h2 == 0 || (this.valid(h2) && this.p(h2) == 0)));
         if (h1 == 0) return h2;
         if (h2 == 0 || h1 == h2) return h1;
-        return (this.key(h1) <= this.key(h2) ? this._sibs.join(h1, h2) :
-                                               this._sibs.join(h2, h1));
+        return (this.key(h1) <= this.key(h2) ? this.#sibs.join(h1, h2) :
+                                               this.#sibs.join(h2, h1));
     }
 
     /** Insert item into a heap. 
@@ -735,7 +730,7 @@ export default class Fheaps extends Adt {
      *  @param k is the key under which i is inserted
      */
     insert(i, h, k) {
-        this._insertCount++;
+        this.#insertCount++;
         if (i > this.n) this.expand(i);
         this.setkey(i, k); return this.meld(i, h);
     }
@@ -747,9 +742,9 @@ export default class Fheaps extends Adt {
      *  @return the modified heap
      */
     changekey(i, h, k) {
-        this._changekeyCount++;
-        let key = this._key; let rank = this._rank; let mark = this._mark;
-        let p = this._p; let c = this._c; let sibs = this._sibs;
+        this.#changekeyCount++;
+        let key = this.#key; let rank = this.#rank; let mark = this.#mark;
+        let p = this.#p; let c = this.#c; let sibs = this.#sibs;
         assert(this.valid(i) && this.valid(h) && p[h] == 0);
         if (k > key[i]) {
             h = this.delete(i, h);
@@ -763,7 +758,7 @@ export default class Fheaps extends Adt {
         let pi = p[i];
         if (key[i] >= key[pi]) return h;
         do {
-            this._decreasekeySteps++;
+            this.#decreasekeySteps++;
             rank[pi]--;
             c[pi] = sibs.delete(i, c[pi]);
             p[i] = 0; mark[i] = false; h = this.meld(h, i);
@@ -774,64 +769,14 @@ export default class Fheaps extends Adt {
         return h;
     }
 
-    /** Merge the tree roots in heap, to eliminate repeated ranks.
-     *  @param r is a tree root in a heap; all tree roots are assumed
-     *  to be non-deleted nodes; also r is the id of the root list in sibs
-     *  @return the resulting root with the smallest key
-     */
-    _mergeRoots(r) {
-        let key = this._key; let rank = this._rank; let mark = this._mark;
-        let p = this._p; let c = this._c; let sibs = this._sibs;
-        let tmpq = this._tmpq; let rankVec = this._rankVec;
-
-        assert(this.valid(r) && p[r] == 0);
-
-        // Build queue of roots and find root with smallest key
-        let minRoot = r;
-        for (let sr = r; sr != 0; sr = sibs.next(sr)) {
-            this._mergeSteps++;
-            if (key[sr] < key[minRoot]) minRoot = sr;
-            tmpq.enq(sr); p[sr] = 0; mark[sr] = false;
-        }
-        r = sibs.rotate(r, minRoot); // r is now is min root
-        // scan roots, merging trees of equal rank
-        let maxRank = -1; // maxRank = maximum rank seen so far
-        while (!tmpq.empty()) {
-            this._mergeSteps++;
-            let r1 = tmpq.pop();
-            assert(rank[r1] <= this._MAXRANK);
-            let r2 = rankVec[rank[r1]];
-            if (maxRank < rank[r1]) {
-                for (maxRank++; maxRank < rank[r1]; maxRank++)
-                    rankVec[maxRank] = 0;
-                rankVec[rank[r1]] = r1;
-            } else if (r2 == 0) {
-                rankVec[rank[r1]] = r1;
-            } else if (key[r1] < key[r2] || (key[r1] == key[r2] && r1 == r)) {
-                r = sibs.delete(r2, r);
-                c[r1] = sibs.join(c[r1], r2);
-                rankVec[rank[r1]] = 0;
-                rank[r1]++; p[r2] = r1;
-                tmpq.enq(r1);
-            } else {
-                r = sibs.delete(r1, r);
-                c[r2] = sibs.join(c[r2], r1);
-                rankVec[rank[r1]] = 0;
-                rank[r2]++; p[r1] = r2;
-                tmpq.enq(r2);
-            }
-        }
-        return r;
-    }
-        
     /** Remove the item with smallest key from a heap.
      *  @param h is the canonical element of some heap
-     *  @return the canonical element of the heap that results from
-     *  removing the item with the smallest key
+     *  @return the pair [min, hnew] where min is the deleted item
+     *  and hnew is the modified heap
      */
     deletemin(h) {
-        this._deleteCount++;
-        let p = this._p; let c = this._c; let sibs = this._sibs;
+        this.#deleteCount++;
+        let p = this.#p; let c = this.#c; let sibs = this.#sibs;
         assert(this.valid(h) && p[h] == 0);
     
         // Merge h's children into root list and delete it
@@ -841,9 +786,9 @@ export default class Fheaps extends Adt {
                 p[i] = 0;
             sibs.join(h,c[h]); c[h] = 0;
         }
-        this._rank[h] = 0;
-        if (sibs.singleton(h)) return 0;
-        return this._mergeRoots(sibs.delete(h, h));
+        this.#rank[h] = 0;
+        if (sibs.singleton(h)) return [h,0];
+        return [h, this.#mergeRoots(sibs.delete(h, h))];
     }
     
     /** Delete an item from a heap.
@@ -856,7 +801,7 @@ export default class Fheaps extends Adt {
         let k = this.key(i);
         h = decreasekey(i, (this.key(i) - this.key(h)) + 1, h);
         h = deletemin(h);
-        this._key[i] = k;
+        this.#key[i] = k;
         return h;
     }
 }
@@ -927,127 +872,6 @@ The <code>heapify</code> operation is implemented by
 repeatedly removing the first two heaps from the list, melding them
 then appending the resulting heap at the end of the list.
 It terminates when there is a single heap on the list.
-The core methods of the <code>Lheaps</code> class are shown below.
-<p>
-<textarea id="components" rows="20" cols="80" readonly
-          style="font-size: 95%;background-color:lightCyan">
-import { assert, AssertError} from '../../common/Errors.mjs';
-import Adt from '../Adt.mjs';
-import List from '../basic/List.mjs';
-import Dlists from '../basic/Dlists.mjs';
-import Dsets from '../basic/Dsets.mjs';
-import Scanner from '../basic/Scanner.mjs';
-
-/** This class implements a data structure consisting of a disjoint
- *  set of Fibonacci heaps.
- *  The heap elements are identified by indexes in 1..n where n
- *  is specified when an Lheaps object is constructed.
- */
-export default class Lheaps extends Adt {
-    _key;        ///< _key[i] is key of item i
-    _rank;       ///< _rank[i] gives rank of item i
-    _left;       ///< _left[i] is left child of i
-    _right;      ///< _right[i] is right child of i
-
-    /** Constructor for Lheaps object.
-     *  @param n is index range for object
-     *  @parm d is the base of the heap (defaults to 2)
-     *  @param capacity is maximum index range (defaults to n)
-     */
-    constructor(n, capacity=n) { super(n); this.#init(capacity); }
-    
-    /** Allocate space and initialize Lheaps object.
-     *  @param nMax is the maximum range
-     */
-    #init(capacity) {
-        this._key = new Array(capacity+1).fill(0, 0, this.n+1);
-        this._rank = new Array(capacity+1).fill(1, 0, this.n+1);
-        this._rank[0] = 0;
-        this._left = new Array(capacity+1).fill(0, 0, this.n+1);
-        this._right = new Array(capacity+1).fill(0, 0, this.n+1);
-    }
-
-    /** Return key of a heap item. */
-    key(i) { return this._key[i]; }
-
-    /** Return rank of a heap item. */
-    rank(i) { return this._rank[i]; }
-
-    /** Return left child of a heap item. */
-    left(i) { return this._left[i]; }
-
-    /** Return a right child of a heap item. */
-    right(i) { return this._right[i]; }
-
-    /** Set the key of a heap item.
-     *  @param i is a heap item, assumed to be root of a singleton heap
-     *  @param k is new key value for i
-     */
-    setkey(i, k) { this._key[i] = k; }
-
-    /** Return the item of minimum key in a heap.
-     *  @param h is a heap.
-     *  @return the item in h that has the smallest key
-     */
-    findmin(h) { return h; }
-
-    /** Combine a list of heaps into a single heap.
-     *    @param hlist is a List object containing a list of heaps
-     *  @param return the root of the combined heap.
-     */
-    heapify(hlist) {
-        if (hlist.empty()) return 0;
-        while (hlist.length > 1) {
-            let h = this.meld(hlist.at(1), hlist.at(2));
-            hlist.deq(); hlist.deq(); hlist.enq(h);
-        }
-        return hlist.first();
-    }
-
-    meld(h1, h2) {
-        // relies on null node having rank==0
-        if (h1 == 0) return h2;
-        if (h2 == 0) return h1;
-        if (this.key(h1) > this.key(h2)) {
-            let h = h1; h1 = h2; h2 = h;
-        }
-        this._right[h1] = this.meld(this.right(h1), h2);
-        if (this.rank(this.left(h1)) < this.rank(this.right(h1))) {
-            let h = this.left(h1);
-            this._left[h1] = this.right(h1);
-            this._right[h1] = h;
-        }
-        this._rank[h1] = this.rank(this.right(h1)) + 1;
-        return h1;
-    }
-
-    /** Insert item into a heap. 
-     *  @param i is a singleton.
-     *  @param h is a heap to which i is inserted.
-     *  @param k is the key under which i is inserted
-     */
-    insert(i, h, k) {
-        let mx = Math.max(i, h);
-        if (mx > this.n) this.expand(mx);
-        assert((i == 0 || this.valid(i)) && (h == 0 || this.valid(h)));
-        assert(this.left(i) == 0 && this.right(i) == 0 && this.rank(i) == 1);
-        this.setkey(i, k);
-        return this.meld(i, h);
-    }
-
-    /** Remove the item with smallest key from a heap.
-     *  @param h is the canonical element of some heap
-     *  @return the canonical element of the resulting heap
-     */
-    deletemin(h) {
-        assert(this.valid(h));
-        let h1 = this.meld(this.left(h),this.right(h));
-        this._left[h] = this._right[h] = 0; this._rank[h] = 1;
-        return h;
-    }
-}
-</textarea>
-<p>
 Since the length of the right path from any node to the <i>null</i> node
 is at most $\lg n$, the <code>meld</code>, <code>insert</code> and
 <code>deletemin</code> operations all take $O(\log n)$ time.
@@ -1064,7 +888,7 @@ $$
 O \left(\log n_1 + \cdots + \log n_r \right) = O \left( r \log n/r \right)
 $$
 since the value of the sum is maximized when all heaps are the same size.
-Consequently,the total time for <code>heapify</code> is
+Consequently, the total time for <code>heapify</code> is
 $$
 \begin{eqnarray*}
 O\left( \sum_{j=1}^{\lfloor \lg k \rfloor} (k/2^j) \log ( 2^j n/k) \right) &=&
@@ -1074,43 +898,253 @@ O\left( k \sum_{j=1}^{\lfloor \lg k \rfloor} (j/2^j) + (1/2^j) \log ( n/k) \righ
 $$
 
 <h3>Lazy Variant</h3>
-In some applications, a lazy variant of the leftist heap can be useful.
-The lazy version includes a <code>delete</code> that can be implemented
-by marking a node deleted and leaving it in place. The actual removal of
-a deleted node is deferred to a later time.
-The presence of deleted nodes means that the &ldquo;true&rdquo; minimum
-key node may not be at the root of a heap. Consequently,
+The basic leftist heap data structure can be extended to include
+a <i>lazy deletion</i> operation called <code>retire</code>
+and a <i>lazy melding</i> operation.
+The <code>retire</code> operation can be implemented by marking the
+tree node for an item, but leaving it in place.  
+The <code>lazyMeld</code> operation can be implemented similarly,
+using a <i>dummy node</i> with a key of minus infinity,
+and making the two heaps to be combined, children of this dummy node.
+<p>
+The presence of retired or dummy nodes means that the
+&ldquo;true&rdquo; minimum key node may not be at the root of a heap.
+Consequently,
 the <code>findmin</code> and <code>deletemin</code> operations must start
 with an initial step that traverses the top of the heap, removing all
-the marked nodes that it finds and constructing a list of sub-heaps
-for which the roots are not marked deleted.
-This is illustrated below, with marked nodes shown in yellow.
+the retired/dummy nodes that it finds and constructing a list of sub-heaps
+for which the roots are not retired or dummy.
+This is illustrated below, with retired/dummy nodes shown in yellow.
 <p>
 <div  style="text-align:center;">
 <img width="1000" src="figs/lheap3.png"><br>
 </div>
+This list of heaps is then merged into a single heap using <code>heapify</code>.
 <p>
-The list of heaps is then combined using <code>heapify</code>.
-The lazy deletion can also be implemented without any explicit marking.
-Instead a client-provided <i>deleted</i>
-function can be used to determine if a node should
-be considered deleted, based on some application-specific criterion.
-This eliminates the time spent marking nodes deleted and
+Heap items can also be retired implicitly, using a
+a client-provided <i>retired</i> function.
+If such a function is provided, it is used to determine if a
+node should be considered retired, instead of consulting a stored bit.
+This eliminates the time spent marking nodes as retired and
 is particularly useful if a single step in an application may make many
 heap nodes no longer relevant at the same time. Rather than force the
 application to identify and mark each of these nodes, it can be more
-efficient to identify them with a function call when it's time to remove
-them from the heap.
+efficient to identify them with a function call when it's time to purge
+them from the heap-ordered tree.
 <p>
-One can take the laziness one step further by providing a
-<i>lazy meld</i> operation. To perform a lazy meld on two heaps
-$h_1$ and $h_2$ with $rank(h_1)\geq rank(h_2)$, add a <i>dummy node</i>
-with $h_1$ as its left subtree and $h_2$ as its right subtree.
-The key of the dummy node is set to $- \infty$ and the rank is
-set to $1+rank(h_2)$. During <code>findmin</code> and <code>deletemin</code>
-operations, dummy nodes are removed along with the nodes marked as deleted.
-<code>Heapify</code> is implemented using the original <code>meld</code>,
-not the lazy version.
+The core methods of the <code>LeftistHeaps</code> class are shown below.
+<p>
+<textarea id="components" rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+import { assert, AssertError} from '../../common/Errors.mjs';
+import Top from '../Top.mjs';
+import List from '../basic/List.mjs';
+import ListSet from '../basic/ListSet.mjs';
+import Sets from '../basic/Sets.mjs';
+import Scanner from '../basic/Scanner.mjs';
+
+export default class LeftistHeaps extends Top {
+    #key;          ///< #key[i] is key of item i
+    #rank;         ///< #rank[i] gives rank of item i
+    #left;         ///< #left[i] is left child of i
+    #right;        ///< #right[i] is right child of i
+
+    #dummy;        ///< is first node in list of unused dummy nodes
+    #retired;      ///< #retired is either a user-supplied function
+                   ///< or an array of bits
+    #plist;        ///< temporary list used by purge
+    #lazy          ///< when true, implements lazy deletion/melding
+
+    #insertCount;       // calls to insert
+    #deleteCount;       // calls to deletemin
+    #meldSteps;         // steps in non-lazy meld
+    #purgeSteps;        // steps in purge operation
+
+    /** Constructor for LeftistHeaps object.
+     *  @param n is index range for object
+     *  @parm d is the base of the heap (defaults to 2)
+     *  @param capacity is maximum index range (defaults to n)
+     *  @param retired is an optional function that if present is used
+     *  to determine which nodes are retired.
+     */
+    constructor(n, capacity=n, lazy=false, retired=null) {
+        super(n); 
+        if (!capacity) capacity = this.n;
+        this.#init(capacity, lazy, retired);
+    }
+
+    /** Extend the data structurue to support lazy deletion and melding.
+     *  @param retired is an optional function that is used to determine
+     *  if a given heap item should be considered retired, or not;
+     *  if it is not present, an array of stored bits is used to
+     *  distinguish retired items from those that are still active
+     */
+    makeLazy(retired) {
+        let nu = new LeftistHeaps(this.n, this.n, true, retired);
+        nu.assign(this); this.xfer(nu);
+    }
+
+    /** Revert to initial state. */
+    clear() {
+        let roots = this.#findRoots();
+        for (let r = roots.first(); r != 0; r = roots.next(r)) {
+            while (r != 0) [,r] = this.deletemin(r);
+        }
+    }
+
+    /** Determine if a node is a dummy.
+     *  @param i is a node index
+     *  @return true if i is a dummy node (possibly in-use)
+     */
+    isdummy(i) { return this.#lazy && i > this.n; }
+
+    /** Determine if a node is active.
+     *  @param i is a node index
+     *  @return true if i is neither a dummy, nor a retired item.
+     */
+    isactive(i) {
+        return (!this.#lazy || i <= this.n && !this.retired(i));
+    }
+
+    /** Return key of a heap item. */
+    key(i) { return this.#key[i]; }
+
+    /** Return rank of a heap item. */
+    rank(i) { return this.#rank[i]; }
+
+    /** Return left child of a heap item. */
+    left(i) { return this.#left[i]; }
+
+    /** Return a right child of a heap item. */
+    right(i) { return this.#right[i]; }
+
+    /** Set the key of a heap item.
+     *  @param i is a heap item, assumed to be root of a singleton heap
+     *  @param k is new key value for i
+     */
+    setkey(i, k) { this.#key[i] = k; }
+
+    /** Retire a heap item.
+     *  Retired heap items do not belong to any heap and cannot be
+     *  used in the future.
+     *  @param i is a heap item to be retired.
+     */
+    retire(i) {
+        if (!this.#lazy) this.makeLazy();
+        if (Array.isArray(this.#retired)) this.#retired[i] = true;
+    }
+
+    /** Determine if a heap item is retired.
+     *  @param i is a heap item
+     *  @return true if i has been retired (either explicitly or implicitly
+     *  through user-provided retired function)
+     */
+    retired(i) {
+        if (!this.#lazy) return false;
+        return i <= this.n && (Array.isArray(this.#retired) ?
+                                  this.#retired[i] : this.#retired(i));
+    }
+
+    /** Meld two heaps.
+     *  @param h1 is a heap
+     *  @param h2 is a second heap
+     *  @return the identifier of the resulyt of melding h1 and h2
+     */
+    meld(h1, h2) {
+        this.#meldSteps++;
+        // relies on null node having rank==0
+        if (h1 == 0) return h2;
+        if (h2 == 0) return h1;
+        if (this.key(h1) > this.key(h2)) {
+            let h = h1; h1 = h2; h2 = h;
+        }
+        this.#right[h1] = this.meld(this.right(h1), h2);
+        if (this.rank(this.left(h1)) < this.rank(this.right(h1))) {
+            let h = this.left(h1);
+            this.#left[h1] = this.right(h1);
+            this.#right[h1] = h;
+        }
+        this.#rank[h1] = this.rank(this.right(h1)) + 1;
+        return h1;
+    }
+
+    /** Insert item into a heap. 
+     *  @param i is a singleton.
+     *  @param h is a heap to which i is inserted.
+     *  @param k is the key under which i is inserted
+     */
+    insert(i, h, k) {
+        this.#insertCount++;
+        let mx = Math.max(i, h);
+        if (mx > this.n) this.expand(mx);
+        assert((i == 0 || this.valid(i)) && (h == 0 || this.valid(h)));
+        assert(this.left(i) == 0 && this.right(i) == 0 && this.rank(i) == 1);
+        this.setkey(i, k);
+        return this.meld(i, h);
+    }
+    
+    /** Return the item of minimum key in a heap.
+     *  @param h is a heap.
+     *  @return the item in h that has the smallest key
+     */
+    findmin(h) {
+        this.#plist.clear();
+        this.#purge(h);
+        return this.heapify(this.#plist);
+    }
+
+    /** Remove the item with smallest key from a heap.
+     *  @param h is a heap
+     *  @return the pair [hmin, hnew] where hmin is the deleted
+     *  item and hnew is the modified heap
+     */
+    deletemin(h) {
+        this.#deleteCount++;
+        let hmin;
+        if (this.#lazy) {
+            hmin = h = this.findmin(h);
+            h = this.lazyMeld(this.left(h), this.right(h));
+        } else {
+            hmin = h;
+            h = this.meld(this.left(h), this.right(h));
+        }
+        this.#left[hmin] = this.#right[hmin] = 0; this.#rank[hmin] = 1;
+        return [hmin,h];
+    }
+
+
+    /** Combine a list of heaps into a single heap.
+     *    @param hlist is a List object containing a list of heaps
+     *  @param return the root of the combined heap.
+     */
+    heapify(hlist) {
+        if (hlist.empty()) return 0;
+        while (hlist.length > 1) {
+            let h = this.meld(hlist.at(1), hlist.at(2));
+            hlist.deq(); hlist.deq(); hlist.enq(h);
+        }
+        return hlist.first();
+    }
+
+    /** Lazy meld a pair of heaps */
+    lazyMeld(h1, h2) {
+        if (!this.#lazy) this.makeLazy();
+        if (h1 == 0) return h2;
+        if (h2 == 0) return h1;
+        assert((h1 == 0 || this.valid(h1)) &&
+               (h2 == 0 || this.valid(h2)) && this.#dummy != 0);
+        let d = this.#dummy; this.#dummy = this.#left[this.#dummy];
+        if (this.rank(h1) < this.rank(h2)) {
+            let h = h1; h1 = h2; h2 = h;
+        }
+        this.#left[d] = h1; this.#right[d] = h2;
+        this.#rank[d] = this.rank(h2) + 1;
+        this.#key[d] = Number.NEGATIVE_INFINITY;
+        return d;
+    }
+}
+</textarea>
+<p>
 
 <h2>References</h2>
 <dt> Crane72
