@@ -176,7 +176,7 @@ body	{
 	border-right:	0;
 	width:	auto;
 	font-family: "Times New Roman", Times, serif;
-	font-size:160%;
+	/*font-size:160%;*/
 	}
 code, pre {
 	font-size:110%;
