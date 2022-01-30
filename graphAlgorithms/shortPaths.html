@@ -21,8 +21,9 @@
 <body bgcolor=ffffff>
 <h1>Shortest Paths</h1>
 
-Let $G = (V,E)$ be a directed graph and let <i>length</i> be a
-real-valued function on $E$.
+(This chapter is loosely based on Chapter 7 of [Tarjan87].)
+Let $G = (V,E)$ be a directed graph (<i>digraph</i> for short)
+and let <i>length</i> be a real-valued function on $E$.
 The <i>length of a directed path</i> in $G$ is defined to be the sum of the 
 lengths of its edges. So for example, the
 length of the path $c$, $a$, $b$, $g$ in the example below is 14.
@@ -31,24 +32,16 @@ length of the path $c$, $a$, $b$, $g$ in the example below is 14.
 <img width="200" src="figs/spath.png"><br>
 </div>
 <p>
-
-Define reachable. A directed spanning tree includes all reachable vertices.
-
-Define spt in terms of reachable vertices. A directed subtree that
-spans all reachable vertices.
-
-Spt distance lemma, with distance function infinite for non-tree vertices.
-
-Sketch how a subtree can be converted to an spt by correcting violations
-of the lemma. If the process terminates, we have an spt.
-
-
-
-
 A <i>shortest path</i> joining a pair of vertices $u$ and $v$ is defined
 as a path of minimum length among all paths from $u$ to $v$.
 So for example, the highlighted path $a$, $e$, $d$, $f$ in the example above
 is a shortest path from $a$ to $f$, but the path $a$, $b$, $g$, $f$ is not.
+If there is a directed path from a vertex $u$ to a vertex $v$, then $v$
+is said to be <i>reachable</i> from $u$. Note that some vertex pairs
+may not be connected by any directed path, even when the underlying
+undirected graph is connected.
+The distance from $u$ to $v$ is defined to be infinite when $v$
+is not reachable from $u$.
 <p>
 The shortest path problem has many applications. For example, it is used
 to determine the best way to forward packets in the internet, and by
@@ -56,26 +49,46 @@ mapping applications, to determine the shortest driving distance between
 two locations. It also arises in less obvious forms, and often appears as
 a subproblem within other problems.
 <p>
-Note that we allow edges to have negative lengths, which means that
+There are several variants of the shortest path problem. The simplest is the
+<i>single pair problem</i>, in which there is a given <i>source</i> vertex
+$s$ and a <i>sink</i> vertex $t$  and the objective is find a shortest path
+from $s$ to $t$.
+In the <i>single source problem</i>, the objective is to find shortest
+paths from a given source $s$ to every reachable vertex.
+In the <i>single sink problem</i>, the objective is to find shortest
+paths to a sink $t$ from every vertex from which $t$ is reachable.
+Finally, in the <i>all pairs problem</i>, the objective is to
+find shortest paths between every of vertices joined by a path.
+<p>
+It turns out that solving the single pair problem generally requires solving
+a single source (or single sink) problem.
+Also, the single source and single sink problems are essentially the same,
+and the all pairs problem can be solved by solving the single source problem
+multiple times.
+Hence, it makes sense to focus on the single source version of the problem.
+<p>
+Note that edges are allowed to have negative lengths, which means that
 shortest paths may have negative lengths as well.
-This allows the possibility that a graph might contain a cycle of negative
-length, in which case shortest paths are not well-defined (since we
-can get a path of arbitrarily small length by traversing a negative
-cycle multiple times). This means that we have to take extra care when
+This introduces the possibility that a graph might contain a cycle of negative
+length, in which case shortest paths are not well-defined (since one
+can produce a path of arbitrarily small length by traversing a negative
+cycle multiple times). This means that extra care is needed when
 dealing with graphs that have negative edge lengths.
 <p>
-You might well wonder why we would want to allow negative edge lengths.
+You might wonder why negative edge lengths are allowed in the first place.
 While many applications of shortest paths do not require negative edge lengths,
-there are other applications where they are useful or even essential.
+there are others where they are useful or even essential.
 Indeed, shortest path computations are used in algorithms for the
-<i>min cost flow</i> problem and in this context, negative edge lengths
+<i>minimum cost flow</i> problem and in this context, negative edge lengths
 are an unavoidable feature of the problem.
-<p>
-We note that if there is no negative cycle on any path from $s$ to $t$
-in a graph, then there must be a <i>simple path</i> of minimum length,
-since we can always remove a simple cycle of non-negative length from
+
+<h2>Properties of Shortest Paths</h2>
+Note that if $t$ is reachable from $s$ and
+there is no negative cycle on any path from $s$ to $t$,
+then there must be a <i>simple path</i> of minimum length,
+since a simple cycle of non-negative length can always removed from
 a path without increasing its length. So in the example below,
-the shortest path $s$, $a$, $b$, $c$, $t$ can
+the shortest path $s$, $a$, $b$, $c$, $a$, $t$ can
 be replaced with the simple shortest path $s$, $a$, $t$ by removing the
 non-negative cycle $a$, $b$, $c$.
 <p>
@@ -87,67 +100,62 @@ These observations yield the following basic theorem.
 <p>
 <i>Theorem 1</i>.
 Let $G$ be digraph with a path from $s$ to $t$. 
-There is a shortest path from $s$ to $t$ if and only if no path from $s$ to $t$ that contains a negative cycle.
+There is a shortest path from $s$ to $t$ if and only if no path from
+$s$ to $t$ contains a negative cycle.
 If there is a shortest path from $s$ to $t$, there is one that is simple.
-<p>
-There are several variants of the shortest path problem. The simplest is the
-<i>single pair problem</i>, in which we are given a source vertex
-$s$ and a sink vertex $t$  and our objective is find a shortest path
-from $s$ to $t$.
-In the <i>single source problem</i>, we are given a source vertex $s$, and
-our objective is to find shortest paths from $s$ to every other vertex in $G$.
-In the <i>single sink problem</i>, we are given a sink vertex $t$, and
-our objective is to find shortest paths to $t$ from every other vertex in $G$.
-Finally, in the <i>all pairs problem</i>, our objective is to
-find shortest paths between every pair of vertices.
-<p>
-It turns out that solving the single pair problem generally requires solving
-a single source (or single sink) problem.
-Also, the single source and single sink problems are essentially the same,
-and the all pairs problem can be solved by solving the single source problem
-multiple times.
-Hence, it makes sense to focus most of our attention on the single source
-version of the problem.
 <p>
 Solutions to the single source problem can be expressed conveniently using
 a <i>shortest path tree</i>. A <i>directed spanning tree</i> of a graph is a
-directed subtree of the graph that includes a directed path from the root
-to every vertex.
-A shortest path tree is a directed spanning tree rooted at the source vertex $s$, in which all paths are shortest paths. So for example, the heavy weight
+directed subtree that includes a directed path from its root
+$s$ to every vertex that is reachable from $s$.
+A shortest path tree is a directed spanning tree
+in which all paths are shortest paths.
+By Theorem 1, a shortest path tree rooted at $s$ exists if an only if
+there are no negative cycles reachable from $s$.
+So for example, the heavy weight
 edges in the example below form a shortest path tree rooted at $a$.
 <p>
 <div  style="text-align:center;">
 <img width="200" src="figs/sptree.png"><br>
 </div>
 <p>
-The following theorem characterizes the existence of shortest paths in terms of shortest path trees.
+Note that if $G$ has a shortest path tree with root $s$, then it contains
+a shortest path from $s$ to every vertex reachable from $s$.
+Similarly, if $G$ has shortest paths to every reachable vertex,
+one can use those paths to construct a shortest path tree.
+Simply take a set of paths $P$ containing one path from $s$ to each
+reachable vertex. Let $H$ be the graph defined by the union of the
+edges in $P$'s paths. Now, for each vertex with more that one incoming
+edge, remove all but one. The resulting graph is a shortest path tree.
+This yields the following theorem.
 <p>
 <i>Theorem 2</i>.
-$G$ contains shortest paths from $s$ to every other vertex if and only if it contains a shortest path tree with root $s$. 
+$G$ contains shortest paths from $s$ to every vertex reachable from
+$s$ if and only if it contains a shortest path tree with root $s$. 
 <p>
-The proof of this will be deferred until later.
-<p>
-Next, we describe a key property of shortest path trees.
-If $T$ is a spanning tree of $G$ with root $s$, define $\textit{distance}(v)$
-to be the length of the path from $s$ to $v$ in $T$.
-<p>
-Consider an edge $(v,w)$ in $G$ that is not in $T$ and note that that
-if $\textit{distance}(w)>\textit{distance}(v)+\textit{length}(v,w)$,
-then the tree path from $s$ to $w$ is not a shortest path.
+Shortest path trees have an important property that can be
+used to define a shortest path algorithm.
+Let $T$ be a directed spanning tree of $G$ with root $s$, and
+let $\textit{distance}(u)$ be the length of the path from $s$ to $u$ in $T$
+or infinity if $u$ is not reachable from $s$.
+Consider an edge $(u,v)$ in $G$ that is not in $T$ and note that
+if $\textit{distance}(v)>\textit{distance}(u)+\textit{length}(u,v)$,
+then the tree path from $s$ to $u$ is not a shortest path.
 <p>
 <div  style="text-align:center;">
-<img width="200" src="figs/sptProp.png"><br>
+<img width="175" src="figs/sptProp.png"><br>
 </div>
 <p>
-Hence, if $T$ is a shortest path tree, then we must have
-$\textit{distance}(w)\leq\textit{distance}(v)+\textit{length}(v,w)$
-for all edges $(v,w)$ in $G$. 
+Hence, if $T$ is a shortest path tree,
+$\textit{distance}(v)\leq\textit{distance}(u)+\textit{length}(u,v)$
+for all edges $(u,v)$ in $G$. 
 <p>
-What about the converse? That is, can we say that if
-$\textit{distance}(w)\leq\textit{distance}(v)+\textit{length}(v,w)$
-for all edges $(v,w)$ in $G$, that all paths in $T$ are shortest paths?
-<p>
-To prove this, we must show that for any path $p$ in $G$ from $s$
+What about the converse? That is, if
+$\textit{distance}(v)\leq\textit{distance}(u)+\textit{length}(u,v)$
+for all edges $(u,v)$ in $G$, does that imply
+that all paths in $T$ are shortest paths?
+The converse can be confirmed by
+showing that for any path $p$ in $G$ from $s$
 to a vertex $x$, $\textit{distance}(x)\leq\textit{length}(p)$.
 Note that if $p$ consists of a single edge $(s,x)$, then
 $$
@@ -163,7 +171,7 @@ Now, let $q$ be the path consisting of the first $k$ edges of $p$
 and let $y$ be the last vertex in $q$.
 <p>
 <div  style="text-align:center;">
-<img width="300" src="figs/sptProof.png"><br>
+<img width="250" src="figs/sptProof.png"><br>
 </div>
 <p>
 Then,
@@ -172,144 +180,575 @@ Then,
 &\leq&\textit{length}(q)+\textit{length}(y,x) \\
 &=&\textit{length}(p)
 \end{eqnarray*}
-This gives us the following theorem.
+This yields the following theorem.
 <p>
 <i>Theorem 3</i>.
-Let $T$ is a spanning tree of $G$ with root $s$, and
-let $\textit{distance}(v)$ be the length of the path from $s$ to $v$ in $T$.
+Let $T$ be a directed spanning tree of $G$ with root $s$, and
+let $\textit{distance}(u)$ be the length of the path from $s$ to $u$ in $T$.
 $T$ is a shortest path tree if and only if, 
-$\textit{distance}(w)\leq\textit{distance}(v)+\textit{length}(v,w)$
-for all edges $(v,w)$ in $G$.
+$\textit{distance}(v)\leq\textit{distance}(u)+\textit{length}(u,v)$
+for all edges $(u,v)$ in $G$.
 <p>
 The property described in Theorem 3 is called the
-<i>shortest path tree property</i> and is the basis for
-a fundamental method for solving the shortest path problem.
+<i>shortest path tree property</i> and immediately
+suggests the following strategy for computing shortest paths.
+First, construct a directed spanning tree rooted at $s$, then while
+there exists an edge $(u,v)$ that violates the inequality,
+replace the tree edge entering $v$ with $(u,v)$.
+If there is a shortest path tree rooted at $s$, this process will
+eventually find it. However, if there is a negative cycle reachable
+from $s$, the procedure will never terminate.
+The next section describes a general method for computing
+shortest paths based on this approach.
 
-<h2>The Labeling Method</h2>
+<h2>General Methods for Shortest Paths</h2>
 The <i>labeling method</i> builds a directed spanning tree incrementally
 and transforms it to a shortest path tree by identifying edges that
-violate the shortest path property, then modifying the tree to eliminate
+violate the shortest path tree property and modifying the tree to eliminate
 those violations.
-It uses two arrays, a <i>parent</i> array that maps a vertex $u$ to $p(u)$,
-its tentative parent in a partial shortest path tree, and a 
-<i>distance</i> array that maps vertex $u$ to $\textit{dist}(u)$,
+It uses two mappings, a <i>parent</i> mapping that maps a vertex $u$ to $p(u)$,
+its tentative parent in a partial shortest path tree, and a
+<i>distance</i> mapping that maps vertex $u$ to $\textit{dist}(u)$,
 the distance from the source vertex to $u$ in the current partial tree.
 Initially, $p(u)=\textbf{null}$ for all $v$ and $\textit{dist}(u)=\infty$
-for all $u$ except the source vertex $s$, for which $\textit{dist}(s)=0$.
-It then repeatedly applies the following labelling step.
+for all $u$ except the source $s$, for which $\textit{dist}(s)=0$.
+It then repeatedly applies the following labeling step.
 <p style="padding-left:5%;">
 Select an edge $(u,v)$ with
 $\textit{dist}(v) > \textit{dist}(u) + \textit{length}(u,v)$;
 let $p(v) = u$ and
 $\textit{dist}(v) = \textit{dist}(u) + \textit{length}(u,v)$.
 <p>
-
-
-
-
-
-
+If there is a shortest path tree at $s$, then when the labeling method halts,
+its parent pointers define a shortest path tree and the <i>dist</i> values match
+the path lengths in the tree. The proof can be found in Chapter 7 of [Tarjan87].
 <p>
-At this point we're ready for a nearly complete
-implementation of the algorithm.
-<p style="padding-left:5%;margin-top:0;margin-bottom:0">
-<b>functon</b> prim(<b>graph</b> $G=(V,E)) \Rightarrow$
-    <p style="padding-left:10%;margin-top:0;margin-bottom:0">
-    <b>graph</b> $T=(W,F);\; \textbf{set}\;B;$<br>
-    select $s \in V;\;W=W\cup\{s\};$<br>
-    <b>for</b> $e=\{s,u\} \in E \Rightarrow
-		B=B\cup e;\;\textit{light}(u) := e\;$ <b>rof</b><br>
-    <b>do</b> $B \not = \{\} \Rightarrow$<br>
-        <p style="padding-left:15%;margin-top:0;margin-bottom:0">
-        select $u \in B$ with the lightest edge $\textit{light}(u)$<br>
-        $B := B \setminus \{u\};\;
-			W=W \cup \{u\};\; F := F \cup \{\textit{light}(u)\}$<br>
-        <b>for</b> $e=\{u,v\} \in E \Rightarrow$
-            <p style="padding-left:20%;margin-top:0;margin-bottom:0">
-            <b>if</b> $v \not\in W \cup B \Rightarrow$
-                <p style="padding-left:25%;margin-top:0;margin-bottom:0">
-                $B := B + \{v\}; \;\textit{light}(v) := e$
-            <p style="padding-left:20%;margin-top:0;margin-bottom:0">
-            $|\;\;v \in B \land
-				\textit{weight}(e) < \textit{weight}(\textit{light}(v))
-				\Rightarrow$<br>
-                <p style="padding-left:25%;margin-top:0;margin-bottom:0">
-                $\textit{light}(v) := e$<br>
-            <p style="padding-left:20%;margin-top:0;margin-bottom:0">
-            <b>fi</b>
-        <p style="padding-left:15%;margin-top:0;margin-bottom:0">
-        <b>rof</b>
-    <p style="padding-left:10%;margin-top:0;margin-bottom:0">
-    <b>od</b><br>
-    <b>return</b> $T$
-<p style="padding-left:5%;margin-top:0;">
-<b>end</b>
+Note that the edge selection method is crucial to the design of efficient
+algorithms based on the labeling method. For example, in the graph shown
+below, if the shortest edges are selected first
+the number of labeling steps is $3(2^3 -1) = 21$.
+The example can be easily extended to yield
+graphs on $2k+1$ vertices that require $3(2^k-1)$ steps.
 <p>
+<div  style="text-align:center;">
+<img width="250" src="figs/badCaseLabel.png"><br>
+</div>
+<p>
+Most algorithms for computing shortest paths apply the
+labeling step to all the edges leaving a given vertex before
+moving on to other edges. In this approach, vertices are placed in one
+of three states: <i>unlabeled</i>, <i>labeled</i> and <i>scanned</i>.
+Initially, the source is labeled and all others are unlabeled.
+The algorithm then repeats the following <i>scanning step</i>.
+<p style="padding-left:5%;">
+Select a labeled vertex $u$ and for all edges $(u,v)$ with
+$\textit{dist}(v) > \textit{dist}(u) + \textit{length}(u,v)$;
+let $p(v) = u$ and
+$\textit{dist}(v) = \textit{dist}(u) + \textit{length}(u,v)$ and
+make the state of $v$ labeled.
+On completion of the scanning step, the state of $u$ becomes scanned.
+<p>
+The method halts when there are no labeled vertices.
+Observe that since a scanned vertex reverts to the labeled state whenever
+its distance label changes, this is just a specific version of the
+labeling method.
+Different algorithms can be obtained by using different methods
+for selecting the vertex to be scanned next.
+When applied to the previous example, this method uses no more than one
+labeling step per edge, regardless of how vertices are selected.
+<h2>Shortest Path Tree Algorithms</h2>
+Before considering an algorithm that handles the general case,
+let's focus on two special cases of graphs with no negative cycles.
+The first of these is acyclic graphs. By scanning the vertices in
+topological order (in topological order, a vertex $u$ precedes a vertex $v$
+if there is a path from $u$ to $v$),
+one can ensure that no vertex need ever be scanned
+more than once. Consequently, the running time is $O(m)$.
+Here is a <i>Javascript</i> version of this algorithm, along with a
+function that implements a topological sort.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-/** @file mst_prim.mjs
- *
- *  @author Jon Turner
- *  @date 2021
- *  This is open source software licensed under the Apache 2.0 license.
- *  See http://www.apache.org/licenses/LICENSE-2.0 for details.
- */
+export default function sptDag(g, s) {
+    let topo = toposort(g); // sorted list of vertices
+    if (topo.length != g.n) 
+        return ['Error: graph is not acyclic', null, null];
 
-import List from '../../dataStructures/basic/List.mjs';
-import Dsets from '../../dataStructures/basic/Dsets.mjs';
-import Dheap from '../../dataStructures/heaps/Dheap.mjs';
-import Graph_w from '../../dataStructures/graphs/Graph_w.mjs';
+    let pedge = new Array(g.n+1).fill(0);
+    let dist = new Array(g.n+1).fill(Infinity);
+    let reached = new Array(g.n+1).fill(false);
+        // reached[u]==true means u is no longer unlabeled
 
-/** Compute min spanning tree of a graph using Prim's algorithm.
- *  @param g is weighted graph
- *  @param trace controls the amount of trace output produced, larger
- *  values produce more output
- *  @return a list of edges that defines an mst in g or a minimum
- *  spanning forest, if g is not connected; also a trace string
- *  and a statistics object
- */
-export default function mst_prim(g, trace=0) {
-    let elist = []; let traceString = '';
-    let light = new Array(g.n+1).fill(0);
-    let h = new Dheap(g.n, 2+Math.floor(g.m/g.n));
-
-    if (trace) traceString += g + '\n';
-    let mark = new Array(g.n).fill(false);
-    for (let s = 1; s <= g.n; s++) {
-        if (mark[s]) continue;
-        mark[s] = true;
-        for (let e = g.firstAt(s); e != 0; e = g.nextAt(s,e)) {
-            let u = g.mate(s,e); h.insert(u, g.weight(e)); light[u] = e;
-        }
-        light[s] = 1;    // dummy value, anything non-zero will do
-        while (!h.empty()) {
-            if (trace) {
-                let u = h.findmin();
-                traceString += g.index2string(u) + ' ' +
-                               g.edge2string(light[u]) + ' ' +
-                               g.elist2string(elist) + '\n' + h +'\n\n';
-            }
-            let u = h.deletemin(); elist.push(light[u]);
-            for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
-                let v = g.mate(u,e); mark[v] = true;
-                if (h.contains(v) && g.weight(e) < h.key(v)) {
-                    h.changekey(v, g.weight(e)); light[v] = e;
-                } else if (!h.contains(v) && light[v] == 0) {
-                    h.insert(v, g.weight(e)); light[v] = e;
-                }
+    pedge[s] = 0; dist[s] = 0; reached[s] = true;
+    for (let i = 0; i < g.n; i++) {
+        let u = topo[i];
+        if (!reached[u]) continue;
+        for (let e = g.firstOut(u); e != 0; e = g.nextOut(u, e)) {
+            let v = g.mate(u, e); reached[v] = true;
+            if (dist[v] > dist[u] + g.length(e)) {
+                pedge[v] = e; dist[v] = dist[u] + g.length(e);
             }
         }
     }
-    return [elist, traceString, h.getStats() ];
+
+    return ['', pedge, dist];
+}
+
+function toposort(g) {
+    let vlist = []; // list of vertices in topological order
+    let q = new List(g.n);
+        // list of vertices whose in-edges have all been touched
+    let icount = new Array(g.n+1).fill(0);
+        // icount[u] = inDegree(u) - (# of times in-edge of u has been touched)
+
+    // Initialize icount[u] and put nodes with icount[u]=0 on q
+    for (let u = 1; u <= g.n; u++) {
+        icount[u] = g.inDegree(u);
+        if (icount[u] == 0) q.enq(u);
+    }
+    while (!q.empty()) { // q contains nodes u with icount[u] == 0
+        let u = q.deq(); vlist.push(u);
+        for (let e = g.firstOut(u); e != 0; e = g.nextOut(u,e)) {
+            let v = g.head(e); icount[v]--;
+            if (icount[v] == 0) q.enq(v);
+        }
+    }
+    return (vlist.length == g.n ? vlist : null);
 }
 </textarea>
 <p>
+Note that the version shown above has been abridged for clarity.
+The provided implementation also provides execution tracing and
+performance statistics.
+This provided version can be run in the web app's scratchpad by
+entering the following text.
+<pre style="padding-left:5%">
+let g = new Digraph();
+g.fromString('{a[g:2] b[c:1] c[i:-2 e:1] d[a:-2 c:3 h:1] e[] ' +
+             'f[a:4 d:-7 g:1] g[e:-4] h[b:-3] i[g:-1] j[e:4 h:-1 f:3]}');
+let [err, pedge, dist, traceString] = sptDag(g, 10, true);
+log(traceString);
+log(g.elist2string(pedge,null,true));
+log(g.nlist2string(dist));
+</pre>
+This produces the result shown below.
+<pre style="padding-left:5%">
+{
+a[g:2]
+b[c:1]
+c[e:1 i:-2]
+d[a:-2 c:3 h:1]
+e[]
+f[a:4 d:-7 g:1]
+g[e:-4]
+h[b:-3]
+i[g:-1]
+j[e:4 f:3 h:-1]
+}
+sorted vertex list: [j f d a h b c i g e]
+
+selected vertex, distance, edge to parent
+j 0 -
+f 3 (j,f,3)
+d -4 (f,d,-7)
+a -6 (d,a,-2)
+h -3 (d,h,1)
+b -6 (h,b,-3
+c -5 (b,c,1)
+i -7 (c,i,-2)
+g -8 (i,g,-1)
+e -12 (g,e,-4)
+ 
+[- (d,a,-2) (h,b,-3) (b,c,1) (f,d,-7) (g,e,-4) (j,f,3) (i,g,-1) (d,h,1) (c,i,-2) -] 
+[Infinity -6 -6 -5 -4 -12 3 -8 -3 -7 0] 
+
+</pre>
+Next, let's consider an algorithm that can be applied to any
+graph with no negative edges. This algorithm selects the labeled vertex
+with the smallest tentative distance label and is known as
+<i>Dijkstra's algorithm</i> [Dijkstra59].
+It is generally implemented using a heap
+of labeled vertices, as suggested by Johnson [Johnson77].
+This implementation is very similar to Prim's algorithm for the
+minimum spanning tree.
+If the graph has no negative edge lengths, it can be shown that
+the vertices are scanned in the order of their shortest path distances
+from the source. Since no vertex is scanned more than once,
+the running time is $O(m \log_d n)$ when implemented with an array heap
+with $d=2+\lfloor m/n \rfloor$,
+and $O(m + n \log n)$ when implemented with a Fibonacci heap.
+A <i>Javascript</i> version is shown below. 
+<p>
+<textarea id="components" rows="15" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default function sptD(g, s) {
+    let pedge = new Array(g.n+1).fill(0); let ts = '';
+    let dist = new Array(g.n+1).fill(Infinity);
+    let h = new ArrayHeap(g.n, 2+Math.floor(g.m/g.n));
+
+    dist[s] = 0; h.insert(s, 0);
+    while (!h.empty()) {
+        let u = h.deletemin();
+        for (let e = g.firstOut(u); e != 0; e = g.nextOut(u, e)) {
+            if (g.length(e) < 0)
+                return [ `Error: negative edge ${g.edge2string(e)}.`,
+                        pedge, dist];
+            let v = g.head(e);
+            if (dist[v] > dist[u] + g.length(e)) {
+                dist[v] = dist[u] + g.length(e); pedge[v] = e;
+                if (h.contains(v)) h.changekey(v, dist[v]);
+                else h.insert(v, dist[v]);
+            }
+        }
+    }
+    return ['', pedge, dist];
+}
+</textarea>
+<p>
+The performance of Dijkstra's algorithm directly mirrors Prim's algorithm.
+The example below demonstrates the worst-case performance.
+<p>
+<div  style="text-align:center;">
+<img width="400" src="figs/hardcaseDijkstra.png"><br>
+</div>
+<p>
+In this graph,
+the vertices are scanned from left to right and the vertices are all
+inserted into the heap in the first iteration of the main loop.
+On subsequent iterations, a <i>changekey</i> is performed for every
+edge examined and if the edges are examined in decreasing order of length,
+each <i>changekey</i> moves a vertex from the bottom of the heap to the top.
+<p>
+Finally, let's consider an algorithm that can handle the general case.
+This algorithm scans the vertices in breadth-first order.
+More precisely, it maintains a queue of labeled vertices and
+at each step, the first vertex in the queue is scanned, and any
+newly labeled vertices are added to the end of the queue.
+To evaluate the performance of this approach, it's helpful to divide
+the execution into
+a series of <i>passes</i>, where a pass ends, when all vertices on the
+queue at the start of the pass have been scanned.
+If the first pass is pass 0, then at the start of pass $k$,
+all vertices $u$ that have a shortest path from the source
+consisting of $k$ edges have $dist(u)$ equal to the length
+of that path. This can be established by induction on the length
+of the path. Consequently, if there is a shortest path tree rooted
+at the specified source vertex,
+the program terminates after no more than $n$ passes.
+Since each edge is processed at most once per pass,
+the algorithm halts in $O(mn)$ time.
+<p>
+Note that if the breadth-first scanning does not halt after $n$ passes,
+it will never halt, as there must be some negative cycle reachable from the
+source. The simplest way to handle this is to simply count passes and
+terminate with a failure if the number of passes exceeds $n$.
+This algorithm was discovered independently by Bellman [Bellman58]
+and Moore [Moore59] and is referred to here as the
+Bellman-Moore algorithm.
+A <i>Javascript</i> version appears below.
+<p>
+<textarea id="components" rows="15" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default function sptBM(g, s) {
+    let pedge = new Array(g.n+1).fill(0); let err = '';
+    let dist = new Array(g.n+1).fill(Infinity);
+
+    let q = new List(g.n);
+    if (s != 0) {
+        q.enq(s); dist[s] = 0;
+    } else {
+        for (let u = 1; u <= g.n; u++) {
+            q.enq(u); dist[u] = 0;
+        }
+    }
+    let pass = 0; let last = q.last(); let steps = 0;
+    while (!q.empty()) {
+        let u = q.pop();
+        for (let e = g.firstOut(u); e != 0; e = g.nextOut(u,e)) {
+            let v = g.head(e); steps++;
+            if (dist[u] + g.length(e) < dist[v]) {
+                dist[v] = dist[u] + g.length(e); pedge[v] = e;
+                if (!q.contains(v)) q.enq(v);
+            }
+        }
+        if (u == last && !q.empty()) { pass++; last = q.last(); }
+        if (pass == g.n) 
+            return ['Error: negative cycle', pedge, dist];
+    }
+    return ['', pedge, dist];
+}
+</textarea>
+<p>
+This implementation has a special feature. When the specified source
+vertex is 0, it computes distances as if there were a separate
+source vertex with a zero length edge to every other vertex.
+This is useful for detecting the presence of negative cycles anywhere
+in the graph using a single shortest path tree computation.
+It can also play a role in solving the all-pairs shortest path problem,
+as discussed in the next section.
+
+<h2>All Pairs Shortest Paths</h2>
+The all-pairs problem for graphs with non-negative edge lengths can be solved
+efficiently by repeatedly applying Dijkstra's algorithm. For graphs with
+negative edge lengths, one can also use Dijkstra's algorithm by first
+transforming the edge lengths to a set of non-negative lengths for which
+every path joining two vertices $u$ and $v$ has its length shifted
+by the same amount. Consequently, shortest path distances for the
+orignal set of lengths can be computed using shortest path distances
+for the transformed edge lengths.
+<p>
+The edge-length transformation is computed by first computing a shortest
+path tree in an augmented version of the original graph. The augmented
+version simply adds a source vertex $s$ with a zero length edge to every other
+vertex. For each vertex $u$ in the orignal graph, define $\textit{distance}(u)$
+to be the length of the shortest path from $s$ to $u$ in this augmented graph.
+Then for each edge $(u,v)$ in the original graph, let
+$$
+\textit{length}'(u,v) = \textit{length}(u,v) +
+\textit{distance}(u) - \textit{distance}(v)
+$$
+Note that if there a shortest path tree rooted at every vertex,
+the shortest path tree theorem implies that $\textit{length}'(u,v)>0$.
+For any path $p$ from $u$ to $v$, one can show (by induction on the path length)
+that
+$$
+\textit{length}'(p) = \textit{length}(p) +
+\textit{distance}(u) - \textit{distance}(v)
+$$
+Since the lengths of all $u$-$v$ paths are shifted by the same amount,
+a shortest path tree computed with the transformed lengths is also
+a shortest path tree in the graph using the original lengths.
+This transformation was defined by Edmonds and Karp.
+An example is shown below.
+<p>
+<div  style="text-align:center;">
+<img width="400" src="figs/spathTransform.png"><br>
+</div>
+<p>
+<p>
+The shortest path tree can be computed using the Bellman-Moore algorithm.
+Since this runs in $O(mn)$ time, the overall running time is dominated
+by the $n$ repetitions of Dijkstra's algorithm.
+An <i>Javascript</i> implementation of the algorithm
+(referred to here as the Edmonds-Karp algorithm) is shown below.
+Note that results are returned as an array of shortest path trees
+and a corresponding array of distances.
+<p>
+<textarea id="components" rows="15" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default function allpairsEK(g) {
+    let dist = new Array(g.n+1); let pedge = new Array(g.n+1);
+    
+    // compute distances in augmented graph
+    let [err,pe,d] = sptBM(g, 0);
+    if (err.length > 0) return [err, null, null];
+
+    // transform edge lengths
+    for (let e = g.first(); e != 0; e = g.next(e)) {
+        g.setLength(e, g.length(e) + (d[g.tail(e)] - d[g.head(e)]));
+    }
+
+    // compute shortest paths & put inverse-transformed distances in dist.
+    stats.stepsD = 0; let statsD;
+    for (let u = 1; u <= g.n; u++) {
+        [,pedge[u],dist[u]] = sptD(g, u);
+        for (let v = 1; v <= g.n; v++) dist[u][v] -= (d[u]-d[v]);
+    }
+
+    // Restore original edge lengths.
+    for (let e = g.first(); e != 0; e = g.next(e)) {
+        g.setLength(e, g.length(e) - (d[g.tail(e)] - d[g.head(e)]));
+    }
+
+    return ['', pedge, dist];
+}
+</textarea>
+<p>
+The algorithm can be run in the web app's scratchpad by entering the
+following text.
+<pre style="padding-left:5%">
+let g = new Digraph();
+g.fromString('{a[b:3 d:-2 f:4] b[c:7 e:4 f:1] c[d:1 f:2] ' +
+             'd[b:1 e:3] e[a:5 b:1] f[c:3 d:1 e:-2]}' );
+let [err, pedge, dist, traceString] = allpairsEK(g, 10, true);
+log(traceString);
+</pre>
+This produces the result shown below.
+<pre style="padding-left:5%">
+{
+a[b:3 d:-2 f:4]
+b[c:7 e:4 f:1]
+c[d:1 f:2]
+d[b:1 e:3]
+e[a:5 b:1]
+f[c:3 d:1 e:-2]
+}
+graph with non-negative edge lengths
+{
+a[b:4 d:0 f:4]
+b[c:6 e:5 f:0]
+c[d:3 f:2]
+d[b:0 e:3]
+e[a:3 b:0]
+f[c:3 d:3 e:0]
+}
+current source, tree edges, distances
+a
+[- - (d,b,0) (f,c,3) (a,d,0) (f,e,0) (b,f,0)]
+[Infinity 0 -1 3 -2 -2 0]
+b
+[- (e,a,3) - (f,c,3) (f,d,3) (f,e,0) (b,f,0)]
+[Infinity 4 0 4 2 -1 1]
+c
+[- (e,a,3) (e,b,0) - (c,d,3) (f,e,0) (c,f,2)]
+[Infinity 5 1 0 1 0 2]
+d
+[- (e,a,3) (d,b,0) (f,c,3) - (f,e,0) (b,f,0)]
+[Infinity 5 1 5 0 0 2]
+e
+[- (e,a,3) (e,b,0) (f,c,3) (f,d,3) - (b,f,0)]
+[Infinity 5 1 5 3 0 2]
+f
+[- (e,a,3) (e,b,0) (f,c,3) (f,d,3) (f,e,0) -]
+[Infinity 3 -1 3 1 -2 0]
+</pre>
+<p>
+Floyd's algorithm is an alternate algorithm for the all-pairs
+problem that takes $O(n^3)$.
+For dense graphs, it can be substantially faster than Edmonds-Karp,
+since it has extremely low overhead.
+Suppose $G=(V,E)$ where $V=\{v_1,\ldots,v_n\}$.
+Define $d(i,j,k)$ to be the length of the shortest path from $v_i$ to $v_j$
+that passes only through intermediate vertices in the set $\{v_1,\ldots,v_k\}$.
+Observe that
+$$
+d(i,j,0) = \left\{
+\begin{array}{ll}
+0 & \textrm{if $i=j$} \\
+length(v_i,v_j) & \textrm{if $i\neq j$ and $(v_i,v_j)$ is an edge} \\
+\infty & \textrm{if $i\neq j$ and $(v_i,v_j)$ is not an edge} \\
+\end{array}
+\right.
+$$
+and for $k>0$,
+$$
+d(i,j,k)=\min(d(i,j,k-1),d(i,k,k-1)+d(k,j,k-1))
+$$
+Floyd's algorithm uses this recurrence to compute shortest path distances.
+It starts by computing
+$d(i,j,1)$ for all values of $i$ and $j$, then repeats this process to obtain
+$d(i,j,2)$ for all $i$ and $j$, continuing in this fashion until
+it has computed $d(i,j,n)$.
+A <i>Javascript</i> implementation is shown below.
+<p>
+<textarea id="components" rows="15" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default function allpairsF(g) {
+	let dist = new Array(g.n+1); let pedge = new Array(g.n+1);
+    
+    // initialize dist and pedge
+    for (let u = 1; u <= g.n; u++) {
+		dist[u] = new Array(g.n+1).fill(Infinity); dist[u][u] = 0;
+		pedge[u] = new Array(g.n+1).fill(0);
+    }   
+
+    for (let e = g.first(); e != 0; e = g.next(e)) {
+		let u = g.tail(e); let v = g.head(e);
+        dist[u][v] = g.length(e); pedge[u][v] = e;
+    }   
+
+    // compute distances
+    for (let s = 1; s <= g.n; s++) {
+        if (dist[s][s] < 0)
+			return ['Error: negative cycle in graph', pedge, dist];
+        for (let v = 1; v <= g.n; v++) {
+            for (let w = 1; w <= g.n; w++) {
+                if (dist[v][w] > dist[v][s] + dist[s][w]) {
+                    dist[v][w] = dist[v][s] + dist[s][w]; 
+                    pedge[v][w] = pedge[s][w];  
+                }   
+            }   
+        }   
+	}
+	return ['', pedge, dist];
+}
+
+</textarea>
+<p>
+To compare the performance of Edmonds-Karp and Floyd's algorithm,
+enter the following text into the web app.
+<pre style="padding-left:5%">
+let g = randomDigraph(100,10000);
+g.randomLengths(randomInteger, -5, 999);
+let t0 = Date.now();
+let [err, pedge, dist, ,stats] = allpairsEK(g);
+let t1 = Date.now();
+if (err) log(err)
+else (t1-t0 + ' ms', JSON.stringify(stats));
+
+t0 = Date.now();
+[err, pedge, dist, ,stats] = allpairsF(g);
+t1 = Date.now();
+if (err) log(err)
+else log(t1-t0 + ' ms', JSON.stringify(stats));
+</pre>
+This produces the output shown below.
+<pre style="padding-left:5%">
+168 ms {"stepsBM":12672,"stepsD":450525} 
+20 ms {"steps":1000000,"updates":67560} 
+</pre>
+Note that this example uses a complete graph,
+so it's not surprising that Floyd's algorithm
+is substantially faster than Edmonds-Karp.
+The two statistics shown for Edmonds-Karp are the
+number of steps performed by the Bellman-Moore algorithm
+and the number of steps performed by Dijkstra's algorithm
+(counting the siftup and siftdown steps in the heap).
+This makes it clear that Dijkstra's algorithm dominates
+the computation.
+The statistics shown for the Floyd's algorithm are the
+total steps in the inner loop and the number of steps that
+produce a change in the distance values.
+If the number of edges in the random graph is reduced to 1000,
+the results are
+<pre style="padding-left:5%">
+27 ms {"stepsBM":1009,"stepsD":161203} 
+19 ms {"steps":1000000,"updates":49195} 
+</pre>
+Edmonds-Karp is now much faster, but remains
+slower than Floyd's algorithm, which is largely unaffected by
+the reduction in the edge count.
+On the other hand, doubling the vertex count
+(while holding the number of edges at 1000)
+shifts the advantage to Edmonds-Karp.
+<pre style="padding-left:5%">
+64 ms {"stepsBM":1001,"stepsD":477102} 
+136 ms {"steps":8000000,"updates":182397} 
+</pre>
 
 <h2>References</h2>
 <dl>
+<dt> Bellman58
+<dd> &ldquo;On a Routing Problem,&rdquo; by R. E. Bellman.
+      <i>Quarterly of Applied Math</i> 16, 1958.
+<dt> Dijkstra59
+<dd> &ldquo;A Note on Two Problems in Connexion with Graphs,&rdquo;
+    by E. W. Dijkstra. <i>Numerical Mathematics</i> 1, 1959.
+<dt> Floyd62
+<dd> &ldquo;Algorithm 95,&rdquo; by R. W. Floyd. <i>Communications of the ACM</i> 5, 1962.
+<dt> Ford56
+<dd> &ldquo;Network Flow Theory,&rdquo; by L. R. Ford. Paper P-923, Rand Corporation,
+    Santa Monica, CA, 1956.
+<dt> Johnson77
+<dd> &ldquo;Efficient Algorithms for Shortest Paths in Sparse Networks,&rdquo;
+    by D. B. Johnson.
+    <i>Journal of the Association of Computing Machinery</i> 24, 1977.
+<dt> Moore59
+<dd> &ldquo;The shortest path through a maze,&rdquo; by E. F. Moore.
+    In <I>Proc. International Symposium on the Theory of Switching, Part II</i>,
+    4/57.
 <dt> Tarjan87
-<dd> <i>Network Algorithms and Data Structures</i> by Robert E. Tarjan.
+<dd> <i>Network Algorithms and Data Structures</i>, by Robert E. Tarjan.
      Society for Industrial and Applied Mathematics, 1987.
 </dl>
 </body>
