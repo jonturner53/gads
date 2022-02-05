@@ -31,7 +31,7 @@ The diagram below shows an edge-weighted graph with
 bold edges that highlight a minimum spanning tree.  
 <p>
 <div  style="text-align:center;">
-<img width="200" src="figs/mstExample.png"><br>
+<img width="125" src="figs/mstExample.png"><br>
 </div>
 <p>
 
@@ -43,16 +43,16 @@ a sub-problem within other optimization problems.
 The <i>greedy method</i> is a general approach to finding a minimum
 spanning tree, and is the basis for several specific algorithms.
 (The version of the greedy method described here is a simplification
-of the greedy method described in [Tarjan87]).
+of the one described in [Tarjan87]).
 A <i>cut</i> in a graph is a division of the vertices into
 two subsets $X$ and $X'$.
 An edge is said to <i>cross the cut</i> if one of its
 endpoints is in $X$ and the other in $X'$.
 For brevity, a minimum weight edge is called a <i>lightest</i> edge.
-The greedy method selects tree edges by repeatedly applying the following rule
-(a tree edge is any edge that has been selected in a previous step).
+The greedy method selects tree edges by repeatedly applying the following rule.
 <p style="padding-left:5%;">
-Select a cut with at least one edge crossing the cut, but no tree edges.
+Select a cut with at least one edge crossing the cut, but no tree edges
+(a <i>tree edge</i> is any edge that has been selected in a previous step).
 Select a lightest edge crossing the cut and add it to the tree.
 <p>
 The method terminates when there are no eligible cuts.
@@ -87,7 +87,7 @@ and some edge $e'$ on this path must be in the cut from which $e$ was selected,
 as shown below.
 <p>
 <div  style="text-align:center;">
-<img width="225" src="figs/mstGreedy1.png"><br>
+<img width="150" src="figs/mstGreedy1.png"><br>
 </div>
 <p>
 Since the cut contains no tree edges, $e'$ cannot be a tree edge,
@@ -102,7 +102,7 @@ the graph is connected and a minimum spanning forest if it is not.
 
 <h2>Prim's Algorithm</h2>
 
-Prim's algorithm [Prim57, Johnson75] is a particlar instantiation of
+Prim's algorithm [Prim57, Johnson75] is a particular instantiation of
 the greedy method that applies to connected graphs and
 constructs the minimum spanning tree incrementally, by repeatedly selecting
 edges from the cut separating a partially constructed tree from the
@@ -168,7 +168,7 @@ A <i>Javascript</i> implementation of the main part of the algorithm is shown
 below.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-let light = new Array(g.n+1).fill(-1);
+let light = new Int32Array(g.n+1).fill(-1);
 let s = 1; light(s) = 0; border.insert(s, 0);
 while (!border.empty()) {
     let u = border.deletemin();
@@ -193,7 +193,7 @@ described above.
 <p>
 Prim's algorithm can be implemented using any heap data structure,
 but it is most commonly implemented using a
-<a href="../dataStructures/heaps.html#dheap">$d$-heap</a>.
+<a href="../dataStructures/heaps.html#arrayHeap">array heap</a>.
 If the heap operations are excluded, the running time
 is $O(m)$, since the innermost loop is executed no more than $2m$ times.
 The heap operations include $n-1$ <i>insert</i> operations,
@@ -222,7 +222,7 @@ examples for which the
 performance of Prim's algorithm closely matches the analysis.
 <p>
 <div  style="text-align:center;">
-<img width="600" src="figs/worstCasePrim.png"><br>
+<img width="400" src="figs/worstCasePrim.png"><br>
 </div>
 <p>
 If the algorithm starts at the leftmost vertex and examines
@@ -257,30 +257,9 @@ it produces a minimum spanning forest of the graph.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import List from '../../dataStructures/basic/List.mjs';
-import Dsets from '../../dataStructures/basic/Dsets.mjs';
-import Dheap from '../../dataStructures/heaps/Dheap.mjs';
-import Graph_w from '../../dataStructures/graphs/Graph_w.mjs';
-
-/** Compute min spanning tree of a graph using Prim's algorithm.
- *  @param g is weighted graph
- *  @param trace controls the amount of trace output produced, larger
- *  values produce more output
- *  @param d is an optional argument that specfies the base of the border
- *  heap; the default value is 2+floor(g.m/g.n)
- *  @return a tuple [elist, ts, stats] where elist is an array listing
- *  the edges in the mst (or forest), ts is a trace string and
- *  stats is a statistics object
- */
-export default function mst_prim(g, trace=0, d=2+Math.floor(g.m/g.n)) {
-    let ts = '';
-    if (trace) {
-        ts += g.toString(0,1) + '\n' +
-              'selected vertex, tree edge, heap contents\n';
-    }
-
-    let light = new Array(g.n+1).fill(-1);
-    let border = new Dheap(g.n, d);
+export default function mstP(g) {
+    let light = new Int32Array(g.n+1).fill(-1);
+    let border = new ArrayHeap(g.n, d);
     for (let s = 1; s <= g.n; s++) {
         if (light[s] >= 0) continue;
         border.insert(s, 0); light[s] = 0;
@@ -290,15 +269,9 @@ export default function mst_prim(g, trace=0, d=2+Math.floor(g.m/g.n)) {
                 let v = g.mate(u,e);
                 if (light[v] < 0) {
                     border.insert(v, g.weight(e)); light[v] = e;
-                } else if (border.contains(v) &&
-                           g.weight(e) < border.key(v)) {
+                } else if (border.contains(v) && g.weight(e) < border.key(v)) {
                     border.changekey(v, g.weight(e)); light[v] = e;
                 }
-            }
-            if (trace) {
-                ts += g.index2string(u) + ' ' +
-                      (light[u] != 0 ? g.edge2string(light[u]) : '-') +
-                      ' ' + border + '\n';
             }
         }
     }
@@ -307,23 +280,27 @@ export default function mst_prim(g, trace=0, d=2+Math.floor(g.m/g.n)) {
     for (let i = 1; i <= g.n; i++)
         if (light[i] > 0) light[j++] = light[i];
     light.length = j;
-    return [light, ts, border.getStats()];
+    return light;
 }
 </textarea>
+<p>
 <p>
 In the common case of a connected graph, the body of the
 outer <code>for</code>-loop
 is executed one time, producing a minimum spanning tree starting
 from the first vertex.
-This version returns an optional <i>trace string</i>
-and an object containing the $d$-heap performance counts.
+For a disconnected graph, each iteration of the outer loop
+computes a minimum spanning tree of a distinct connnected component.
+The version shown above has been abridged for clarity.
+The complete version (available on the web app) supports execution tracing
+and performance statistics.
 <p>
 If the following code is run in the scratch pad of the web app
 <pre style="padding-left:5%;">
-let g = new Graph_w();
+let g = new Graph();
 g.fromString("{a[b:3 d:2 e:5] b[a:3 c:7 f:4] c[b:7 d:1 f:2] " +
              "d[a:2 c:1 e:3] e[a:5 d:3 f:1] f[b:4 c:2]}");
-let [,ts] = mst_prim(g, 1);
+let [,ts] = mstP(g, 1);
 log(ts);
 </pre>
 it produces the following output.
@@ -353,6 +330,96 @@ On each iteration of the inner <code>while</code> loop,
 the border vertex with the lightest edge
 connecting it to the partially constructed forest
 is shown, along with its lightest edge, and the heap.
+<p>
+To compare the experimental performance to the predicted worst-case
+performance, enter the following code into the web app.
+<pre style="padding-left:5%;">
+let n = 1024; let m = n*(n-1)/2;
+let g = hardcaseP(n, m); 
+log(`n=${n} density=${g.m/g.n}`);
+let t0, t1, steps, stats;
+
+t0 = Date.now(); [,,stats] = mstP(g); t1 = Date.now();
+steps = stats.loopCount+stats.siftup+stats.siftdown;
+log(`prim time=${t1-t0}ms steps/m=${(steps/g.m).toFixed(2)}`);
+
+t0 = Date.now(); [,,stats] = mstP(g,0,2); t1 = Date.now();
+steps = stats.loopCount+stats.siftup+stats.siftdown;
+log(`prim_2 time=${t1-t0}ms steps/m=${(steps/g.m).toFixed(2)}`);
+</pre>
+When $m=n(n-1)/2$, the function <code>hardcaseP(n,m)</code> produces
+a graph like the worst-case example shown earlier,
+with $n$ vertices and $m$ edges.
+The optional third argument to <code>mstP</code> specifies the
+heap parameter $d$.
+When it is omitted, $d$ is chosen to match the edge density.
+Running this code on graphs of increasing size produces the output
+<pre style="padding-left:5%;">
+n=128 density=63.5 
+prim time=2ms steps/m=5.01 
+prim_2 time=3ms steps/m=8.50
+ 
+n=256 density=127.5 
+prim time=7ms steps/m=5.01 
+prim_2 time=8ms steps/m=9.43
+ 
+n=512 density=255.5 
+prim time=26ms steps/m=5.00 
+prim_2 time=34ms steps/m=10.39
+ 
+n=1024 density=511.5 
+prim time=110ms steps/m=5.00 
+prim_2 time=151ms steps/m=11.37 
+</pre>
+Observe that when $d$ matches the edge density,
+the number of steps per edge remains constant, even as the edge density
+grows, as predicted by the worst-case analysis.
+When  $d=2$, the number of steps per edge increases by about one additional
+step each time $n$ is doubled.
+For the largest graph shown, the number of steps per edge is more than
+double that for the case when $d$ matches the edge density.
+The impact on running time is somewhat smaller, as the siftup steps take less
+time than the siftdown steps.
+The impact of $d$ is greatest when the graphs are maximally dense.
+Reducing the density in the last case shows a much smaller effect.
+<pre style="padding-left:5%;">
+n=1024 density=128 
+prim time=24ms steps/m=4.72 
+prim_2 time=26ms steps/m=5.87
+</pre>
+To evaluate program's performance on random graphs, replace the second
+line of the code in the web app with
+<pre style="padding-left:5%;">
+let g = randomGraph(n,m); g.randomWeights(randomFraction);
+</pre>
+The <code>randomWeights</code> function takes a random number generator
+as its first argument. In this case, the specified function
+generates uniform random numbers in $[0,1]$.
+Running this on graphs of increasing size produces the output
+<pre style="padding-left:5%;">
+n=128 density=63.5 
+prim time=2ms steps/m=2.93 
+prim_2 time=1ms steps/m=2.33 
+
+n=256 density=127.5 
+prim time=25ms steps/m=2.88 
+prim_2 time=17ms steps/m=2.19 
+
+n=512 density=255.5 
+prim time=59ms steps/m=2.88 
+prim_2 time=37ms steps/m=2.12
+ 
+n=1024 density=511.5 
+prim time=259ms steps/m=2.86 
+prim_2 time=217ms steps/m=2.07 
+</pre>
+Notice that in this case, fixing the heap parameter at 2 produces
+fewer steps per edge and faster run times. This reflects the fact
+that with random edge weights, the number of <i>changekey</i> operations
+is much smaller than in the worst-case, greatly reducing the
+number of siftup operations. Consequently, the running time is
+largely determined by the overhead of the inner loop of Prim's
+algorithm, not the data structure operations.
 
 <h2>Kruskal's Algorithm</h2>
 Kruskal's algorithm [Kruskal56] is another instantiation of the greedy 
@@ -370,49 +437,30 @@ a cut that has one of the trees by itself on one side of the cut,
 with all other vertices on the other side.
 <p>
 The
-<a href="../dataStructures/basic.html#dsets">disjoint sets</a>.
+<a href="../dataStructures/basic.html#dsets">disjoint sets</a>
 data structure can be used to keep track of the
 vertices in the different trees. This leads directly to the following
-implementation.
+implementation (abridged for clarity).
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import Dsets from '../../dataStructures/basic/Dsets.mjs';
-import Graph_w from '../../dataStructures/graphs/Graph_w.mjs';
+export default function mstK(g) {
+	// first make a sorted list of the edges in g
+	let edges = [];
+	for (let e = g.first(); e != 0; e = g.next(e)) edges.push(e);
+	edges.sort((e1, e2) => g.weight(e1) - g.weight(e2));
 
-/** Find a minimum spanning tree of g using Kruskal's algorithm.
- *  @param g is a weighted graph
- *  @param trace controls the production of trace information
- *  @return a tuple [elist, ts,  stats] where elist is an array listing the
- *  edges in the mst (or forest), ts is a trace string and stats is
- *  a statistics object
- */
-export default function mst_kruskal(g, trace=0) {
-    // first make a sorted list of the edges in g
-    let i = 0; let edges = new Array(g.m);
-    for (let e = g.first(); e != 0; e = g.next(e)) edges[i++] = e;
-    edges.sort((e1, e2) => g.weight(e1) - g.weight(e2));
-    let ts = '';
-    if (trace) {
-        ts += g.toString(0,1) + 'sorted edge list\n' +
-                       g.elist2string(edges) + '\n\n' +
-                       'selected tree edge, disjoint sets\n';
-    }
-
-    // now examine edges in order, merging separate subtrees
-    let elist = []; let subtrees = new Dsets(g.n);
-    for (let i = 0; i < edges.length; i++) {
-        let e = edges[i];
-        let u = g.left(e); let v = g.right(e);
-        let cu = subtrees.find(u); let cv = subtrees.find(v);
-        if (cu != cv) {
-            elist.push(e); subtrees.link(cu, cv);
-            if (trace) {
-                ts += g.edge2string(e) + ' ' + subtrees + '\n';
-            }
-        }
-    }
-    return [elist, ts, subtrees.getStats() ];
+	// now examine edges in order, merging separate subtrees
+	let treeEdges = []; let subtrees = new Sets(g.n);
+	for (let i = 0; i < edges.length; i++) {
+		let e = edges[i];
+		let u = g.left(e); let v = g.right(e);
+		let cu = subtrees.find(u); let cv = subtrees.find(v);
+		if (cu != cv) {
+			treeEdges.push(e); subtrees.link(cu, cv);
+		}
+	}
+	return treeEdges;
 }
 </textarea>
 <p>
@@ -420,9 +468,9 @@ If an efficient comparison sorting algorithm is used to sort the edges,
 then Kruskal's algorithm takes $O(m \log n)$ time.
 If the edges can be sorted using a linear-time algorithm such as
 radix sort, this drops to $O(m \alpha(m,n))$.
-The simplicity of Kruuskal's algorithm makes it an attractive choice
-in practice and in those cases where radix sorting is applicable,
-it's hard to beat.
+The simplicity of Kruskal's algorithm makes it an attractive choice,
+but its performance is critically dependent on the quality of the
+function used to sort the edges.
 
 <h2>The Cheriton-Tarjan algorithm</h2>
 
@@ -456,84 +504,45 @@ A <i>Javascript</i> implementation of the algorithm appears below.
 <p>
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-/** @file mst_chetar.mjs
- *
- *  @author Jon Turner
- *  @date 2021
- *  This is open source software licensed under the Apache 2.0 license.
- *  See http://www.apache.org/licenses/LICENSE-2.0 for details.
- */
-
-import List from '../../dataStructures/basic/List.mjs';
-import List_d from '../../dataStructures/basic/List_d.mjs';
-import Dsets from '../../dataStructures/basic/Dsets.mjs';
-import Lheaps_l from '../../dataStructures/heaps/Lheaps_l.mjs';
-import Graph_w from '../../dataStructures/graphs/Graph_w.mjs';
-
-/** Compute min spanning tree of a graph using Cheriton/Tarjan algorithm.
- *  @param g is weighted graph
- *  @param trace controls the amount of trace output produced
- *  @return a tuple [elist, ts, stats] where is an array listing the
- *  edges in the mst (or forest), ts is a trace string and stats is
- *  a statistics object
- */
-export default function mst_chetar(g, trace=0) {
-    let trees = new Dsets(g.n); // one subset for each mst subtree
+export default function mstCT(g) {
+    let trees = new Sets(g.n); // one subset for each mst subtree
 
     // initialize collection of edge endpoint heaps
     // each heap contains edge endpoints touching one mst subtree
-    let M = g.M;    // largest edge number used in g
-    let eph = new Lheaps_l(2*M+1, 2*M+1, ee =>
-        ee > 1 && trees.find(g.left(Math.trunc(ee/2))) ==
-                  trees.find(g.right(Math.trunc(ee/2))));
+    let epHeap = new LeftistHeaps(2*g.edgeCapacity+1, 2*g.edgeCapacity+1, true,
+        ee => ee > 1 && trees.find(g.left(Math.trunc(ee/2))) ==
+                          trees.find(g.right(Math.trunc(ee/2))));
     for (let e = g.first(); e != 0; e = g.next(e)) {
-        eph.setkey(2*e, g.weight(e)); eph.setkey(2*e+1, g.weight(e));
+        epHeap.setkey(2*e, g.weight(e)); epHeap.setkey(2*e+1, g.weight(e));
     }
-    eph.setkey(1, 0); // unused heap item
+    epHeap.setkey(1, 0); // unused heap item
 
-    let h = new Array(g.n+1); let q = new List_d(g.n);
-    let hlist = new List(2*eph.n+1);
+    let h = new Int32Array(g.n+1);  // h[u] is heap for tree whose id is u
+    let q = new List(g.n);   // queue of trees
+    let hlist = new List(2*epHeap.n+1);
     for (let u = 1; u <= g.n; u++) {
         hlist.clear();
         for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e))
             hlist.enq(u == g.left(e) ? 2*e : 2*e+1);
         if (!hlist.empty()) {
-            h[u] = eph.heapify(hlist); q.enq(u);
+            h[u] = epHeap.heapify(hlist); q.enq(u);
         }
     }
-    let ts = '';
-    if (trace) {
-        ts += g.toString(0,1) + '\n' +
-              'selected edge, queue, tree vertex sets';
-        if (trace > 1)
-            ts += ', heap of incident edges';
-        ts += '\n';
-    }
-    let elist = [];
+    let treeEdges = [];  // vector of edges in tree
     while (q.length > 1) {
-        let t = q.first(); let ee = h[t] = eph.findmin(h[t]);
+        let t = q.first(); let ee = h[t] = epHeap.findmin(h[t]);
         if (ee == 0) { q.deq(); continue; }
 
-        let e = Math.trunc(ee/2); elist.push(e);
+        let e = Math.trunc(ee/2); treeEdges.push(e);
         let u = g.left(e); let v = g.right(e);
         let tu = trees.find(u); let tv = trees.find(v);
 
         q.delete(tu); q.delete(tv);
-        h[trees.link(tu, tv)] = eph.lazyMeld(h[tu], h[tv]);
+        h[trees.link(tu, tv)] = epHeap.lazyMeld(h[tu], h[tv]);
         q.enq(trees.find(u));
 
-        if (trace) {
-            ts += g.edge2string(e) + ' ' + q + ' ' + trees;
-            if (trace > 1)
-                ts += ' ' +
-                    eph.heap2string(h[trees.find(u)], 0, 1,
-                        (ee => (ee <= 1 ? '-' :
-                        '{' +g.index2string(g.left(Math.floor(ee/2))) + ',' +
-                             g.index2string(g.right(Math.floor(ee/2))) + '}')));
-                ts += '\n';
-        }
     }
-    return [elist, ts, eph.getStats()];
+    return treeEdges;
 }
 </textarea>
 <p>
@@ -553,11 +562,11 @@ combined.
 To see the algorithm in action, enter the following text into the 
 scratch pad of the web app.
 <pre>
-    let g = new Graph_w();
-    g.fromString('{a[b:3 d:2] b[a:3 c:7] c[b:7 d:1] d[a:2 c:1] ' +
-                 'e[f:1 g:3] f[e:1 g:2 h:3] g[e:3 f:2 h:1] i[j:5] j[i:5]}');
-    let [,ts] = mst_chetar(g, 1);
-    log(ts);
+let g = new Graph();
+g.fromString('{a[b:3 d:2] b[a:3 c:7] c[b:7 d:1] d[a:2 c:1] ' +
+             'e[f:1 g:3] f[e:1 g:2 h:3] g[e:3 f:2 h:1] i[j:5] j[i:5]}');
+let [,ts] = mstCT(g, 1);
+log(ts);
 </pre>
 Running this code yields
 <p>
@@ -577,36 +586,36 @@ j[i:5]
 }
 
 selected edge, queue, tree vertex sets
-(a,d,2) [b c e f g h i j a] {{a d}}
-(a,b,3) [c e f g h i j a] {{a b d}}
-(c,d,1) [e f g h i j a] {{a b c d}}
-(e,f,1) [g h i j a e] {{a b c d} {e f}}
-(g,h,1) [i j a e g] {{a b c d} {e f} {g h}}
-(i,j,5) [a e g i] {{a b c d} {e f} {g h} {i j}}
-(f,g,2) [i e] {{a b c d} {e f g h} {i j}}
+{a,d,2} [b c e f g h i j a] {{a d}}
+{a,b,3} [c e f g h i j a] {{a b d}}
+{c,d,1} [e f g h i j a] {{a b c d}}
+{e,f,1} [g h i j a e] {{a b c d} {e f}}
+{g,h,1} [i j a e g] {{a b c d} {e f} {g h}}
+{i,j,5} [a e g i] {{a b c d} {e f} {g h} {i j}}
+{f,g,2} [i e] {{a b c d} {e f g h} {i j}}
 </textarea>
 <p>
-The trace string returned by <code>mst_chetar</code>
+The trace string returned by <code>mstCT</code>
 shows the graph and for each iteration of the
 main loop, it shows the edge selected in that iteration,
 plus the resulting queue state and the vertex sets for the trees that
 are not singletons.
 If the penultimate line is changed to
 <pre>
-    let [,ts] = mst_chetar(g, 2);
+    let [,ts] = mstCT(g, 2);
 </pre>
 it also shows the heap of edges incident to the newly formed tree.
 <p>
 <textarea rows="9" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 selected edge, queue, tree vertex sets, heap of incident edges
-(a,d,2) [b c e f g h i j a] {{a d}} ({a,b}:3 {c,d}:1)
-(a,b,3) [c e f g h i j a] {{a b d}} ({c,d}:1 {b,c}:7)
-(c,d,1) [e f g h i j a] {{a b c d}} ()
-(e,f,1) [g h i j a e] {{a b c d} {e f}} ({f,g}:2 {f,h}:3 {e,g}:3)
-(g,h,1) [i j a e g] {{a b c d} {e f} {g h}} ({e,g}:3 {f,g}:2 {f,h}:3)
-(i,j,5) [a e g i] {{a b c d} {e f} {g h} {i j}} ()
-(f,g,2) [i e] {{a b c d} {e f g h} {i j}} ()
+{a,d,2} [b c e f g h i j a] {{a d}} ({a,b}:3 {c,d}:1)
+{a,b,3} [c e f g h i j a] {{a b d}} ({c,d}:1 {b,c}:7)
+{c,d,1} [e f g h i j a] {{a b c d}} ()
+{e,f,1} [g h i j a e] {{a b c d} {e f}} ({f,g}:2 {f,h}:3 {e,g}:3)
+{g,h,1} [i j a e g] {{a b c d} {e f} {g h}} ({e,g}:3 {f,g}:2 {f,h}:3)
+{i,j,5} [a e g i] {{a b c d} {e f} {g h} {i j}} ()
+{f,g,2} [i e] {{a b c d} {e f g h} {i j}} ()
 </textarea>
 <p>
 The running time of the algorithm is dominated by the
@@ -630,7 +639,7 @@ have at least $2^k$ vertices and the number of passes is $\leq \lg n$.
 Now, note that any two trees selected during the same pass are vertex-disjoint,
 since they are on the heap at the same time. This implies that the total size
 of the heaps that processed in a single pass is at most $2m + n-1$,
-seach each edge appears in at most two heaps and the number of dummy items
+so each each edge appears in at most two heaps and the number of dummy items
 introduced by lazy melds is at most $n-1$.
 <p>
 To complete the analysis,
@@ -661,39 +670,79 @@ This implies that the number of disjoint set operations is
 $O(m\log\log n)$ and so the time spent on disjoint set operations is
 $O(m\log\log n\alpha(m\log\log n, n) = O(m \log\log n)$.
 
-<h2>Remarks</h2>
+<h2>Performance Comparison</h2>
 The figure below illustrates the relative growth rates of the functions
 that characterize the asymptotic running times of the various algorithms
 studied in this section.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/compare.png"><br>
+<img width="400" src="figs/compare.png"><br>
 </div>
 <p>
 The value of $n$ is fixed at $10^3$, while $m$ ranges from $10^3$ to $10^6$.
 The chart shows the function values divided by $m$, to emphasize the
 differences among them.
-The two versions of Prim's algorithm clearly dominate at all but the
-lowest densities and the relatively simplicity of $d$-heaps gives it
-a clear advantage over Fibonaccie heaps.
+The two curves that decrease with $m$ are associated with Prim's algorithm.
+The $m+n\log n$ curve is for the version that uses Fibonacci heaps.
+While that version appears to have an advantage at moderate densities,
+experimental commparisons show that the version using array heaps
+is consistently faster, due to the relative simplicity of its data
+structuures.
 The Cheriton-Tarjan algorithm has an edge at the lowest densities,
 but the advantage over Prim's algorithm is modest.
+<p>
+The results below compare Prim's algorithm (with $d$ matched to edge density)
+with Kruskal's algorithm and the Cheriton-Tarjan algorithm on low
+density random graphs.
+<p> <textarea rows="14" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+n=4096 density=1 
+prim time=11ms steps/m=17.43 
+kruskal time=9ms steps/m=14.00 
+cheriton-tarjan time=23ms steps/m=8.02 
+
+n=4096 density=2 
+prim time=6ms steps/m=13.50 
+kruskal time=8ms steps/m=14.00 
+cheriton-tarjan time=16ms steps/m=8.77 
+
+n=4096 density=4 
+prim time=6ms steps/m=9.27 
+kruskal time=15ms steps/m=14.00 
+cheriton-tarjan time=20ms steps/m=8.05 
+
+n=4096 density=8 
+prim time=10ms steps/m=6.81 
+kruskal time=32ms steps/m=14.00 
+cheriton-tarjan time=28ms steps/m=7.02 
+
+n=4096 density=12 
+prim time=14ms steps/m=5.78 
+kruskal time=48ms steps/m=14.00 
+cheriton-tarjan time=37ms steps/m=6.58 
+
+n=4096 density=16 
+prim time=18ms steps/m=5.41 
+kruskal time=67ms steps/m=14.00 
+cheriton-tarjan time=53ms steps/m=6.30 
+</textarea> <p>
+In all cases Prim's algorithm out-performs the others.
 
 <h2>References</h2>
 <dl>
 <dt> CheTar76
 <dd> &ldquo;Finding minimum spanning trees,&rdquo;
-	by D. Cheriton and R. E. Tarjan. <i>SIAM Journal on Computing</i>, 1976.
+    by D. Cheriton and R. E. Tarjan. <i>SIAM Journal on Computing</i>, 1976.
 <dt> Johnson75
 <dd> &ldquo;Priority queues with update and finding minimum
-	spanning trees,&rdquo; <i>Information Processing Letters</i>, 1975.
+    spanning trees,&rdquo; <i>Information Processing Letters</i>, 1975.
 <dt> Kruskal56
 <dd> &ldquo;On the shortest spanning subtree of a graph
     and the traveling salesman problem,&rdquo; by J. B. Kruskal.
     <i>Proceedings of the American Mathematical Society</i>, 1956.
 <dt> Prim57
 <dd> &ldquo;Shortest connection networks and some generalizations,&rdquo;
-	by R. C. Prim. <i>Bell System Technical Journal</i>, 1957.
+    by R. C. Prim. <i>Bell System Technical Journal</i>, 1957.
 <dt> Tarjan87
 <dd> <i>Network Algorithms and Data Structures</i> by Robert E. Tarjan.
      Society for Industrial and Applied Mathematics, 1987.
