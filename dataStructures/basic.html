@@ -26,7 +26,7 @@ various algorithms and as building blocks within more complex data structures.
 
 <h2>Introduction</h2>
 
-Many of the algorithms described on this site here require multiple
+Many of the algorithms described on this site require multiple
 data structures that address different aspects of the problem being solved.
 Because the data structures are closely related, there must be a way to
 maintain correspondences among them.
@@ -38,7 +38,7 @@ can be used to represent any list of distinct positive integers within a bounded
 range, in this case, 1 to 10.
 <p>
 <div  style="text-align:center;">
-<img width="550" src="figs/indexList.png"><br>
+<img width="450" src="figs/indexList.png"><br>
 </div>
 <p>
 The list is represented by a vector $\textit{next}$, which identifies the next
@@ -59,7 +59,7 @@ the six subsets $\{[1, 6, 3], [4], [2, 7], [8], [11, 9], [5, 12, 10]\}$. This li
 arrays defining the neighbors of each list item.
 <p>
 <div  style="text-align:center;">
-<img width="600" src="figs/dlists.png"><br>
+<img width="500" src="figs/dlists.png"><br>
 </div>
 <p>
 Observe that the colors highlight items in the same list.
@@ -291,10 +291,6 @@ the following methods.
     they typically support comparison of <code>this</code> object to
     a string argument. In this case, the string is used to
     construct an object, which is then compared to <code>this</code>.
-<li> <code>matches(a)</code> is similar to <code>equals</code>,
-    but returns true if <code>this</code> object
-    contains the same list items as <code>a</code>, but not necessarily
-    in the same order.
 <li> <code>index2string(i, label)</code> creates a string
     representation of the index $i$. <code>Label</code> is an optional
     function argument.
@@ -329,6 +325,11 @@ Most classes also define the following methods.
     This effectively destroys <code>x</code>.
 <li> <code>clear()</code> clears the value of the object (so for example,
     in the case of a list, the list becomes empty).
+<li> <code>getStats()</code> returns a statistics object that contains
+	one or more counters that count events of interest for a particular
+	data structure. This method is typically defined only for classes
+	that have operations that take more than constant time.
+<li> <code>clearStats()</code> sets an object's statistic counters to zero.
 </ul>
 
 <a id=list><h2>List</h2></a>
@@ -362,6 +363,10 @@ a limited range $1\ldots n$ and supports the following methods.
 <li> <code>top()</code> is an alias for <code>first()</code>.
 <li> <code>enq(i)</code> is an alias for <code>insert(i, last())</code>.
 <li> <code>deq()</code> is an alias for <code>deleteNext(0)</code>.
+<li> <code>matches(a)</code> is similar to <code>equals</code>,
+    but returns true if <code>this</code> object
+    contains the same list items as <code>a</code>, but not necessarily
+    in the same order.
 </ul>
 When first constructed, a <code>List</code> uses a single <code>next</code>
 array, linking successive list items; items not on the list have 
@@ -425,13 +430,13 @@ export default class List extends Top {
 
     #init(capacity) {
         assert(capacity >= this.n);
-        this.#next = new Array(capacity+1).fill(-1, 1, this.n+1);
+        this.#next = new Int32Array(capacity+1).fill(-1);
         this.#next[0] = this.#first = this.#last = this.#length = 0;
         if (this.#prev) {
-            this.#prev = new Array(capacity+1).fill(0, 0, this.n+1);
+            this.#prev = new Int32Array(capacity+1);
         }
         if (this.#value) {
-            this.#value = new Array(capacity+1).fill(null, 0, this.n+1);
+            this.#value = new Array(capacity+1).fill(null);
         }
     }
 
@@ -663,14 +668,6 @@ import Top from '../Top.mjs';
 import { assert } from '../../common/Errors.mjs';
 import Scanner from './Scanner.mjs';
 
-/** Data structure that represents a pair of complementary index lists.
- *  The index values have a limited range 1..n and each index is
- *  always in one of the two lists.  The lists are referred to as
- *  "in" and "out" and can be accessed using the provided methods.
- *  The only way to modify the data structure is to move an item
- *  from one list to the other, using the swap method.
- *  Initially, all items are in the out list.
- */
 export default class ListPair extends Top {
     #nIn;         ///< number of items in in-list
     #nOut;        ///< number of items in out-list
@@ -697,8 +694,8 @@ export default class ListPair extends Top {
      */
     #init(capacity) {
         assert(this.n <= capacity);
-        this.#next = new Array(capacity+1);
-        this.#prev = new Array(capacity+1);
+        this.#next = new Int32Array(capacity+1);
+        this.#prev = new Int32Array(capacity+1);
         this.#firstIn = this.#lastIn = 0;
         this.#firstOut = 1; this.#lastOut = this.n;
         for (let i = 1; i <= this.n; i++) {
@@ -901,10 +898,6 @@ import Top from '../Top.mjs';
 import { assert } from '../../common/Errors.mjs';
 import Scanner from './Scanner.mjs';
 
-/** The ListSet class maintains a collection of disjoint lists defined
- *  over a set of integers 1..n. Each list in the collection is identified
- *  by its first item.
- */
 export default class ListSet extends Top {
     #next;        // #next[i] is next item on list or 0 for last item
     #prev;        // #prev[i] is previous item on list or last for first item,
@@ -918,11 +911,11 @@ export default class ListSet extends Top {
 
     #init(capacity) {
         assert(this.n <= capacity);
-        this.#next = new Array(capacity+1);
-        this.#prev = new Array(capacity+1);
+        this.#next = new Int32Array(capacity+1);
+        this.#prev = new Int32Array(capacity+1);
         // initialize to singleton lists
         for (let i = 0; i <= this.n; i++) {
-            this.#next[i] = 0; this.#prev[i] = i;
+            this.#prev[i] = i;
         }
         this.#prev[0] = 0;
     }
@@ -1072,7 +1065,7 @@ The new methods are listed below.
         If <code>i</code> is the last item, <code>j</code> must be 0.
         If there is no item preceiding <code>i</code>, 0 is returned.
 </ul>
-<code>ListSet</code> replaces the <code>next</code> and <code>prev</code>
+<code>ReverseLists</code> replaces the <code>next</code> and <code>prev</code>
 arrays of the <code>ListSet</code> class, with arrays that represent
 neighboring list items, <code>nabor1</code> and <code>nabor2</code>.
 A list is reversed by effectively complementing a bit that determines which
@@ -1152,7 +1145,7 @@ identfier. If $i$ is a root, $p(i)=i$.
 This is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="600" src="figs/disjointSets.png"><br>
+<img width="500" src="figs/disjointSets.png"><br>
 </div>
 <p>
 The <code>find</code> method follows parent pointers up the tree to
@@ -1207,8 +1200,8 @@ export default class Sets extends Top {
 
     #init(capacity) {
         assert(this.n <= capacity);
-        this.#p = new Array(capacity+1); 
-        this.#rank = new Array(capacity+1);
+        this.#p = new Int32Array(capacity+1); 
+        this.#rank = new Int32Array(capacity+1);
         this.clear();
     
         this.#linkCount = 0;
@@ -1293,7 +1286,7 @@ This can be proved by induction on the number of link
 operations, as illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="800" src="figs/dsetsLemma.png"><br>
+<img width="600" src="figs/dsetsLemma.png"><br>
 </div>
 <p>
 This implies that if a tree root has rank $k$,
@@ -1369,7 +1362,7 @@ This is illustrated below.
 
 <p>
 <div  style="text-align:center;">
-<img width="800" src="figs/dsetsAnalysis1.png"><br>
+<img width="600" src="figs/dsetsAnalysis1.png"><br>
 </div>
 <p>
 
@@ -1416,7 +1409,7 @@ So in the example, $c$ and $d$ are singular.
 
 <p>
 <div  style="text-align:center;">
-<img width="600" src="figs/dsetsAnalysis2.png"><br>
+<img width="450" src="figs/dsetsAnalysis2.png"><br>
 </div>
 <p>
 
@@ -1553,7 +1546,7 @@ is on the same level that it is.
 So, in the example, nodes $b$, $c$ and $d$ are singular.
 <p>
 <div  style="text-align:center;">
-<img width="650" src="figs/dsetsAnalysis2a.png"><br>
+<img width="500" src="figs/dsetsAnalysis2a.png"><br>
 </div>
 <p>
 As before, a case analysis is used,
@@ -1589,7 +1582,7 @@ and this at most $2^{[j]}-2^{[j-1]}<2^{[j]}$,
 as illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="700" src="figs/dsetsAnalysis3.png"><br>
+<img width="500" src="figs/dsetsAnalysis3.png"><br>
 </div>
 <p>
 Since the number of nodes with rank in $block_2(j)$
@@ -1713,7 +1706,7 @@ $i$ and that for $j>0$, $b_i(j) \leq A_i(j)-A_i(j-1)< A_i(j)$,
 as illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="800" src="figs/dsetsAnalysis4.png"><br>
+<img width="600" src="figs/dsetsAnalysis4.png"><br>
 </div>
 <p>
 Since the number of nodes with rank in $block_i(j)$
@@ -1761,6 +1754,8 @@ in the string; the cursor is updated as portions of the string are parsed.
         cursor is reset to <code>i</code> (default value 0)
         and the string is optionally reset to the argument <code>s</code>
         (if <code>s</code> is omitted, the string remains unchanged).
+		If <code>i</code> is negative, it is added to the cursor,
+		effectively moving it back the specified number of positions.
 <li>    <code>cursor</code> returns the position of the cursor in the string.
 <li>    <code>length</code> is the number of unscanned characters remaining.
 <li>    <code>toString()</code> returns the unparsed portion of the string.
@@ -1807,18 +1802,27 @@ in the string; the cursor is updated as portions of the string are parsed.
         (1 for $a$, 2 for $b$ and so forth) and advances the cursor.
         If it finds an integer, it returns the integer and advances the cursor.
         Otherwise, it returns 0 and leaves the cursor unchanged.
-<li>    <code>nextIndexList(l, ld, rd)</code> scans the string for a
+<li>    <code>nextIndexList(ld, rd)</code> scans the string for a
         list of index values (either lower-case letters or integers)
         separated by spaces and delimited by the delimiter characters
         <code>ld</code> and <code>rd</code>.
-        The argument <code>l</code> is an array used to return the
-        index values. 
         So for example, if the next portion of the
         string in <code>scanner</code> is
         <code>"[ a b 5 )"</code>, then
-        <code>scanner.nextIndexList(l, '[', ')')</code>
+        <code>scanner.nextIndexList('[', ')')</code>
         returns the array <code>[1, 2, 5]</code>.
-        If a valid list is found, <code>l</code> is returned and the
+        If a valid list is found, it is returned as an array and the
+        cursor is advanced.
+        Otherwise, <code>null</code> is returned and
+        the cursor is left unchanged.
+<li>    <code>nextPairList(ld, rd)</code> is similar to
+		<code>nextIndexList()</code>
+		but parses a list of pairs of the form <code>i:x</code>
+		whenre <code>i</code> is an index and <code>x</code> 
+		is a numerical value.
+		So for example, <code>"[ a:1 b:5 f:2.1 ]"</code>
+		is a possible list of pairs.
+        If a valid list is found, is returned as an array of pairs and the
         cursor is advanced.
         Otherwise, <code>null</code> is returned and
         the cursor is left unchanged.

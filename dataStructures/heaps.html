@@ -36,7 +36,7 @@ with the smallest key without deleting it, and a general <i>delete</i> method.
 <p>
 Efficient heap implementations are usually built around the idea of a
 <i>heap-ordered tree</i>,
-which is a tree in which for each heap vertex $i$,
+which is a tree in which each heap item $i$ is viewed as a tree node and
 $\textit{key}(i) \geq \textit{key}(p(i))$ where 
 $p(i)$ is the parent of $i$ in the tree.
 This property ensures that the root of the tree has the
@@ -50,10 +50,11 @@ of the heap data type that uses an array to implement a
 $d$-ary heap-ordered tree.
 The provided <i>Javascript</i> implementation
 includes the following methods in addition to the
-three standard ones mentioned earlier..
+three standard ones mentioned earlier.
 <ul>
 <li>    <code>d</code> returns the &ldquo;arity&rdquo; of the heap-ordered tree.
-<li>    <code>m</code> returns the number of items in the heap.
+<li>    <code>m</code> returns the number of items in the heap
+        (note, this is not the same as the index range).
 <li>    <code>key(i)</code> returns the key of item <code>i</code>.
 <li>    <code>empty()</code> returns true if the heap is empty.
 <li>    <code>contains(i)</code> returns true if item <code>i</code>
@@ -62,9 +63,6 @@ three standard ones mentioned earlier..
 <li>    <code>delete(i)</code> deletes item <code>i</code> from the heap.
 <li>    <code>add2keys(delta)</code> adds the value <code>delta</code>
         to the keys of all heap items.
-<li>    <code>getStats()</code> returns a statistics object <code>stat</code>
-        containing several performance counters.
-<li>    <code>clearStats()</code> resets the statistics counters.
 </ul>
 <p>
 The web app  can be used to construct a heap from a string and
@@ -87,7 +85,7 @@ Parentheses are used to indicate the tree structure.
 Specifically, each item with children in the tree is
 immediately followed by a parenthesized list of its children.
 The final line includes a more concise view of the heap,
-just listing all items and their keys, in some unspecified order.
+just listing all the remaining items and their keys, in some unspecified order.
 <p>
 The implementation of the array heap stores the $m$ heap items
 in positions $1\ldots m$ of an array with the positions of items
@@ -97,7 +95,7 @@ This tree has a characteristic <i>heap-shape</i>,
 which is illustrated in the example below.
 <p>
 <div  style="text-align:center;">
-<img width="600" src="figs/dheap1.png"><br>
+<img width="400" src="figs/dheap1.png"><br>
 </div>
 <p>
 The index of an item in the <i>item</i> array is referred to as
@@ -122,7 +120,7 @@ all move down one level in the tree. So for example, inserting item $l$
 with key 5 into the previous example heap yields the following.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/dheap2.png"><br>
+<img width="350" src="figs/dheap2.png"><br>
 </div>
 <p>
 The insertion is done with the assistance of a helper method
@@ -144,7 +142,7 @@ So for example, a $\textit{deletemin}$ on the heap
 from the last example, yields the configuration shown below.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/dheap3.png"><br>
+<img width="350" src="figs/dheap3.png"><br>
 </div>
 <p>
 The search process described above is implemented by
@@ -153,10 +151,6 @@ The core methods for the <code>Dheap</code> class are shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import { assert, AssertError} from '../../common/Errors.mjs';
-import Top from '../Top.mjs';
-import Scanner from '../basic/Scanner.mjs';
-
 export default class ArrayHeap extends Top {
     #d;            ///< base of heap
     #m;            ///< # of items in the heap set
@@ -166,11 +160,11 @@ export default class ArrayHeap extends Top {
     #key;          ///< #key[i] is key of item i
     #offset;       ///< offset for key values, allowing all to shift at once
 
-    #insertCount;       // calls to insert
-    #deleteCount;       // calls to delete
+    #insertCount;        // calls to insert
+    #deleteCount;        // calls to delete
     #changekeyCount;    // calls to changekey
-    #siftupSteps;       // steps taken by siftup
-    #siftdownSteps;     // steps taken by siftdown
+    #siftupSteps;        // steps taken by siftup
+    #siftdownSteps;        // steps taken by siftdown
 
     /** Constructor for ArrayHeap object.
      *  @param n is index range for object
@@ -184,13 +178,22 @@ export default class ArrayHeap extends Top {
      *  @param capacity is the maximum range
      */
     #init(d, capacity) {
-        this.#item = new Array(capacity+1);
-        this.#pos = new Array(capacity+1).fill(0);
-        this.#key = new Array(capacity+1);
+        this.#item = new Int32Array(capacity+1);
+        this.#pos = new Int32Array(capacity+1);
+        this.#key = new Float32Array(capacity+1);
         this.#item[0] = this.#m = 0; this.#d = d;
         this.#offset = 0;
         this.clearStats();
     }
+
+    /** Remove all elements from heap. */
+    clear() {
+        for (let x = 1; x <= this.#m; x++) this.#pos[this.#item[x]] = 0;
+        this.#m = 0; this.#offset = 0;
+        this.clearStats();
+    }
+
+    get capacity() { return this.#item.length-1; }
 
     get d() { return this.#d; }
 
@@ -281,6 +284,7 @@ export default class ArrayHeap extends Top {
      *  @param x is a tentative position for i in the heap
      */
     #siftup(i, x) {
+        this.#siftupSteps++;
         let px = this.p(x);
         while (x > 1 && this.#key[i] < this.#key[this.#item[px]]) {
             this.#item[x] = this.#item[px]; this.#pos[this.#item[x]] = x;
@@ -311,6 +315,7 @@ export default class ArrayHeap extends Top {
      *  the smallest key
      */
     #minchild(x) {
+        this.#siftdownSteps++;
         let minc = this.left(x);
         if (minc > this.m) return 0;
         for (let y = minc + 1; y <= this.right(x) && y <= this.m; y++) {
@@ -347,14 +352,14 @@ In some applications key reductions may occur more frequently than
 other operations. In such cases, the overall performance can be
 improved by selecting a value of $d$ that makes these operations faster
 at the expense of the others.
-The <code>add2keys</code> is implemented by adding a value
+The <code>add2keys</code> method is implemented by adding a value
 to a hidden offset that is used to interpret the key values.
 This allows the operation to be done in constant time.
 
 <a id=fheaps><h2>Fibonacci Heaps</h2></a>
 
 The Fibonacci heaps [FredTarj87] data structure represents a collection
-of heaps that define a partition over a common index set $1\ldots n$.
+of heaps that define a partition over a common index range $1\ldots n$.
 Each heap is identified by one of its items.
 The data structure supports an efficient <i>meld</i> operation which
 combines two heaps into a single heap.
@@ -392,16 +397,16 @@ The <i>Javascript</i> implementation includes the following methods.
 Each heap in the data structure is represented by a collection
 of heap-ordered trees. Each heap item $i$ has
 a parent pointer $p(i)$ and a child pointer $c(i)$.
-Siblings are linked by lists within a <code>Dlists</code> data structure.
+Siblings are linked by lists within a <code>ListSet</code> data structure.
 That is, each set of siblings (in all the trees, in all the heaps)
-defines a list within a single <code>Dlists</code> object.
+defines a list within a single <code>ListSet</code> object.
 The roots of the trees within each heap are also linked by
 lists in the same object.
 This structure is illustrated in the figure below that shows
 a single heap consisting of three trees.
 <p>
 <div  style="text-align:center;">
-<img width="900" src="figs/fheaps1.png"><br>
+<img width="600" src="figs/fheaps1.png"><br>
 </div>
 <p>
 Each item in the heap has a <i>key</i> and two auxiliary properties,
@@ -413,15 +418,17 @@ This is also the item with the smallest key.
 Two heaps can be melded simply by combining their root lists.
 An insert is essentially just a meld of a singleton heap with another heap.
 <p>
-To implement the <code>deletemin</code> operation, it's necessary to scan the
-root list to find the new item with the smallest key.
+The <code>deletemin</code> operation for a heap identified by <code>h</code>
+is implemented by first removing <code>h</code> from the root list,
+then combining its child list  with the root list.
+Next, the root list is scanned to find the root with the smallest key.
 The heap is restructured at the same time to speed up later operations.
 In particular, trees with roots of equal rank are combined, with one tree
 becoming a subtree of the other's root.
 This is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="600" src="figs/fheaps2.png"><br>
+<img width="500" src="figs/fheaps2.png"><br>
 </div>
 <p>
 This procedure can be implemented
@@ -497,11 +504,12 @@ Since an <code>insert</code> operation takes constant time and does not
 change the number of trees, a single credit can be allocated for each
 <code>insert</code> and used to pay for the operation.
 <p>
-For the <code>deletemin</code> operation the inital step of merging
-the deleted node's children into the root list takes constant time,
+For the <code>deletemin</code> operation the inital step of 
+removing the minimum key item from the root list and merging
+its children into the root list takes constant time,
 so can be payed for with a single credit.
 The remaining time is determined by the number of steps in
-the restructuring process. If the deleted node has rank $r$,
+the restructuring process. If the deleted item has rank $r$,
 then the first step increases the number of trees by $r$, while the
 restructuring process may decrease the number of trees.
 If $p$ is the number of restructuring steps that involve a collision
@@ -521,19 +529,19 @@ $O(n+m+d\log n)$.
 Since every computational step was paid for from allocated credits,
 the running time is also $O(n+m+d\log n)$.
 <p>
-Now, it's time to consider the <code>changekey(i, h, k)</code>
-operation.  When decreasing the key value, it be
+Now, it's time to consider the <code>changekey(i,h,k)</code>
+operation.  When decreasing the key value, it can be
 implemented by first changing the key value, removing the edge
 from $i$ to its parent, then moving the resulting tree into the
 root list.
 This is a perfectly fine way of implementing <code>changekey</code>
 but has the unfortunate side effect of breaking the analysis just
-completed. In particular, the key lemma requires that no node ever
+completed. In particular, the key lemma requires that no item ever
 loses a child.
 <p>
 Fortunately, an alternate version of the lemma can be applied if
 the operation is modified to ensure that no non-root
-node loses more than one child.
+item loses more than one child.
 The new version sets the mark bit of
 a node $x$ whenever $x$ loses one of its children. If $x$ was
 already marked, the edge from $x$ to its parent is also removed
@@ -546,17 +554,17 @@ The mark bits of all the new tree roots are cleared.
 This process is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="600" src="figs/fheaps3.png"><br>
+<img width="400" src="figs/fheaps3.png"><br>
 </div>
 <p>
 Here is the new version of the lemma.
 <p>
-<i>Lemma 2</i>. Let $x$ be any node with rank $r$ and children $y_1,\ldots,y_r$,
+<i>Lemma 2</i>. Let $x$ be any item with rank $r$ and children $y_1,\ldots,y_r$,
 where the children are listed in the order that they became children of $x$.
 Then, $\textit{rank}(y_i) \geq i-2$.
 <p>
 <i>Proof</i>.
-As before, note that a node becomes the child of another during the
+As before, note that a item becomes the child of another during the
 restructuring process performed by the <code>deletemin</code> operation.
 Consequently, just before $y_i$ became a child of $x$, $x$ had
 at least $i-1$ children. Since $y_i$ became a child of $x$ it must have collided
@@ -564,7 +572,7 @@ with $x$ during the restructuring process and hence it must have had
 at least $i-1$ children, and since it has lost no more than one child
 since it became a child of $x$, it must still have at least $i-2$. $\Box$
 <p>
-<i>Corallary 2</i>. A node $x$ with rank $r$ has at least $F_r$ descendants in
+<i>Corallary 2</i>. A item $x$ with rank $r$ has at least $F_r$ descendants in
 its subtree, where $F_r$ is the $r$-th Fibonacci number.
 <p>
 <i>Proof</i>. 
@@ -579,11 +587,11 @@ where $\phi = (1 + \sqrt{5})/2$. Consequently, the maximum rank
 is $\leq 2 + \log_\phi n$.
 <p>
 To complete the analysis, the amortized complexity argument must be
-extended to handle the <code>decreasekey</code> operation.
+extended to handle the decreasing <code>changekey</code> operation.
 Here is a modified version of the credit policy.
 <p style="padding-left:5%;">
 Maintain one credit on-hand for every tree in all the heaps
-plus two credits for every marked non-root node.
+plus two credits for every marked non-root item.
 <p>
 As before, if $2n$ credits are allocated
 for the initialization, $n$ can be used to pay for the computation,
@@ -591,18 +599,18 @@ and the remainder is enough to satisfy the credit policy.
 <p>
 Since an <code>insert</code> or <code>meld</code> operation takes
 constant time and does not change the number of trees or the number of
-marked nodes, a single credit can be allocated for each
+marked item, a single credit can be allocated for each
 <code>insert</code> or <code>meld</code> and used to pay for the operation.
 <p>
 Since the <code>deletemin</code> operation makes no change to the number
-of marked nodes, the previous argument can be applied directly.
+of marked items, the previous argument can be applied directly.
 The only change required is that the number of credits allocated to the step
 must increased to $1 +  2(2+\log_\phi n)$.
 <p>
 To determine the number of credits needed for
 a decreasing <code>changekey</code> operation,
 let $k$ be the number of new subtrees created by the
-operation. Observe that the number of marked non-root nodes decreases
+operation. Observe that the number of marked non-root items decreases
 by $k-1$, while the number of trees increases by $k$.
 Consequently, $k-2$ fewer credits are needed to satify the credit policy
 following the operation.
@@ -613,7 +621,7 @@ All that remains is to analyze the <code>delete</code> and the
 increasing <code>changekey</code>. These can both be implemented in terms
 of the other operations. Specifically,
 the <code>delete</code> operation can be implemented by doing
-a <code>decreasekey</code> followed by a <code>deletemin</code>.
+a decreasing <code>changekey</code> followed by a <code>deletemin</code>.
 The increasing <code>changekey</code> can be implemented as a
 <code>delete</code> followed by an <code>insert</code>.
 Consequently
@@ -626,16 +634,10 @@ the running time is also $O(n+m+d\log n)$.
 If $m\geq n$ (as it usually is), the bound can expressed more
 simply as $O(m+d\log n)$.
 <p>
-The core methods of the <code>Fheaps</code> class are shown below.
+The core methods of the <code>FibHeaps</code> class are shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import { assert, AssertError} from '../../common/Errors.mjs';
-import Top from '../Top.mjs';
-import List from '../basic/List.mjs';
-import ListSet from '../basic/ListSet.mjs';
-import Scanner from '../basic/Scanner.mjs';
-
 export default class FibHeaps extends Top {
     #key;         ///< #key[i] is key of item i
     #rank;        ///< #rank[i] gives rank of item i
@@ -666,14 +668,14 @@ export default class FibHeaps extends Top {
      *  @param nMax is the maximum range
      */
     #init(capacity) {
-        this.#key = new Array(capacity+1).fill(0);
-        this.#rank = new Array(capacity+1).fill(0);
-        this.#mark = new Array(capacity+1).fill(false);
-        this.#p = new Array(capacity+1).fill(0);
-        this.#c = new Array(capacity+1).fill(0);
+        this.#key = new Float32Array(capacity+1);
+        this.#rank = new Int32Array(capacity+1);
+        this.#mark = new Int8Array(capacity+1);
+        this.#p = new Int32Array(capacity+1);
+        this.#c = new Int32Array(capacity+1);
         this.#sibs = new ListSet(this.n, capacity);
 
-        this.#rankVec = new Array(this.#MAXRANK+1).fill(0);
+        this.#rankVec = new Int32Array(this.#MAXRANK+1);
         this.#tmpq = new List(this.n, capacity);
 
         this.#insertCount = 0;
@@ -681,6 +683,17 @@ export default class FibHeaps extends Top {
         this.#changekeyCount = 0;
         this.#decreasekeySteps = 0;
         this.#mergeSteps = 0;
+    }
+
+    get capacity() { return this.#key.length-1; }
+
+    /** Remove all elements from heap. */
+    clear() {
+        this.#sibs.clear();
+        for (let i = 0; i < this.n; i++) {
+            this.#key[i] = this.#rank[i] = this.#p[i] = this.#c[i] = 0;
+            this.#mark[i] = false;
+        }
     }
 
     /** Return key of a heap item. */
@@ -714,6 +727,21 @@ export default class FibHeaps extends Top {
      *  @return the item in h that has the smallest key
      */
     findmin(h) { return h; }
+
+    /** Built a heap from a list of singletons.
+     *  @param hl is a List object containing singleton items
+     *  @param return the heap containing the listed items
+     */
+    makeheap(hl) {
+        let h = hl.first();
+        if (h == 0) return 0;
+        let minh = h;
+        for (let h1 = hl.next(h); h1 != 0; h1 = hl.next(h1)) {
+            if (this.key(h1) < this.key(minh)) minh = h1;
+            this.#sibs.join(h, h1);
+        }
+        return minh;
+    }
 
     meld(h1, h2) {
         assert((h1 == 0 || (this.valid(h1) && this.p(h1) == 0)) &&
@@ -769,6 +797,56 @@ export default class FibHeaps extends Top {
         return h;
     }
 
+    /** Merge the tree roots in heap, to eliminate repeated ranks.
+     *  @param r is a tree root in a heap; all tree roots are assumed
+     *  to be non-deleted nodes; also r is the id of the root list in sibs
+     *  @return the resulting root with the smallest key
+     */
+    #mergeRoots(r) {
+        let key = this.#key; let rank = this.#rank; let mark = this.#mark;
+        let p = this.#p; let c = this.#c; let sibs = this.#sibs;
+        let tmpq = this.#tmpq; let rankVec = this.#rankVec;
+
+        assert(this.valid(r) && p[r] == 0);
+
+        // Build queue of roots and find root with smallest key
+        let minRoot = r;
+        for (let sr = r; sr != 0; sr = sibs.next(sr)) {
+            this.#mergeSteps++;
+            if (key[sr] < key[minRoot]) minRoot = sr;
+            tmpq.enq(sr); p[sr] = 0; mark[sr] = false;
+        }
+        r = sibs.rotate(r, minRoot); // r is now is min root
+        // scan roots, merging trees of equal rank
+        let maxRank = -1; // maxRank = maximum rank seen so far
+        while (!tmpq.empty()) {
+            this.#mergeSteps++;
+            let r1 = tmpq.pop();
+            assert(rank[r1] <= this.#MAXRANK);
+            let r2 = rankVec[rank[r1]];
+            if (maxRank < rank[r1]) {
+                for (maxRank++; maxRank < rank[r1]; maxRank++)
+                    rankVec[maxRank] = 0;
+                rankVec[rank[r1]] = r1;
+            } else if (r2 == 0) {
+                rankVec[rank[r1]] = r1;
+            } else if (key[r1] < key[r2] || (key[r1] == key[r2] && r1 == r)) {
+                r = sibs.delete(r2, r);
+                c[r1] = sibs.join(c[r1], r2);
+                rankVec[rank[r1]] = 0;
+                rank[r1]++; p[r2] = r1;
+                tmpq.enq(r1);
+            } else {
+                r = sibs.delete(r1, r);
+                c[r2] = sibs.join(c[r2], r1);
+                rankVec[rank[r1]] = 0;
+                rank[r2]++; p[r1] = r2;
+                tmpq.enq(r2);
+            }
+        }
+        return r;
+    }
+        
     /** Remove the item with smallest key from a heap.
      *  @param h is the canonical element of some heap
      *  @return the pair [min, hnew] where min is the deleted item
@@ -804,14 +882,14 @@ export default class FibHeaps extends Top {
         this.#key[i] = k;
         return h;
     }
-}
+}    
 </textarea>
 
 <a id=lheaps><h2>Leftist Heaps</h2></a>
 
 As with Fibobacci heaps, the leftist heaps [Crane72, Knuth73] data structure
 maintains a collection of meldable heaps which define a partition over a
-common index set $1\ldots n$.
+common index range $1\ldots n$.
 Each heap is identified by one of its items.
 In its basic form, the running time of all the standard heap operations
 is $O(\log n)$.
@@ -819,18 +897,18 @@ is $O(\log n)$.
 The <i>Javascript</i> implementation includes the following methods.
 <ul>
 <li>    <code>key(i)</code> returns the key of item <code>i</code>.
-<li>    <code>setKey(i, k)</code> sets the key of item <code>i</code>
-        too <code>k</code>; item <code>i</code> must define a singleton
+<li>    <code>setKey(i,k)</code> sets the key of item <code>i</code>
+        to <code>k</code>; item <code>i</code> must define a singleton
         heap.
 <li>    <code>findmin(h)</code> returns the item of minimum key in the
         heap identified by item <code>h</code>.
 <li>    <code>deletemin(h)</code> returns the item of minimum key in the
         heap identified by <code>h</code> and removes it from
         <code>h</code>.
-<li>    <code>meld(h1, h2)</code> combines the two heaps identified by
+<li>    <code>meld(h1,h2)</code> combines the two heaps identified by
         <code>h1</code> and <code>h2</code> and returns the identifier of
         the combined heap.
-<li>    <code>insert(i, h, k)</code> inserts <code>i</code> into the
+<li>    <code>insert(i,h,k)</code> inserts <code>i</code> into the
         heap identified by <code>h</code> with key <code>k</code>.
 <li>    <code>heapify(l)</code> combines the heaps in the list <code>l</code>
         into a single heap.
@@ -850,7 +928,7 @@ This ensures that the shortest path from any tree node to the <i>null</i>
 node is the path defined by following right pointers. 
 <p>
 <div  style="text-align:center;">
-<img width="400" src="figs/lheap1.png"><br>
+<img width="300" src="figs/lheap1.png"><br>
 </div>
 <p>
 The <code>meld</code> operation is implemented by merging the right-most paths
@@ -860,7 +938,7 @@ left and right children as needed to ensure that the larger rank value
 is always to the left. This is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="1000" src="figs/lheap2.png"><br>
+<img width="700" src="figs/lheap2.png"><br>
 </div>
 <p>
 The <code>insert</code> operation is implemented by treating the item
@@ -917,7 +995,7 @@ for which the roots are not retired or dummy.
 This is illustrated below, with retired/dummy nodes shown in yellow.
 <p>
 <div  style="text-align:center;">
-<img width="1000" src="figs/lheap3.png"><br>
+<img width="700" src="figs/lheap3.png"><br>
 </div>
 This list of heaps is then merged into a single heap using <code>heapify</code>.
 <p>
@@ -936,13 +1014,6 @@ The core methods of the <code>LeftistHeaps</code> class are shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import { assert, AssertError} from '../../common/Errors.mjs';
-import Top from '../Top.mjs';
-import List from '../basic/List.mjs';
-import ListSet from '../basic/ListSet.mjs';
-import Sets from '../basic/Sets.mjs';
-import Scanner from '../basic/Scanner.mjs';
-
 export default class LeftistHeaps extends Top {
     #key;          ///< #key[i] is key of item i
     #rank;         ///< #rank[i] gives rank of item i

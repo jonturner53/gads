@@ -34,7 +34,7 @@ extending the <code>Digraph</code> class.
 The implementation of the <code>Graph</code> class is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="650" src="figs/graph.png"><br>
+<img width="400" src="figs/graph.png"><br>
 </div>
 <p>
 
@@ -46,7 +46,7 @@ Edges are also identified by integer values in a bounded range.
 The <i>edges</i> array lists the pair of vertices joined by
 each edge, assigning them arbitrary designations of <i>left</i>
 and <i>right</i>.
-A disjoint lists object (<code>Dlists</code>) is used to represent the
+A <code>ListSet</code> object is used to represent the
 edges incident to each vertex.
 More precisely, it represents lists of <i>edge endpoints</i>,
 where the endpoints of edge $e$ are defined to be $2e$ and $2e+1$.
@@ -55,7 +55,7 @@ right endpoint (3) at vertex $b$, so the endpoint list at $a$ includes
 endpoint 2, while the list at $b$ includes 3.
 The <i>first_endpoint</i> array identifies the first endpoint
 in the endpoint list for each vertex.
-This implementation supports iteration through the entire edge set,
+This implementation supports efficient iteration through the entire edge set,
 or the edges incident to each vertex. Edges can be added,
 if the edges array is pre-dimensioned to allow for the maximum number of
 edges expected.
@@ -107,7 +107,7 @@ The <code>Graph</code> class supports the following methods.
     edge weights.
 <li> <code>setWeight(e, w)</code> sets the weight of edge <code>e</code>
     to <code>w</code>.
-    If weights have note yet been added to the graph,
+    If weights have not yet been added to the graph,
     they are added as a side-effect.
 <li> <code>weight(e)</code> returns the weight of edge <code>e</code>.
       If weights have not been added to the graph, 0 is returned.
@@ -118,13 +118,6 @@ The <code>Graph</code> class also supports the common methods,
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import { assert } from '../../common/Errors.mjs'
-import Top from '../Top.mjs';
-import List from '../basic/List.mjs';
-import ListPair from '../basic/ListPair.mjs';
-import ListSet from '../basic/ListSet.mjs';
-import Scanner from '../basic/Scanner.mjs';
-
 export default class Graph extends Top {
     _firstEp;    ///< _firstEp[v] is first edge endpoint at v
     _left;       ///< _left[e] is left endpoint of edge e
@@ -149,8 +142,9 @@ export default class Graph extends Top {
 
     #init(vcap, ecap) {
         assert(this.n > 0 && vcap >= this.n && ecap > 0);
-        this._firstEp = new Array(vcap+1).fill(0, 0, this.n+1);
-        this._left = new Array(ecap+1); this._right = new Array(ecap+1);
+        this._firstEp = new Int32Array(vcap+1);
+        this._left = new Int32Array(ecap+1);
+        this._right = new Int32Array(ecap+1);
         this._edges = new ListPair(ecap);
         this._epLists = new ListSet(2*(ecap+1));
         if (this.#weight) this.addWeights();
@@ -306,7 +300,7 @@ export default class Graph extends Top {
 
     /** Add array of edge weights. */
     addWeights() {
-        this.#weight = new Array(this.edgeCapacity+1);
+        this.#weight = new Float32Array(this.edgeCapacity+1);
     }
 
     /** Get the weight of an edge.
@@ -361,15 +355,6 @@ The core methods in the <code>Digraph</code> class are shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import { assert } from '../../common/Errors.mjs';
-import { scramble, shuffle } from '../../common/Random.mjs';
-import Graph from './Graph.mjs';
-import { randomPermutation } from '../../common/Random.mjs';
-
-/** Data structure for weighted undirected graph.
- *  Extends Graph class and places incoming edges before outgoing edges
- *  in adjuacency lists.
- */
 export default class Digraph extends Graph {
     _firstEpOut     // _firstEpOut[u] is endpoint of first outgoing edge
                     // in u's adjacency list
@@ -384,7 +369,7 @@ export default class Digraph extends Graph {
     }
     
     #init_d() {
-        this._firstEpOut = new Array(this.vertexCapacity+1).fill(0);
+        this._firstEpOut = new Int32Array(this.vertexCapacity+1);
     } 
 
     addLengths() { super.addWeights(); }
@@ -529,17 +514,17 @@ Finally, it adds the following methods.
 <li>    <code>sink</code> returns the sink vertex.
 <li>    <code>setSource(u)</code> makes vertex <code>u</code> the source.
 <li>    <code>setSink(u)</code> makes vertex <code>u</code> the sink.
-<li>    <code>f(u, e)</code> returns the flow leaving vertex <code>u</code>
+<li>    <code>f(e, u)</code> returns the flow leaving vertex <code>u</code>
         on edge <code>e</code>. May be negative.
-<li>    <code>cap(u, e)</code> returns the capacity of edge <code>e</code>
-        leaving vertex <code>u</code>.
-<li>    <code>res(u, e)</code> returns the residual capacity of edge
+        If <code>u</code> is omitted, it defaults to the tail of the edge.
+<li>    <code>cap(e)</code> returns the capacity of edge <code>e</code>.
+<li>    <code>res(e, u)</code> returns the residual capacity of edge
         <code>e</code> leaving vertex <code>u</code>.
 <li>    <code>setFlow(e, f)</code> sets the flow on edge
         <code>e</code> to <code>f</code>.
 <li>    <code>setCapacity(e, cap)</code> sets the capacity of edge
         <code>e</code> to <code>cap</code>.
-<li>    <code>addFlow(u, e, f)</code> adds <code>f</code> units of flow
+<li>    <code>addFlow(e, u, f)</code> adds <code>f</code> units of flow
         leaving vertex <code>u</code> on edge <code>e</code>.
 <li>    <code>clearFlow()</code> sets the flow on all edges to 0.
 <li>    <code>totalFlow()</code> returns the flow leaving the source vertex.
@@ -547,21 +532,26 @@ Finally, it adds the following methods.
 <li>    <code>cost(e)</code> is an alias of <code>weight()</code>.
 <li>    <code>setCost(e, c)</code> is an alias of <code>setWeight()</code>.
 <li>    <code>totalCost()</code> returns the cost of the current flow.
+<li>    <code>addFloors()</code> adds the ability to support minimum flow
+        requirements for the edges. When floors are defined, they
+        affect the residual capacity in the reverse direction.
+<li>    <code>floor(e)</code> returns the floor value for edge <code>e</code>
+        or 0 if floors are not yet enabled.
+<li>    <code>setFloor(e, f)</code> sets the floor of edge <code>e</code>
+        to <code>f</code>. If floors are not yet enabled, they are enabled
+        as a side effect.
 </ul>
 <p>
 The core methods in the <code>Flograph</code> class are shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import { assert } from '../../common/Errors.mjs';
-import Digraph from './Digraph.mjs';
-import { shuffle } from '../../common/Random.mjs';
-
 export default class Flograph extends Digraph {
-    #f;             // #f[e] is flow on edge e
-    #cap;           // #cap[e] is capacity of edge e
+    #f;                // #f[e] is flow on edge e
+    #cap;            // #cap[e] is capacity of edge e
     #source;        // source vertex
-    #sink;          // sink vertex
+    #sink;            // sink vertex
+    #floor;            // floor[e] is min flow requirement (optional)
 
     /** Constructor for directed graph
      *  @param n is the number of vertices
@@ -569,44 +559,66 @@ export default class Flograph extends Digraph {
      *  @param vcap is the max number of vertices to provide space for
      */
     constructor(n, ecap, vcap) {
-        super(n, ecap, vcap); this.#init_d();
+        super(n, ecap, vcap); this.#init();
     }
     
-    #init_d() {
-        this.#f = new Array(this.edgeCapacity+1);
-        this.#cap = new Array(this.edgeCapacity+1);
+    /** Initialize the Flograph. */
+    #init() {
+        this.#f = new Int32Array(this.edgeCapacity+1);
+        this.#cap = new Int32Array(this.edgeCapacity+1);
         this.#source = 1; this.#sink = this.n;
+        if (this.floored) this.addFloors();
     } 
 
+    /** Add edge costs to the graph (cost per unit flow). */
     addCosts() { super.addWeights(); }
+    
+    /** Enable minimum flow requirements. */
+    addFloors() {
+        this.#floor = new Int32Array(this.edgeCapacity+1);
+    }
 
+    /** Return true if minimum flow requirements are enabled. */
+    get floored() { return (this.#floor ? true : false); }
+
+    /** Set the source vertex.
+     *  @param s is the new source vertex.
+     */
     setSource(s) { this.#source = s; }
+
+    /** Set the sink vertex.
+     *  @param t is the new sink vertex.
+     */
     setSink(t) { this.#sink = t; }
+
+    /* Return the source vertex. */
     get source() { return this.#source; }
+
+    /* Return the sink vertex. */
     get sink() { return this.#sink; }
 
-    /** Get the flow on an edge.
-     *  @param u is a vertex in the flograph
-     *  @param e is an edge that is incident to u
-     *  @return the flow on e, going from u to mate(u)
-     */
-    f(e, u) { return (u == this.tail(e) ? this.#f[e] : -this.#f[e]); }
-
     /** Get the capacity of an edge.
-     *  @param u is a vertex in the flograph
      *  @param e is an edge that is incident to u
-     *  @return the capacity of e, going from u to mate(u)
+     *  @return the capacity of e
      */
-    cap(e, u) { return (u == this.tail(e) ? this.#cap[e] : 0); }
+    cap(e) { return this.#cap[e]; }
+
+    /** Get the min flow requirement for an edge.
+     *  @param e is an edge that is incident to u
+     *  @return the min flow requirement for e
+     */
+    floor(e) {
+        return (this.floored && this.#floor[e] ? this.#floor[e] : 0);
+    }
 
     /** Get the cost of the current flow on an edge.
      *  @param u is a vertex in the flograph
      *  @param e is an edge that is incident to u
      *  @return the cost of the flow on e, going from u to mate(u)
      */
-    cost(e, u) {
-        if (!this.#cost || !this.#cost[e]) return 0;
-        return (u == this.tail(e) ? this.#cost[e] : -this.#cost[e]);
+    cost(e, u=this.tail(e)) {
+        let c = super.weight(e);
+        return (u == this.tail(e) ? c : -c);
     }
 
     /** Get the residual capacity of an edge.
@@ -614,68 +626,183 @@ export default class Flograph extends Digraph {
      *  @param e is an edge that is incident to u
      *  @return the unused capacity of e, going from u to mate(u)
      */
-    res(e, u) { return (u == this.tail(e) ? this.#cap[e] - this.#f[e]
-                                          : this.#f[e]); }
+    res(e, u=this.tail(e)) {
+        return (u == this.tail(e) ? this.#cap[e] - this.#f[e] :
+                                    this.#f[e] - this.floor(e));
+    }
+
+    /** Get the flow on an edge.
+     *  @param u is a vertex in the flograph
+     *  @param e is an edge that is incident to u
+     *  @return the flow on e, going from u to mate(u)
+     */
+    f(e, u=this.tail(e)) {
+        return (u == this.tail(e) ? this.#f[e] : -this.#f[e]);
+    }
 
     /** Change the flow on an edge.
      *  @param e is an edge
      *  @param f is the new flow on e from the tail to the head
      */ 
     setFlow(e, f) {
-        assert(0 <= f && f <= this.#cap[e], 'edge capacity violation');
-        this.#f[e] = f; }
+        assert(f <= this.#cap[e], 'setFlow: edge capacity violation');
+        this.#f[e] = f;
+    }
     
     /** Change the capacity of an edge.
      *  @param e is an edge 
      *  @param cap is the new edge capacity for e
      */
-    setCapacity(e, cap) { this.#cap[e] = cap; }
+    setCapacity(e, cap) {
+        assert(cap >= this.floor(e), 'setCapacity: edge capacity violation');
+        this.#cap[e] = cap;
+    }
 
     /** Change the cost of an edge.
      *  @param e is an edge 
      *  @param cost is the new edge cost for e
      */
-    setCost(e, cost) { 
-        if (!this.#cost) this.addCosts();
-        this.#cost[e] = cost;
+    setCost(e, cost) { super.setWeight(e, cost); }
+
+    /** Set the minimum flow requirement for an edge.
+     *  @param e is an edge
+     *  @param floor is the new min flow reqirement for e.
+     */
+    setFloor(e, floor) {
+        if (!this.floored) this.addFloors();
+        this.#floor[e] = floor;
     }
 
+    /** Set the flow of every edge to zero. */
     clearFlow() {
         for (let e = this.first(); e != 0; e = this.next(e))
             this.setFlow(e, 0);
     }
 
+    /** Return the current flow magnitude (total flow leaving source). */
     totalFlow() {
         let flow = 0; let src = this.source;
         for (let e = this.firstOut(src); e != 0; e = this.nextOut(src, e)) {
-            flow += this.f(e, src);
+            flow += this.f(e);
         }
         return flow;
     }
 
+    /** Return the current flow cost (sum of flow*cost for all edges). */
     totalCost() {
         let cost = 0;
         for (let e = this.first(); e != 0; e = this.next(e)) {
-            let u = this.tail(e);
-            cost += this.f(e, u) * this.cost(e, u);
+            cost += this.f(e) * this.cost(e);
         }
         return cost;
     }
 
+    /** Add flow to an edge.
+     *  @param e is an edge
+     *  @param u is an endpoint of e
+     *  @param f is a flow amount to be added to the flow on e leaving u
+     */
     addFlow(e, u, f) {
-        assert(f + this.f(e, u) <= this.cap(e, u), 'edge capacity violation');
+        assert(f <= this.res(e, u), 'addFlow: edge capacity violation');
         if (u == this.tail(e)) this.#f[e] += f;
         else                    this.#f[e] -= f;
     }
 
+    /** Join two vertices with an edge.
+     *  @param u is a vertex
+     *  @param v is an edge
+     *  @param e is a currently unused edge number to be used for the
+     *  new edge (u,v); if omitted, the first available edge number is used
+     *  the edge capacity and flow are both initialized to zero,
+     *  as is the min flow requirement, if enabled
+     */
     join(u, v, e) {
         let ee = super.join(u, v, e);
-        this.setCapacity(ee, 0);
-        this.setFlow(ee, 0);
+        this.setCapacity(ee, 0); this.setFlow(ee, 0);
+        if (this.floored) this.setFloor(ee, 0);
         return ee;
     }
 }
 </textarea>
+
+<h2>Random Graphs</h2>
+The <code>RandomGraphs</code> module provides a collection of methods for
+generating simple (no self-loops or parallel edges) random graphs
+of all three types.
+It provides the following methods.
+<ul>
+<li> <code>randomGraph(n, m)</code> returns a <code>Graph</code> object with
+    <code>n</code> vertices and <code>m</code> random edges.
+<li> <code>randomTree(n)</code> returns a <code>Graph</code> object with
+    <code>n</code> vertices that defines a random tree.
+<li> <code>randomConnectedGraph(n, m)</code> returns a <code>Graph</code>
+    object with <code>n</code> vertices and <code>m</code> edges
+    that is guaranteed to be connected.
+<li> <code>randomRegularGraph(n, d)</code> returns a <code>Graph</code>
+    object with <code>n</code> vertices and <code>d</code> edges
+    incident to each vertex.
+<li> <code>randomBigraph(n1, n2, m)</code> returns a <code>Graph</code> object
+    that defines a bipartite graph with <code>n1+n2</code> vertices and
+    <code>m</code> random edges that defines a bipartite graph with
+    <code>n1</code> vertices in the &ldquo;left&rdquo; part and
+    <code>n2</code> in the &ldquo;right&rdquo; part.
+<li> <code>randomRegularBigraph(n1, d1, n2)</code> returns a <code>Graph</code>
+    object that defines a bipartite graph with <code>n1+n2</code> vertices
+    and <code>d1</code> vertices incident to each vertex in the left part.
+<li> <code>randomDigraph(n, m)</code> returns a <code>Digraph</code> object
+    with <code>n</code> vertices and <code>m</code> random edges.
+<li> <code>randomFlograph(p, q, k, m)</code> returns a <code>Flograph</code>
+    object with <code>2+p*q</code> vertices and <code>m</code> random edges.
+    The non-source/sink vertices are distributed among
+    <code>p</code> <i>levels</i> with <code>q</code> vertices per level.
+    For each value of $i$, edges are generated within level $i$,
+    from level $i$ to level $i+1$ and from $i$ to levels
+    $i-1$ through $i-k$. In addition, edges are generated from the
+    source vertex to every vertex in the first level, and to the sink
+    vertex from every vertex in the last level.
+    The number of edges is at most
+    $2q + ((p-1) + k(p-k) + (k(k-1)/2))q^2 + pq(q-1)$.
+</ul>
+The above methods define random edges for graphs.
+Each graph class is also equipped with methods to
+assign random values to its edge properties
+(weights, lengths, costs, capacities, floors).
+These are summarized below.
+<ul>
+<li>	<code>randomWeights(f)</code> generates random weights for the
+		edges in a graph, using the random number generator <code>f</code>.
+		If the function <code>f</code> requires any arguments, they must
+		be supplied as additional arguments to  <code>randomWeights()</code>.
+		For example, <code>randomWeights(randomInteger, 3, 7)</code>
+		assigns random integer values in [3,7] to the edges of a Graph.
+		The <code>randomInteger</code> can be found in the <code>Random</code>
+		module. If edge weights have not been previously enables, they are
+		enabled as a side-effect.
+<li>	<code>randomLengths(f)</code> is an alias for
+		<code>randomWeights()</code>, for use on Digraph objects.
+<li>	<code>randomCosts(f)</code> is an alias for
+		<code>randomWeights()</code>, for use on Flograph objects.
+<li>	<code>randomCapacities(scale, f)</code> generates random edge
+		capacities in a Flograph object. The <code>scale</code> argument
+		is applied to source/sink edges, allowing their capacities to
+		be scaled relative to those of other edges.
+		The second argument is a random number generator and any remaining
+		arguments are used as arguments to it.
+<li>	<code>randomFloors(f)</code> generates minimum flow requirements
+		for the edges, using a random number generator <code>f</code>.
+</ul>
+The <code>Random</code> module contains several random number generators
+that can be used in conjunction with the <code>RandomGraph</code> module.
+<ul>
+<li>	<code>randomFraction()</code> returns a random value in [0,1].
+<li>	<code>randomInteger(lo, hi)</code> returns a random integer in
+		<code>[lo,hi]</code>.
+<li>	<code>randomExp(mu)</code> returns a random sample from an
+		exponential distribution with mean <code>mu</code>.
+<li>	<code>randomPareto(mu, s)</code> returns a random sample from a
+		Pareto distribution with mean <code>mu</code> and shape parameter
+		<code>s</code>.
+</ul>
 
 <script src="../googleAnalytics.js"></script>
 </body>
