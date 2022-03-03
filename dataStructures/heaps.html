@@ -953,7 +953,8 @@ It terminates when there is a single heap on the list.
 Since the length of the right path from any node to the <i>null</i> node
 is at most $\lg n$, the <code>meld</code>, <code>insert</code> and
 <code>deletemin</code> operations all take $O(\log n)$ time.
-The <code>heapify</code> is a bit more complicated.
+<a id="heapify">The analysis of <code>heapify</code></a>
+is a bit more complicated.
 The first step is to divide the processing into <i>passes</i>,
 where a pass ends when all the heaps on the list at the start of the
 pass have been removed and melded with some other heap.

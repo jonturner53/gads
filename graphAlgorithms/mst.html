@@ -192,7 +192,7 @@ invariant, while the remaining iterations maintain the invariant as
 described above.
 <p>
 Prim's algorithm can be implemented using any heap data structure,
-but it is most commonly implemented using a
+but it is most commonly implemented using an
 <a href="../dataStructures/heaps.html#arrayHeap">array heap</a>.
 If the heap operations are excluded, the running time
 is $O(m)$, since the innermost loop is executed no more than $2m$ times.
@@ -648,7 +648,9 @@ let $m_i$ be the size of the heap on the $i$-th call to
 heap during that execution of <i>findmin</i>.
 Note that $\sum_{i=1}^{n-1} m_i \leq (2m+n-1)\lg n$ and
 that the time required for the <i>heapify</i> in the $i$-th <i>findmin</i> is
-$O(k_i \max(1,\log(m_i/k_i))$ based on the earlier analysis.
+$O(k_i \max(1,\log(m_i/k_i))$ based on the
+<a href="../dataStructures/heaps.html#heapify">earlier analysis
+of <i>heapify</i></a>.
 <p>
 A <i>findmin</i> is called <i>small</i> if $k_i \leq m_i/(\lg n)^2)-1$;
 otherwise, it is called <i>large</i>.
