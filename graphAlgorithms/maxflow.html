@@ -129,7 +129,7 @@ the following step so long as there is an augmenting path.
 Select an augmenting path $p$ and add $res(p)$ units of flow to all
 edges on $p$.
 <p>
-This method was first proposed by Ford and Fulkerson [FordFulk56].
+This method was first proposed by Ford and Fulkerson [ForFul56].
 If flow capacities are integers, flow increases by at least 1 on each step,
 so the augmenting path algorithm terminates
 in at most $|f^\ast|$ steps, where $f^\ast$ is a maximum flow.
@@ -142,8 +142,9 @@ could alternate between the paths $[s,a,b,t]$ and $[s,b,a,t]$ taking
 </div>
 <p>
 Efficient algorithms can be obtained using an appropriate path
-selection policy. There are two natural choices. The first is
-to select augment paths of minimum length (where path length is
+selection policy. There are two natural choices, both suggested
+by Edmonds and Karp [EdKar72]. The first is
+to select augmenting paths of minimum length (where path length is
 simply the number of edges in the path). The second is to select
 paths of maximum residual capacity. Both of these algorithms
 use just two steps to find a max flow in the example graph.
@@ -1032,9 +1033,9 @@ On the other hand, it is never dramatically slower than the simpler
 version, and it is occasionally dramatically faster.
 
 <h2>The Preflow-Push Method</h2>
-The <i>preflow-push</i> (also know as push-relabel) method
-of Goldman and Tarjan [GTXX]
-for computing maximum flows takes a distinctly different approach.
+The <i>preflow-push</i> (also know as push-relabel) method for
+computing maximum flows (first suggested by Karzanov [Kar74])
+takes a distinctly different approach.
 Instead of incrementally improving a flow function, approaching the
 maximum flow value &ldquo;from below&rdquo;,
 it starts with a <i>preflow</i> with
@@ -1060,9 +1061,9 @@ of admissible edges at $u$.
 <p>
 So, the preflow-push method attempts to balance vertices by pushing flow
 out on its admissible edges.
-It uses a technique that is similar to the use of
-the <i>level</i> function in Dinic's algorithm, to determine which edges
-are admissible.
+Goldman and Tarjan [GolTar86] proposed a method for determining which edges
+should be admissible that is similar to
+the <i>level</i> function in Dinic's algorithm.
 Each vertex $u$ is assigned a <i>distance label</i> $d(u)$ and
 an edge $e=(u,v)$ is defined to be admissible at $u$
 if $res_e(u,v)>0$ and $d(u)=d(v)+1$.
@@ -1139,7 +1140,7 @@ First, note that every unbalanced vertex $u$ has a non-saturated path
 back to the source throughout the execution of the method. This follows easily
 by induction on the number of steps.
 Next, note that whenever a vertex $u$ is relabeled, it is unbalanced,
-and so the existence of a non-saturated path plus the validity of the
+and so the existence of a non-saturated path to the source plus the validity of the
 distance labels implies that $d(u) <2n$.
 This implies that the each vertex is relabled $<2n$ times,
 since each step increases the label by at least 1.
@@ -1242,7 +1243,7 @@ pushed back to $d$ and $c$ in the next two steps.
 </div>
 <p>
 At this point $c$ is relabeled, allowing flow to move forward again
-to $d$, which is then relabeled and sends flow forwward to $e$.
+to $d$, which is then relabeled and sends flow forward to $e$.
 This pattern of back and forth flow adjustments continues until
 the labels at vertices $b$ through $e$ increase to 9, 10, 11 and 12.
 For longer paths, the number of steps grows quadratically with
@@ -1316,11 +1317,11 @@ that handles the processing that is specific to that variant.
 The module for the FIFO variant appears below.
 <p> <textarea rows="7" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function maxflowGTf(fg, relabThresh=fg.m) {
+export default function maxflowPPf(fg, relabThresh=fg.m) {
     let unbal = new List(fg.n);
     function putUnbal(u) { if (!unbal.contains(u)) unbal.enq(u); }
     function getUnbal(u) { return unbal.deq(); }
-    return maxflowGT(fg, getUnbal, putUnbal, relabThresh);
+    return maxflowPP(fg, getUnbal, putUnbal, relabThresh);
 }
 </textarea> <p>
 The function <code>putUnbal</code> adds a vertex to the set of
@@ -1340,7 +1341,7 @@ let putUnbal;     // reference to function that adds a vertex to unbalanced set
 
 let relabelSteps; // number of steps spent on relabeling
 
-export default function maxflowGK(fg, getUbal, putUbal, relabThresh=fg.m) {
+export default function maxflowPP(fg, getUbal, putUbal, relabThresh=fg.m) {
     g = fg;
     excess = new Int32Array(g.n+1); 
     nextedge = new Int32Array(g.n+1);
@@ -1491,7 +1492,7 @@ let g = new Flograph();
 g.fromString('{a->[b:5 d:6] b[c:3 d:7 g:3] c[d:1 e:5] d[e:2 f:1 g:3] ' +
              'e[f:1 g:3 h:4] f[e:1 g:2 h:3] g[e:3 f:2 h:1] ' +
              'h[f:3 i:4 j:5] i[g:5 j:6] ->j[]}');
-let [f,ts] = maxflowGTf(g,1);
+let [f,ts] = maxflowPPf(g,1);
 log(ts, '\n' + g.toString(0,1));
 </pre>
 Running this produces the output shown below.
@@ -1553,9 +1554,9 @@ A <i>Javascript</i> implementation of this version of the preflow-push
 method appears below.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import maxflowGT from './maxflowGT.mjs';
+import maxflowPP from './maxflowPP.mjs';
 
-export default function maxflowGTf(fg, relabThresh=fg.m) {
+export default function maxflowPPf(fg, relabThresh=fg.m) {
     let unbal = new ListSet(fg.n);
     let ubvec = new Int32Array(2*fg.n+1);
     let top = 0;
@@ -1569,7 +1570,7 @@ export default function maxflowGTf(fg, relabThresh=fg.m) {
         while (top > 0 && ubvec[top] == 0) top--;
         return u;
     }
-    return maxflowGT(fg, getUnbal, putUnbal, relabThresh);
+    return maxflowPP(fg, getUnbal, putUnbal, relabThresh);
 }
 </textarea> <p>
 Observe that a singe call to the <code>getUnbal</code> function
@@ -1578,7 +1579,7 @@ However, the total number of iterations over all calls can be bounded by
 the total increase in the distance labels. This implies that the
 total time spent in the while loop is $O(n^2)$.
 <p>
-The trace output from <code>maxflowGThl</code>
+The trace output from <code>maxflowPPhl</code>
 when run on the sample graph from the last section
 is shown below.
 <p> <textarea rows="14" cols="80" readonly
@@ -1641,15 +1642,15 @@ function testrun(algo, label, g, d, relabThresh=g.m) {
 
 let n = 202; let d = 25;
 let g = randomFlograph(n, d); g.randomCapacities(randomInteger, 1, 99);
-testrun(maxflowGTf, 'f', g, d, 0);
+testrun(maxflowPPf, 'f', g, d, 0);
 
 n = 202; d = 25;
 g = randomFlograph(n, d); g.randomCapacities(randomInteger, 1, 99);
-testrun(maxflowGTf, 'f', g, d, g.m);
+testrun(maxflowPPf, 'f', g, d, g.m);
 
 n = 202; d = 25;
 g = randomFlograph(n, d); g.randomCapacities(randomInteger, 1, 99);
-testrun(maxflowGTf, 'f', g, d, 100*g.m);
+testrun(maxflowPPf, 'f', g, d, 100*g.m);
 </textarea> <p>
 
 The first line below shows the results the pure batch relabeling approach,
@@ -1819,14 +1820,26 @@ i[g:2-5/2 j:6]
 
 <h2>References</h2>
 <dl>
-<dt> AhuMagOrl93
+<dt> [AhMaOr93]
 <dd> <i>Network Flows, Theory, Algorithms and Applications</i>
      by R. K Ahuja, T. L. Magnanti and J. B. Orlin.
      Prentice Hall, 1993.
-<dt> ForFul56
+<dt> [Dinic70]
+<dd> &ldqu;Algorithm for solution of a problem of maximum flow in a network
+     with power estimation&rdquo; by E. A. Dinic. Inn <i>Soviet Math Daklady</i>
+     1970.
+<dt> [EdKar72]
+<dd> &ldquo;Theoretical improvements in algorithmic efficiency for network
+     flow problems&rdquo; by J. Edmonds and R. M. Karp. In <i>Journal of
+     the Association for Computing Machinnery</i>, 1972.
+<dt> [ForFul56]
 <dd> &ldquo;Maximal Flow Through a Network&rdquo; by L. R. Ford, Jr. and
      D. R. Fulkerson. In <i>Canadian Journal of Mathematics</i> 1956.
-<dt> Tarjan87
+<dt> [GolTar86]
+<dd> &ldquo;A new approach to the maximum flow problem&rdquo; by A. V. Goldberg
+     and R. E. Tarjan. In <i>Proceedings of the ACM Symposium on the Theory of
+     Computing</i>, 1986.
+<dt> [Tarjan87]
 <dd> <i>Network Algorithms and Data Structures</i> by Robert E. Tarjan.
      Society for Industrial and Applied Mathematics, 1987.
 </dl>
