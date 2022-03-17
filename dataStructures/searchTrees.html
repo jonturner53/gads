@@ -719,11 +719,11 @@ so there is no need to examine them.
 Also, given a list of eligible subtrees, it's only necessary to
 search one of the eligible subtrees, given the $min_2$ values.
 So, in the example given above, if $limit=15$, then $a$ and $j$ both
-define eligible subtrees and $d$ defines an ineligible subtree.
+define eligible subtrees and $d$ and $e$ both define ineligible subtrees.
 The node with the smallest $key_2$ value can be found by searching
 the left subtree of $a$.
 <p>
-Note that any operation that rotation operations must be extended
+Note that rotation operations must be extended
 to update $min_2$ value. Also, $insert$, $delete$ and $join$ must be
 modified to update the $min_2$ values. This can be done by traversing a
 path from a node to the root, updating $min_2$ values along the way.
