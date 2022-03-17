@@ -1,0 +1,845 @@
+<html>
+<head>
+<title>Search Trees</title>
+<link type="text/css" rel="stylesheet" href="../main.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+</head>
+<body bgcolor=ffffff>
+
+<h1>Search Trees</h1>
+
+The <i>sorted sets</i> data structure represents a collection of sets,
+with each having a numeric <i>key</i>. It supports efficient access to
+items based on their key values.
+A typical implementation supports the following methods.
+<ul>
+<li> $\textit{setkey}(i, k)$ sets the key of item $i$ to $k$.
+<li> $\textit{access}(k, s)$ returns an item $i$ in set $s$ with key $k$.
+<li> $\textit{insert}(i, s)$ inserts item $i$ into set $s$
+    and returns the modified set.
+<li> $\textit{delete}(i)$ deletes an item $i$ from the set containing it;
+    following the operation $i$ is a singleton.
+</ul>
+Some implementations also support the following methods.
+<ul>
+<li> $\textit{join}(s_1, i, s_2)$ forms a larger set from a singleton item $i$
+    and sets $s_1$ and $s_2$, where $s_1$ is required to have keys $\leq key(i)$
+    and $s_2$ is required to have keys $\geq key(i)$.
+<li> $\textit{split}(i)$ divides a set into three parts, $s_1$ containing
+     items with keys $\leq key(i)$, $s_2$ containing items with keys $\geq key(i)$
+    and $i$.
+</ul>
+Sorted sets can be implemented as a collection of disjoint binary search trees.
+If the trees are not explicitly balanced in some way, operations may take
+time proportional to the size of the set being operated on.
+Balanced variants are more efficient, typically requiring
+$O(\log n)$ time per operation.
+Here is an example of a single binary search tree.
+<p>
+<div  style="text-align:center;">
+<img width="250" src="figs/bst.png"><br>
+</div>
+<p>
+Note that for each node, the key values in its left subtree are
+less than or equal to its key value, while the key values in its
+right subtree are greater than or equal to its key value.
+To find an item based on its key, compare the target key to the
+root key. If the keys match, return the root, if the target key
+is smaller, proceed to the left subtree, if it is larger,
+proceed to the right subtree. Continuing in this fashion, the
+search will eventually reach a node that matches the target key,
+if there is one. So for example, a search for a key of 19,
+will proceed right, then left, then right, before returning node $l$.
+A search for a key of 13 will proceed right, left, left, left
+and return null.
+<p>
+To insert a new item into a search tree, perform a similar search
+on the item's key, continuing until the search &ldquo;falls out&rdquo;
+of the tree. Insert the new item in that position. This is illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="250" src="figs/bstInsert.png"><br>
+</div>
+<p>
+Deleting an item from a search tree is easy if the item has no children.
+Just sever the link to the parent. It is almost as easy if it has one
+child, since that child can simply take its parent's place in the tree.
+To delete an item with two children, its position in the tree is
+first swapped with the &ldquo;rightmost node&rdquo; in its left subtree.
+At that point, it has at most one child, making the deletion easy.
+This is illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="500" src="figs/bstDelete.png"><br>
+</div>
+<p>
+The $\textit{join}(s_1, i, s_2)$ operation is easy. Simply make 
+$s_1$ the left child and $s_2$ the right child of $i$.
+The $\textit{split}(i)$ operation is similarly easy if $i$
+is the tree root. If not, the split is accomplished by starting
+at item $i$ and proceeding up the tree, forming two subtrees
+$l$ containing items with keys $\leq key(i)$ and $r$ containing
+items with keys $\geq key(i)$.
+<p>
+The provided code library includes an unbalanced version
+of the sorted sets data type (<code>SortedSets</code>),
+an explicitly balanced version (<code>BalancedSets</code>),
+and an implicitly balanced verstion (<code>SplaySets</code>).
+It also includes an extended version that has a secondary key
+(<code>DualkeySets</code>) and supports efficient access to an item with
+the smallest secondary key value among the nodes with primary keys
+values that do not exceed a specified limit.
+
+<a id=sortedSets><h2>SortedSets</h2></a>
+The <code>SortedSets</code> class uses unbalanced binary search trees
+to represent a collection of disjoint sets with keys.
+In addition to the operations mentioned earlier, it provides convenience
+methods for accessing nodes in the neighborhood of a given node;
+sibling, left child, right child, parent, grandparent, aunt (parent's sibling),
+nephew (&ldquo;further child&rdquo; of sibling) and
+neice (&ldquo;nearer child&rdquo; of sibling).
+It also provides a <code>find</code> method that returns the id of the set
+containing a given item (the tree root) and
+methods <code>first</code>, <code>next</code>, <code>last</code>
+and <code>prev</code> for iterating through the items in a given set.
+For a set of size $k$, the time to iterate through the complete set is $O(k)$.
+The core methods from the <i>Javascript</i> implementation are shown below.
+<p>
+<textarea id="components" rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default class SortedSets extends Top {
+    #left;         ///< #left[u] is left child of u
+    #right;        ///< #right[u] is right child of u
+    #p;            ///< #p[u] is parent of u
+    #key;          ///< #key[u] is key of u
+
+    constructor(n, capacity=n) { super(n); this.#init(capacity); }
+    
+    #init(capacity) {
+        this.#left = new Int32Array(capacity+1);
+        this.#right = new Int32Array(capacity+1);
+        this.#p = new Int32Array(capacity+1);
+        this.#key = new Float32Array(capacity+1);
+        this.clearStats();
+    }
+
+    /* Get or set the left child of a node.  */
+    left(u, v=-1) {
+        if (v >= 0) this.#left[u] = v;
+        return this.#left[u];
+    }
+
+    right(u, v=-1) {
+        if (v >= 0) this.#right[u] = v;
+        return this.#right[u];
+    }
+
+    p(u, v=-1) {
+        if (v >= 0) this.#p[u] = v;
+        return this.#p[u];
+    }
+
+    key(u) { return this.#key[u]; }
+
+    setkey(u, k) { this.#key[u] = k; }
+    
+    find(u) {
+        while (this.p(u) != 0) {
+            u = this.p(u); 
+        }
+        return u;
+    }
+
+    access(k, t) {
+        let u = t;
+        while (u != 0 && this.key(u) != k) {
+            if (k < this.key(u)) u = this.left(u);
+            else                 u = this.right(u);
+        }
+        return u;
+    }
+
+    insert(u, t) {
+        assert(this.valid(u) && this.singleton(u) && (t == 0 || this.valid(t)));
+        if (t == 0 || t == u) return u;
+        let v = t; let pv = 0;
+        while (v != 0) {
+            pv = v; 
+            if (this.key(u) <= this.key(v)) v = this.left(v);
+            else                            v = this.right(v);
+        }
+        if (this.key(u) <= this.key(pv)) this.left(pv, u);
+        else                             this.right(pv, u);
+        this.p(u, pv);
+        return t;
+    }
+
+    delete(u) {
+        assert(this.valid(u));
+        if (this.left(u) != 0 && this.right(u) != 0) {
+            let pu;
+            for (pu = this.left(u); this.right(pu) != 0; pu = this.right(pu)) {}
+            swap(u, pu);
+        }
+        // now, u has at most one child
+        let c = (this.left(u) != 0 ? this.left(u) : this.right(u));
+        // c is now the only child that could be non-null
+        let pu = this.p(u);
+        if (c != 0) this.p(c, pu);
+        if (pu != 0) {
+                 if (u ==  this.left(pu))  this.left(pu, c);
+            else if (u == this.right(pu)) this.right(pu, c);
+        }
+        this.p(u,0); this.left(u,0); this.right(u,0);
+        return [c,pu];
+    }
+
+    swap(u, v) {
+        // save pointer fields for items u and v
+        let lu = this.left(u); let ru = this.right(u); let pu = this.p(u);
+        let lv = this.left(v); let rv = this.right(v); let pv = this.p(v);
+    
+        // fixup fields in u's neighbors
+        if (lu != 0) this.p(lu, v);
+        if (ru != 0) this.p(ru, v);
+        if (pu != 0) {
+            if (u == this.left(pu)) this.left(pu, v);
+            else this.right(pu, v);
+        }
+        // fixup fields in j's neighbors
+        if (lv != 0) this.p(lv, u);
+        if (rv != 0) this.p(rv, u);
+        if (pv != 0) {
+            if (v == this.left(pv)) this.left(pv, u);
+            else this.right(pv, u);
+        }
+    
+        // update fields in nodes u and v
+        this.left(u, lv); this.right(u, rv); this.p(u, pv);
+        this.left(v, lu); this.right(v, ru); this.p(v, pu);
+    
+        // final fixup for the case that u was originally the parent of v
+             if (v == lu) { this.left(v, u); this.p(u, v); }
+        else if (v == ru) { this.right(v, u); this.p(u, v); }
+    }
+
+    join(t1, u, t2) {
+        this.left(u,t1); this.right(u,t2);
+        if (t1 != 0) this.p(t1,u);
+        if (t2 != 0) this.p(t2,u);
+        this.p(u,0);
+        return u;
+    }
+
+    split(u) {
+        let v = u; let w = this.p(v);
+        let [l,r] = [this.left(u), this.right(u)];
+        // update the sets l and r, going up the tree;
+        // equivalent to rotating u to the root, then splitting
+        while (w != 0) {
+            let pw = this.p(w); // get this now, since join may change it
+            if (v == this.left(w))  r = this.join(r, w, this.right(w));
+            else                    l = this.join(this.left(w), w, l);
+            v = w; w = pw;
+        }
+        this.left(u,0); this.right(u,0); this.p(u,0);
+        this.p(l,0); this.p(r,0);
+        return [l, r];
+    }
+
+</textarea>
+<p>
+To experiment with the code, enter the following into the web app.
+<pre style="padding-left:5%;">
+let ss = new SortedSets();
+ss.fromString('{(b:2 a:1 d:4 c:3) (h:8 g:7 j:10 i:7 f:6) (e:5)}');
+log(ss.toString());
+ss.delete(7); log(ss.toString());
+ss.join(ss.find(1), 5, ss.find(10)); log(ss.toString(1));
+ss.split(9); log(ss.toString());
+</pre>
+This produces the output below.
+<pre style="padding-left:5%;">
+{(a:1 b:2 c:3 d:4) (e:5) (f:6 i:7 g:7 h:8 j:10)} 
+{(a:1 b:2 c:3 d:4) (e:5) (g:7) (f:6 i:7 h:8 j:10)} 
+{(((a:1) b:2 ((c:3) d:4)) *e:5 (((f:6) i:7) h:8 (j:10))) (*g:7)} 
+{(a:1 b:2 c:3 d:4 e:5 f:6) (g:7) (h:8 j:10) (i:7)}
+</pre>
+The third line shows a detailed view of the data structure,
+with parentheses enclosing subtrees and roots marked with an asterisk.
+
+<a id=sortedSets><h2>BalancedSets</h2></a>
+While unbalanced search trees can perform well when subjected to
+random inputs, they can also become unbalanced, leading to poor performance.
+There are many ways to keep the trees balanced, so that the
+height of the trees is $O(\log n)$. One method [Bayer72, Tarjan87] assigns
+a <i>rank</i> to every node, so that the ranks satisfy two properties.
+$$
+rank(u) \leq rank(p(u)) \leq rank(u) +1 \\
+rank(u) < rank(gp(u))
+$$
+where $gp(u)$ is the grandparent of $u$.
+Nodes with fewer than two children are assigned a rank of 1.
+An example of such a search tree is shown below.
+<p>
+<div  style="text-align:center;">
+<img width="250" src="figs/bstb.png"><br>
+</div>
+<p>
+One can show by induction that any node of rank $k$ has height at
+most $2k-1$ and has at least $2^k-1$ descendants.
+This implies that the maximum depth of any node
+is $\leq 2 \lfloor\lg (n+1)\rfloor$.
+<p>
+Operations that modify a search tree must be extended to
+to ensure that the conditions on the ranks are maintained.
+This often requires a <i>rotation</i> operation that restructures the
+tree, while maintaining the correct order of the keys.
+This is illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="300" src="figs/bstRotate.png"><br>
+</div>
+<p>
+A rotation at a node $x$ moves $x$ up into the position formerly
+occupied by its parent, while the parent moves down into the position
+formerly occupied by $x$'s sibling. Rotations are often used in pairs.
+In particular, when $x$ is an <i>outer grandchild</i>,
+a double-rotation at $x$ consists of a first rotation at its parent,
+then a rotation at $x$, as illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="350" src="figs/bstRotate2a.png"><br>
+</div>
+<p>
+When $x$ is an <i>inner grandchild</i>,
+both rotations are done at $x$.
+<p>
+<div  style="text-align:center;">
+<img width="350" src="figs/bstRotate2b.png"><br>
+</div>
+<p>
+Following an insertion of a node $x$, one must compare
+$rank(x)$ with $rank(gp(x))$. If $rank(x)$ is smaller,
+nothing further needs to be done. If the two ranks are equal,
+but $x$'s aunt has smaller rank, the rank conditions can be
+satisfied by doing one or two rotations.
+Specifically, if $x$ is an outer grandchild,
+a single rotation at $p(x)$ completes the process.
+If $x$ is an inner grandchild,
+a double-rotation at $x$ is required.
+This is illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="400" src="figs/bstbBalanced1.png"><br>
+</div>
+<p>
+If $rank(x)=rank(gp(x))=rank(aunt(x))$, $rank(gp(x))$ is
+incremented and the checking procedure is repeated at $gp(x)$
+<p>
+The procedure for balancing after a deletion is a bit more involved.
+It starts at the node $x$ that took the place of the deleted node.
+Let $r$ be its rank. There are four case to consider.
+(Case 1) If $x$'s parent has rank $r+2$ then there is a
+violation of the first rank condition that needs to be fixed.
+If $x$'s sibling also has rank $r+2$, a rotation is performed
+at the sibling, as illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="300" src="figs/bstbBal2a.png"><br>
+</div>
+<p>
+This rotation does not fix the rank violation at $x$,
+but because $x$'s new sibling has rank $r+1$, the violation can
+now be addressed using one of the three remaining cases.
+<p>
+(Case 2) If $x$'s sibling has rank $r+1$ and both of its children have
+rank $r$, then $rank(p(x))$ is decremented, eliminating the rank
+violation at $x$, but possibly creating a new violation between
+$p(x)$ and its parent. In this case, the checking process is repeated,
+with $p(x)$ replacing $x$.
+<p>
+<div  style="text-align:center;">
+<img width="150" src="figs/bstbBal2b.png"><br>
+</div>
+<p>
+(Case 3) If $x$'s sibling has rank $r+1$ and $x$'s <i>nephew</i>
+(the more distant
+child of $x$'s sibling) has rank $r+1$, a rotation is performed at
+the sibling and the ranks of $x$'s parent and its new grandparent
+are changed to $r+1$ and $r+2$ respectively.
+<p>
+<div  style="text-align:center;">
+<img width="300" src="figs/bstbBal2c.png"><br>
+</div>
+<p>
+(Case 4) Finally, if $x$'s sibling has rank $r+1$
+and its <i>neice</i> has rank $r+1$, a double rotation is performed at
+the neice and the ranks of $x$'s parent and grandparent
+are changed to $r+1$ and $r+2$.
+<p>
+<div  style="text-align:center;">
+<img width="300" src="figs/bstbBal2d.png"><br>
+</div>
+<p>
+Note that the last two cases eliminate the violation at $x$ and create
+no new violations, so the rebalancing process ends at that point.
+Also, if an application of the first case is followed by an application
+of the second case, there can be no remaining violation of the
+rank condition at that point.
+<p>
+The operation $join(s_1,i,s_2)$ can be performed as before,
+if $rank(s_1)=rank(s_2)$. In this case, $i$ $rank(i)=rank(s_1)+1$.
+If $rank(s_1) \neq rank(s_2)$, things get more complicated.
+If $rank(s_1) > rank(s_2)$, the first step is to follow right pointers
+from $s_1$ looking for the first vertex $v$ with $rank(v)=rank(s_2)$.
+The subtree at $v$ is then replaced with $i$, 
+$v$ becomes the left child of $i$, $s_2$ becomes its right child
+and $rank(i)$ is set to $rank(v)+1$.
+This is illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="500" src="figs/bstbJoin.png"><br>
+</div>
+<p>
+Since this procedure may produce a violation of the second rank condition,
+the rebalancing procedure used for inserts is applied at this point,
+starting at $i$.
+<p>
+The <i>split</i> operation is done as before, but uses the balanced
+version of the <i>join</i> operation in place of the original.
+<p>
+The code implementing the core methods of the <code>BalancedSets</code>
+class is shown below.
+<p>
+<textarea id="components" rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default class BalancedSets extends SortedSets {
+    #rank;         ///< #rank[u] is rank of u; used for balancing
+    
+    constructor(n, capacity=n) { super(n); this.#init(capacity); }
+    
+    #init(capacity) {
+        this.#rank = new Int8Array(capacity+1).fill(1);
+        this.#rank[0] = 0;
+    }
+
+    rank(u, r) {
+        if (r) this.#rank[u] = r;
+        return this.#rank[u];
+    }
+
+    rotate(x) {
+        let px = this.p(x); let gpx = this.p(px);
+        if (px == 0) return;
+        let cx = 0;
+        if (x == this.left(px)) {
+            cx = this.right(x); this.left(px, cx); this.right(x, px);
+        } else {
+            cx = this.left(x); this.right(px, cx); this.left(x, px);
+        }
+        this.p(px, x); if (cx != 0) this.p(cx, px);
+             if (px == this.left(gpx)) this.left(gpx, x);
+        else if (px == this.right(gpx)) this.right(gpx, x);
+        this.p(x, gpx);
+    }
+   
+    rotate2(x) {
+            if (this.outer(x))  { this.rotate(this.p(x)); this.rotate(x); }
+        else if (this.inner(x)) { this.rotate(x); this.rotate(x); }
+    }
+
+    insert(u, t) {
+        t = super.insert(u, t);
+        this.rebalance1(u);
+        return this.find(t);
+    }
+
+    rebalance1(x) {
+        let rx = this.rank(x);
+        while (this.gp(x) != 0 && this.rank(this.gp(x)) == rx &&
+                                  this.rank(this.aunt(x)) == rx) {
+            x = this.gp(x); rx = this.rank(x,rx+1); 
+        }
+        if (rx != this.rank(this.gp(x))) return;
+        if (this.outer(x)) this.rotate(this.p(x));
+        else this.rotate2(x);
+    }
+
+    delete(u) {
+        let [c, pc] = super.delete(u);
+        if (c != 0) this.rebalance2(c, pc);
+    }
+
+    swap(u, v) {
+        super.swap(u, v);
+        let r = this.rank(u); this.rank(u, this.rank(v)); this.rank(v, r);
+    }
+
+    rebalance2(x, px) {
+        let r = this.rank(x);
+        while (this.rank(px) == r+2) {
+            let sx, nefu, nece;
+            if (x != 0) {
+                sx = this.sibling(x); nefu= this.nephew(x); nece= this.niece(x);
+            } else if (this.left(px) != 0) { // && x == 0
+                sx = this.left(px); nefu = this.left(sx); nece = this.right(sx);
+            } else { // x == 0 && right(px) != 0
+                sx = this.right(px); nefu = this.right(sx); nece= this.left(sx);
+            }
+            if (this.rank(sx) == r+2) {
+                this.rotate(sx);
+                // rank(sibling(x) is now r+1, so on next iteration,
+                // next case applies;
+                // also, rank(p(x)) == rank(gp(x)) == r+2
+            } else { // rank(sx) == r+1
+                if (this.rank(nefu) == r && this.rank(nece) == r) {
+                    // if rank(px) == rank(gp(x)) == r+2, this is last step
+                    this.rank(px,r+1); x = px; px = this.p(x); r = this.rank(x);
+                } else {
+                    if (this.rank(nefu) == r+1) this.rotate(sx);
+                    else                          this.rotate2(nece);
+                    this.rank(px, r+1); this.rank(this.p(px), r+2);
+                    return;
+                }
+            }
+        }
+    }
+
+    join(t1, u, t2) {
+        let r1 = this.rank(t1); let r2 = this.rank(t2);
+        if (r1 == r2) {
+            super.join(t1, u, t2); this.rank(u, r1+1);
+            return u;
+        } else if (r1 > r2) {
+            let v = t1; let pv = 0;        // track parent in case t2==0
+            while (this.rank(v) > r2) {
+                pv = v; v = this.right(v); 
+            }
+            // now, rank(v) == rank(t2)
+            super.join(v, u, t2);
+            this.right(pv, u); this.p(u, pv); this.rank(u, r2+1);
+            this.p(t1,0);
+            this.rebalance1(u);
+            return this.find(t1);
+        } else { // (r1 < r2)
+            let v = t2; let pv = 0;        // track parent in case t1==0
+            while (this.rank(v) > r1) {
+                pv = v; v = this.left(v); 
+            }
+            super.join(t1, u, v);
+            this.left(pv, u); this.p(u, pv); this.rank(u, r1+1)
+            this.p(t2,0);
+            this.rebalance1(u);
+            return this.find(t2);
+        }
+    }
+}
+</textarea> <p>
+
+<a id=sortedSets><h2>SplaySets</h2></a>
+Self-adjusting binary search trees [Tarjan87] offer another way of ensuring
+efficient operation. The idea is to restructure trees during normal
+tree operations in a way that makes later operations more efficient.
+While some individual operations may take more than $O(\log n)$ time,
+a sequence of $m$ operations can still be completed in $O(m \log n)$ time.
+<p>
+The key to this approach is a restructuring operation called a <i>splay</i>.
+A splay at a node $u$ consists of a series of double rotations at $u$,
+that moves $u$ to the root, or at most one step away. If needed, a
+final single rotation is used to bring $u$ to the root.
+An example is shown below.
+<p>
+<div  style="text-align:center;">
+<img width="650" src="figs/bstSplay.png"><br>
+</div>
+<p>
+To understand why the splay is helpful,
+note that any double-rotation at a node $u$ brings the descendants of $u$
+at least one step closer to the root of the search tree.
+Consequently, a splay at a node $u$ that is far from the root reduces
+the depth of $u$'s original descendants by roughly a factor of two
+(possibly more for some of them).
+A similar thing happens for $u$'s original ancestors.
+Once an ancestor becomes a descendant of $u$, it benefits in the same way.
+That is, its distance to the root is reduced by roughly a factor of two.
+Even a node $p$ that is not an ancestor of $u$ can benefit, since it also
+starts moving closer to the tree root, once $u$ passes $p$'s ancestor on
+the original path from $u$ to the root.
+<p>
+When an <i>access</i> operation reaches a node with the target key,
+a splay is performed at that node, improving the performance of future
+operations while only increasing the cost of the access by a small
+constant factor.
+Similarly, a splay is performed after a node is inserted or deleted.  
+No splay is performed during a <i>join</i>, but a <i>split</i>
+is implemented by first performing a splay at the split node $u$ and
+then simply separating the two subtrees of the new root, $u$.
+<p>
+An amortized complexity analysis can be used to show that the time
+required to do a sequence of $m$ operations on a collection of
+splay trees is $O(n + m\log n)$ or $O(m\log n)$ in the common case
+where $m\geq n$.
+As usual, operations are paid for with credits and any excess
+credits not needed for a particular operation can be carried over
+to pay for future operations.
+To ensure that there are always enough credits on hand,
+the following credit policy is used.
+<p style="padding-left:5%;">
+For each node of $u$, maintain $rank(u)$ credits, where
+$$rank(u)= \lfloor \lg (\textrm{the number of descendants of }u)\rfloor$$
+<p>
+To determine the number of credits needed for a splay at node $u$,
+let's first determine the number needed for one double-rotation.
+Let $v$ be the parent of $u$ and $w$ its grandparent and let
+$rank'$ denote the rank values after the rotation
+(note that $rank'(u)=rank(w)$).
+The number of credits needed to satisfy the credit policy following a double
+rotation is 
+\begin{eqnarray*}
+(rank'(u)-rank(u)) &+& (rank'(v)-rank(v)) + (rank'(w)-rank(w)) \\
+&=&(rank'(w)+rank'(v)) - (rank(u)+rank(v)) \\
+&\leq& 2(rank(w) - rank(u))
+\end{eqnarray*}
+If $rank(u) < rank(w)$ and $3(rank(w) - rank(u))$ credits are allocated
+for the double rotation, there will be at least one credit available
+to pay for the operation, while still satisfying the credit policy.
+<p>
+Now consider the case where $rank(u)=rank(w)$.
+If $u$ is an inner grandchild, then after the double-rotation,
+$v$ and $w$ are its children, meaning that at least one of them has a smaller
+rank after the operation. This implies that there is one less credit needed to
+satisfy the credit policy after the operation, and this credit can
+be used to pay for it.
+If $u$ is an outer grandchild, then $u$ has at least $2^r$ descendants and 
+$w$ has has fewer than $2^r$ descendants outside of $u$'s subtree.
+This implies that after the operation $w$ has fewer than
+$2^r$ descendants, making $rank'(w) < r$.
+<p>
+<div  style="text-align:center;">
+<img width="400" src="figs/bstCredit1.png"><br>
+</div>
+<p>
+So again, one less credit is needed to satisfy the credit policy and
+that credit can be used to pay for the operation.
+Summarizing, if $3(rank(w)-rank(u))$ credits are allocated to each
+double rotation, the operation can be paid for while continuing to
+satisfy the credit policy.
+<p>
+If a single rotation is required to complete a splay, the number of
+credits needed to satisfy the credit policy after the operation is
+$$
+(rank'(u)-rank(u)) + (rank'(v)-rank(v)) 
+=rank'(v) - rank(u) \leq rank(v) - rank(u)
+$$
+If $3(rank(v) - rank(u))+1$ credits are allocated for the rotation,
+it can be paid for while still satisfying the credit policy.
+These observations are summarized in the following lemma.
+<p>
+<i>Lemma</i>. Let $u$ be a node in a tree with root $v$.
+If $3(rank(v)-rank(u))+1$ credits are allocated to a splay operation
+at $u$, the operation can be fully paid for while continuing to
+satisfy the credit policy.
+<p>
+Note that this implies that at most $3\lfloor \lg n \rfloor+1$ credits
+are needed for each splay.
+The next step in the analysis of splay trees is to determine the number
+of credits that must be allocated to each operation in addition to those
+required for splays.
+For an <i>insert</i> operation, the nodes along the path from the inserted
+node to the root all acquire a new descendant and consequently,
+the ranks will increase for those nodes that have
+exactly $2^k-1$ descendants before the insertion.
+There are at most $\lfloor \lg n \rfloor+1$ such nodes, so the
+total number of credits needed for the insert (including the splay) is
+$\leq 4(\lfloor \lg n \rfloor)+3$. 
+<p>
+The <i>join</i> requires an additional $\lfloor \lg n \rfloor+1$ credits to
+satisfy the credit policy at the new tree root,
+and since no splay is involved, $\lfloor \lg n \rfloor+2$ credits are
+sufficient to pay for the operation
+while continuing to satisfy the credit policy.
+<p>
+The other operations require just one credit beyond those needed for
+the splay, so the total number of credits required for $m$ operations
+is $O(m\log n)$. The initialization can be paid for with $n$ credits and
+no additional credits are needed to satisfy the credit policy initially.
+Since every operation is paid for with allocated credits and the number of
+credits allocated is $O(n + m \log n)$, the time required for the operations
+is also $O(n + m \log n)$.
+<p>
+The splay lemma is also true using a more general
+definition of the $rank$. Specifically, if each node $u$ is assigned some
+arbitrary <i>weight</i> $w(u)$ and $tw(u)$ is defined as the total weight
+of the subtree with root $u$, then $rank(u)$ can be defined as
+$\lfloor \lg tw(u) \rfloor$. The argument used earlier still works with
+this definition. The more general version is used in a later section
+to analyze the performance of the dynamic trees data structure.
+
+<a id=sortedSets><h2>DualkeySets</h2></a>
+
+A dual key search tree is an extension of a binary search tree that
+includes a secondary key for each node $u$, referred to as $key_2(u)$.
+The search tree is still organized around the primary key values,
+but the data structure also provides a method
+$\textit{findmin}(limit)$ that returns an item of minimum $key_2$ value
+from among the items with primary key values $\leq limit$.
+Hence, it can be viewed as a generalization of the heap data structure.
+It can be implemented using an auxiliary field $min_2(u)$ that gives
+the smallest $key_2$ value in the subtree of node $u$.
+An example appears below.
+<p>
+<div  style="text-align:center;">
+<img width="400" src="figs/dualkey.png"><br>
+</div>
+<p>
+The <i>findmin</i> operation can be implemented by first identifying the
+<i>boundary</i> between the nodes with primary keys $\leq limit$ and
+those with primary keys $>limit$.
+If $u$ is a node with primary key $\leq limit$, the subtree consisting of $u$
+plus its left subtree is referred to as an eligible subtree.
+If $u$ is a node with primary key $> limit$, the subtree consisting of $u$
+plus its right subtree is referred to as an ineligible subtree.
+Note, that the target of a search will never be in an ineligible subtree,
+so there is no need to examine them.
+Also, given a list of eligible subtrees, it's only necessary to
+search one of the eligible subtrees, given the $min_2$ values.
+So, in the example given above, if $limit=15$, then $a$ and $j$ both
+define eligible subtrees and $d$ defines an ineligible subtree.
+The node with the smallest $key_2$ value can be found by searching
+the left subtree of $a$.
+<p>
+Note that any operation that rotation operations must be extended
+to update $min_2$ value. Also, $insert$, $delete$ and $join$ must be
+modified to update the $min_2$ values. This can be done by traversing a
+path from a node to the root, updating $min_2$ values along the way.
+<p>
+The provided <i>Javascript</i> implementation extends the
+<code>BalancedSets</code> class, so all operations are $O(\log n)$.
+The core methods are shown below.
+<p>
+<textarea id="components" rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default class DualkeySets extends BalancedSets {
+    #key2;         ///< #key2[u] is second key value
+    #min2;         ///< #min2[u] is the smallest key2 value in the subtree at u
+
+    constructor(n, capacity=n) { super(n); this.#init(capacity); }
+    
+    #init(capacity) {
+        this.#key2 = new Float32Array(capacity+1);
+        this.#min2 = new Float32Array(capacity+1);
+    }
+
+    key2(u) { return this.#key2[u]; }
+
+    setkey2(u, k) {
+        this.#key2[u] = k; this.fixup(u);
+    }
+
+    min2(u, k=null) {
+        if (k != null) this.#min2[u] = k;
+        return this.#min2[u];
+    }
+
+    findmin(limit, t) {
+        // first, find eligible subtrees on boundary and identify best one
+        let u = t; let best = 0; let bestMin = 0;
+        while (u != 0) {
+            if (this.key(u) > limit) {
+                u = this.left(u); continue;
+            }
+            // so, u defines an eligible subtree
+            let l = this.left(u);
+            if (best == 0 || bestMin > this.key2(u) ||
+                (l != 0 && bestMin > this.min2(l))) {
+                best = u; bestMin = Math.min(this.key2(u), this.min2(l));
+            }
+            u = this.right(u); // right subtree may contain eligible subtrees
+        }
+        if (best == 0) return 0;
+        if (this.key2(best) == bestMin) return best;
+        // target is in left subtree of best
+        u = this.left(best);
+        while (this.key2(u) != bestMin) {
+            let l = this.left(u); let r = this.right(u);
+                 if (l != 0 && this.min2(l) == bestMin) u = l;
+            else if (r != 0 && this.min2(r) == bestMin) u = r;
+        }
+        return u;
+    }
+        
+    rotate(x) {
+        let y = this.p(x);
+        if (y == 0) return;
+        super.rotate(x);
+        this.min2(x, this.min2(y));
+        let m2 = this.key2(y);
+        if (this.left(y) != 0)  m2 = Math.min(m2, this.min2(this.left(y)));
+        if (this.right(y) != 0) m2 = Math.min(m2, this.min2(this.right(y)));
+    }
+        
+    insert(u, t) {
+        t = this._insert(u, t);
+        this.fixup(u);
+        this.rebalance1(u);
+        return this.find(t);
+    }
+
+    fixup(u) {;
+        while (u != 0) {
+            let m2 = this.key2(u);
+            if (this.left(u) != 0)
+                m2 = Math.min(m2, this.min2(this.left(u)));
+            if (this.right(u) != 0)
+                m2 = Math.min(m2, this.min2(this.right(u)));
+            this.min2(u, m2);
+            u = this.p(u);
+        }
+    }
+
+    delete(u) {
+        let [c,pc] = this._delete(u);
+        this.fixup(pc);
+        if (c != 0) this.rebalance2(c, pc);
+    }
+
+    swap(u, v) {
+        super.swap(u, v);
+        let k2 = this.key2(u);
+        this.setkey2(u, this.key2(v)); this.setkey2(v, k2);
+    }
+
+    join(t1, u, t2) {
+        super.join(t1, u, t2); this.fixup(u);
+    }
+}
+</textarea>
+<p>
+
+
+<h2>References</h2>
+<dt> [Bayer72]
+<dd> &ldquo;Symmetric binary B-trees: Data structure and maintenance 
+	 algorithms,&rdquo; by R. Bayer. In <i>Acta Informatica</i> 1972.
+<dt> [Tarjan87]
+<dd> <i>Network Algorithms and Data Structures</i> by Robert E. Tarjan.
+     Society for Industrial and Applied Mathematics, 1987.
+</dl>
+<script src="../googleAnalytics.js"></script>
+</body>
+</html>
