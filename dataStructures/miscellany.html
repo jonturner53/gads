@@ -1,0 +1,480 @@
+<html>
+<head>
+<title>Miscellany</title>
+<link type="text/css" rel="stylesheet" href="../main.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+</head>
+
+<body bgcolor=ffffff>
+\(
+\newcommand{\findroot}{\textit{findroot}}
+\newcommand{\findcost}{\textit{findcost}}
+\newcommand{\addcost}{\textit{addcost}}
+\newcommand{\link}{\textit{link}}
+\newcommand{\cut}{\textit{cut}}
+\newcommand{\expose}{\textit{expose}}
+\newcommand{\succ}{\textit{succ}}
+\newcommand{\findpath}{\textit{findpath}}
+\newcommand{\findtail}{\textit{findtail}}
+\newcommand{\findpathcost}{\textit{findpathcost}}
+\newcommand{\addpathcost}{\textit{addpathcost}}
+\newcommand{\join}{\textit{join}}
+\newcommand{\split}{\textit{split}}
+\newcommand{\cost}{\textit{cost}}
+\newcommand{\dmin}{\Delta\textit{min}}
+\newcommand{\dcost}{\Delta\textit{cost}}
+\newcommand{\mincost}{\textit{mincost}}
+\newcommand{\splay}{\textit{splay}}
+\newcommand{\rank}{\textit{rank}}
+\)
+
+<h1>Miscellaneous Data Structures</h1>
+
+<a id=dtrees><h2>Dynamic Trees</h2></a>
+The <i>dynamic trees</i> data structure represents a collection of
+trees with each tree node $u$ having a cost denoted $\cost(u)$.
+It was invented by Sleator and Tarjan [Tarjan87] to enable faster
+implementations of algorithms for the
+<a href="../graphAlgoriths/maxflow.html#maxflowST">maximum flow problem</a>.
+It provides the following methods.
+<ul>
+<li>    $\findroot(u)$ returns the root of the tree containing $u$.
+<li>    $\findcost(u)$ returns a pair $[v,c]$ where $v$ is the last node
+        of minimum cost on the path from $u$ to its tree root and $c$
+        is its cost.
+<li>    $\addcost(u, c)$ adds $c$ to the costs of all nodes on
+        the path from $u$ to the root of its tree.
+<li>    $\link(t, u)$ links the tree with root $t$ to the
+        node $u$, making $t$ a subtree of $u$.
+<li>    $\cut(u)$ divides the tree containing $u$ by removing the edge
+        from $u$ to its parent.
+</ul>
+An example is shown below, illustrating the effects of a few
+of the operations.
+<p>
+<div  style="text-align:center;">
+<img width="300" src="figs/dtrees1.png"><br>
+</div>
+<p>
+In the maximum flow problem, the dynamic trees data structure is
+used to represent information about edges in the graph that can
+accommodate more flow. Specifically, an edge linking a node $u$
+to its parent represents an edge in the &ldquo;flow graph&rdquo;
+on which flow can be added. The amount of flow that can be added
+to that edge
+is represented by the cost of $u$. So any path from a node to
+one of its ancestors represents a path in the flow graph along which
+flow may be added, with the amount of flow represented by the minimum
+cost of the nodes along the path.
+<p>
+To enable efficient operations on paths in a dynamic tree,
+there is a special operation called $\expose$ that isolates a
+particular path
+from the rest of a tree. In fact, the tree is represented as a collection
+of such paths, that are linked together. The example below shows a
+tree that is represented in this way and the effect of an expose operation
+on that tree.
+<p>
+<div  style="text-align:center;">
+<img width="350" src="figs/dtrees2.png"><br>
+</div>
+<p>
+In the diagram, the solid edges define component paths of the tree
+and the dashed edges
+represent links joining paths together. A mapping $\succ$ maps a
+component path $p$ to its successor node $\succ(p)$. So for example,
+in the diagram, if $p$ is the path containing $m$, then $\succ(p)=n$.
+Note that a node can have at most one
+&ldquo;solid edge&rdquo; joining it to a child and that
+$\expose(u)$ turns all the dashed edges on the path from $u$
+to the root into solid edges, and all solid edges incident to, but not on the
+path, into dashed edges.
+<p>
+The &ldquo;solid paths&rdquo; in the dynamic trees data structure are defined
+using another data structure called a <i>path set</i>.
+It supports the following methods.
+<ul>
+<li> $\findpath(u)$ returns the path containing the node $u$.
+<li> $\findtail(p)$ returns the last vertex on path $p$.
+<li> $\findpathcost(p)$ returns a pair $[u,c]$ where $u$ is the last node
+    of minimum cost on $p$ and $c$ is its cost.
+<li> $\addpathcost(p,c)$ adds $c$ to the cost of every node on $p$.
+<li> $\join(p_1,u,p_2)$ combines path $p_1$, singleton $u$ and path $p_2$
+     to form a new path.
+<li> $\split(u)$ divides the path $p$ containing $u$ at $u$ and returns a pair
+    $[p_1, p_2]$ where $p_1$ is the part of $p$ that precedes $u$
+    and $p_2$ is the part that follows $u$.
+</ul>
+An example of a path set, with some operations is shown below.
+<p>
+<div style="text-align:center;">
+<img width="450" src="figs/pathSet1.png"><br>
+</div>
+<p>
+The path sets data structure can be implemented in a way that allows
+$m$ operations to be completed in $O(m \log n)$ time. Details appear below.
+For now, let's focus on how it can be used to implement the dynamic tree
+operations.
+<p>
+The operation $\findroot(u)$ can be implemented by first doing an
+expose at $u$ a then a findtail operation on the resulting path.
+Similarly, $\findcost(u)$ (and $\addcost(u)$) can be implemented by
+first doing an
+expose at $u$ and then a findpathcost (addpathcost).
+The operation $\link(t,u)$ is done by first doing an expose at $t$,
+isolating it from the rest of its path, then a second expose at $u$,
+isolating the path from $u$ to its tree root,
+then a join adding $t$ to that path.
+The operation $\cut(u)$ is done by doing a split
+on the path containing $u$ and updating successors to account
+for the new path components created by the split.
+<p>
+The expose operation is the key the to dynamic trees data structure.
+The diagram below illustrates how it works.
+<p>
+<div  style="text-align:center;">
+<img width="450" src="figs/expose.png"><br>
+</div>
+<p>
+An $\expose(u)$ operation proceeds up the path from $u$ to the root,
+converting dashed edges along the path into solid edges and solid edges
+incident to the path into dashed edges.
+In each step, one solid path that shares part of the root path is
+split, and then the upper part of that path is joined to the solid path
+containing $u$. The successors are updated as needed to maintain
+the overall tree structure. So in the first step of the above example, the
+solid path containing $u$ is split to separate out the portion that
+comes before $u$. Then, $u$ is rejoined to the upper part of the path.
+In the second step, the solid path containing $v$ is split, then the upper part
+of that path is joined with the solid path containing $u$.
+This effectively converts a solid edge incident to the path into a dashed
+edge and a dashed edge on the path into a solid one. The process continues
+in this way until it reaches the root.
+<p>
+A <i>Javascript</i> implementation of the core methods of
+the dynamic trees data structure appears below.
+<p> <textarea id="components" rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default class DynamicTrees extends Top {
+    #paths;        ///< PathSet object implementing tree paths`
+
+    constructor(n, capacity=n) {
+        super(n);
+        if (!capacity) capacity = this.n;
+        this.#init(capacity);
+    }
+
+    #init(capacity) {
+        this.#paths = new PathSet(this.n, capacity);
+    }
+
+    /** Get/set the successor of a path. */
+    succ(q, u=-1) {
+        // rather than provide separate successor array, share the parent
+        // array in the PathSet
+        if (u != -1) this.#paths.p(q, -u);
+        return -this.#paths.p(q);
+    }
+
+    expose(u) {
+        let [p,s] = [0,u];
+        while (s != 0) {
+            [p,s] = this.#splice([p,s]);
+        }
+        this.succ(p, 0);
+        return p;
+    }
+    
+    /** Combine two path segments.
+     *  Splice is a private method used by the expose method.
+     *  @param pair is a pair [p,s] p is a path and s is its successor.
+     *  @return a new pair that can be used in next step of expose operation
+     *  The operation splits the path containing s and then joins p to
+     *  the upper part of the path originally containing s, effectively
+     *  extending p further up the tree.
+     */ 
+    #splice([p,s]) {
+        let next_s = this.succ(this.#paths.findpath(s));
+        let [p1,p2] = this.#paths.split(s);
+        if (p1 != 0) this.succ(p1, s);
+        return [this.#paths.join(p,s,p2), next_s];
+    }
+    
+    findroot(u) {
+        let p = this.expose(u);
+        let x = this.#paths.findtail(p);
+        this.succ(x, 0); // works because x is now both tail and path id
+        return x;
+    }
+    
+    findcost(u) {
+        let [v,c] = this.#paths.findpathcost(this.expose(u));
+        this.succ(v, 0); // works because v is also now path id
+        return [v,c];
+    }
+    
+    addcost(u, c) {
+        this.#paths.addpathcost(this.expose(u), c);
+    }
+    
+    link(t, u) {
+        this.succ(0, this.#paths.join(this.expose(t), this.expose(u)));
+    }
+    
+    cut(u) {
+        let v = this.succ(this.#paths.findpath(u));
+        let [p,q] = this.#paths.split(u);
+        if (p != 0) this.succ(p, u);
+        if (q != 0) this.succ(q, v);
+        this.succ(u, 0);
+    }
+}
+</textarea> <p>
+The following code can be used to demonstrate the data
+structure in the web app.
+<pre style="padding-left:5%;">
+let dt = new DynamicTrees();
+dt.fromString('{c:4(f:2(a:5 b:1)) e:4(g:3(d:2 i:3(h:2)))}');
+log(dt.toString());
+dt.expose(1); dt.expose(4);
+log(dt.toString(1));
+dt.link(3,9);
+log(dt.toString(1));
+</pre>
+This produces the output shown below.
+<pre style="padding-left:5%;">
+{c:4(f:2(a:5 b:1)) e:4(g:3(d:2 i:3(h:2)))} 
+{ {[a:5 f:2 c:4] [b:1]->f} {[d:2 g:3 e:4] [h:2]->i [i:3]->g} } 
+{ {[d:2 g:3 e:4] [a:5 f:2 c:4]->i [b:1]->f [h:2]->i [i:3]->g} } 
+</pre>
+The first line shows a pair of trees in a concise format,
+with each node followed by a parenthesized list of its children.
+The remaining lines show each tree as a linked collection of paths.
+
+<a id=pathSets><h3>Path Sets</h3></a>
+Recapping, the path sets data structure supports the following methods.
+<ul>
+<li> $\findpath(u)$ returns the path containing the node $u$.
+<li> $\findtail(p)$ returns the last vertex on path $p$.
+<li> $\findpathcost(p)$ returns a pair $[u,c]$ where $u$ is the last node
+     of minimum cost on $p$ and $c$ is its cost.
+<li> $\addpathcost(p,c)$ adds $c$ to the cost of every node on $p$.
+<li> $\join(p_1,u,p_2)$ combines path $p_1$, singleton $u$ and path $p_2$
+     to form a new path.
+<li> $\split(u)$ divides the path $p$ containing $u$ at $u$ and returns a pair
+     $[p_1, p_2]$ where $p_1$ is the part of $p$ that precedes $u$
+     and $p_2$ is the part that follows $u$.
+</ul>
+It can be implemented using a binary tree to represent each path.
+At each node in such a tree, the nodes that precede it in the path appear
+in its left subtree, while those that follow it appear in its right subtree.
+Hence, it can be viewed as a binary search tree, although no explicit keys are
+required. To maintain balance in the tree, the $\splay$ operation
+is used, as in the
+<a href="./searchTrees.html#splayTrees">splay tree</a>
+variant of the binary search tree.
+This means that $\findpath(u)$ can be done
+by performing a splay at node $u$ and returning $u$.
+The $\findtail$ operation is done by first finding
+the &ldquo;rightmost&rdquo; node in
+the tree, then performing a splay at that node.
+The operation $join(p_1,u,p_2)$ makes $p_1$ the left subtree of $u$ and
+$p_2$ its right subtree. The operation $\split(u)$ first does a splay at $u$
+and then separates the two subtrees of $u$.
+<p>
+In order to implement $\addpathcost$ efficiently, in the context of
+joins and splits, a <i>differential representation</i> of the
+node costs is used. This representation uses two mappings, $\dcost$
+and $\dmin$. For each vertex $u$, if $\mincost(u)$ is the minimum cost
+for all nodes in $u$'s subtree, then $\dcost(u)=cost(u) - \mincost(u)$
+and $\dmin(u) = \mincost(u)$ if $u$ is a root node and
+$\mincost(u) - \mincost(p(u))$ if it is not.
+With these definitions,
+$\mincost(u)$ can be computed by summing the $\dmin$ fields on the
+path from $u$ to the root of its tree and $cost(u)$ can be computed
+by adding $\dcost(u)$ to $\mincost(u)$.
+<p>
+Using the differential cost representation, the operation
+$\addpathcost(u, c)$ can be implemented by adding $c$ to $\dmin(u)$.
+The operation $\findpathcost(p)$ can be found by searching the tree,
+guided by the $\dmin$ and $\dcost$ values.
+Specifically, if the right child $r$ of the current node $u$ has
+$\dmin(r)=0$, then the target node is in the right subtree;
+if $\dmin(r)\neq 0$, and $\dcost(u)=0$, then $u$ is the target node;
+otherwise, the target is in the left subtree.
+<p>
+The $\join$ and $\split$ operations must update both fields at the root
+and its two children.
+The rotations used by the splays must also update the $\dmin$ and
+$\dcost$ values. An example of this is shown below.
+<p>
+<div  style="text-align:center;">
+<img width="400" src="figs/updateCosts.png"><br>
+</div>
+<p>
+In general, the costs can be updated using the equations below.
+\begin{eqnarray*}
+\dcost\,'(u) &=& \dcost(u) + \dmin(u) \\
+\dcost\,'(v) &=& \dcost(v) - \dmin'(v) \\
+\dmin'(u) &=&\dmin(v) \\
+\dmin'(a) &=&\dmin(a) + \dmin(u) \\
+\dmin'(b) &=&\dmin(b) + \dmin(u) - \dmin'(v) \\ 
+\dmin'(c) &=&\dmin(c) - \dmin'(v) \\ 
+\dmin'(v) &=& \min\{ \dcost(v), \dmin(b)+\dmin(u), \dmin(c)\}
+\end{eqnarray*}
+In the last two equations, the second term is omitted if $b$ is absent
+and the third term is omitted if $c$ is absent.
+The equations can be easily confirmed by first noting
+that $\mincost'(u)=\mincost(v)$,
+since the subtree contains the same vertices before and after the rotation.
+Similarly, the rotation does not alter the $\mincost$ values
+of nodes $a$, $b$ and $c$.
+
+<h3>Performance Analysis</h3>
+The performance of the dynamic trees data structure
+is primarily determined by the performance of the underlying
+path sets data structure. The dynamic tree operations each
+require $O(1)$ path operations, plus one or two exposes.
+Each step in an expose requires $O(1)$ path operations per step,
+so completing the analysis requires accounting for the number of
+steps. For convenience, let's refer to each step as a <i>splice</i>.
+<p>
+To count the number of splices, note that each splice converts a
+dashed edge to a solid edge. This means that the number of splices can
+be counted, by counting the number of times a dashed edge
+becomes solid. To facilitate the counting of these events,
+define an edge from a node $u$ to its parent to be <i>heavy</i>
+if the number of nodes in its subtree is more than half the number
+in its parents subtree. Note that the number of <i>light</i> edges along any
+path from a node to a tree root is at most $\lfloor \lg n \rfloor$.
+Consequently, the number of splices in a sequence of $m$ dynamic
+tree operations that convert a light dashed edge into a solid edge is
+at most $2m \lfloor \lg n \rfloor$.
+<p>
+If $x$ is the number of splices that convert a heavy dashed edge into
+a solid edge, then the total number of splices is
+$\leq x + 2m\lfloor \lg n \rfloor$. 
+If $y$ is the number of times a heavy solid edge is eliminated
+(because it is removed or it becomes dashed or light),
+then $x-y\leq n-1$, since there can never more than $n-1$ edges.
+Consequently, the number of splices in a sequence of $m$ tree operations
+is $\leq y + (n-1) + 2m\lfloor \lg n \rfloor$.
+<p>
+Since each node has at most one heavy edge connecting it to a child,
+an expose converts at most $\lfloor \lg n \rfloor+1$ heavy solid edges
+into heavy dashed edges. A cut may convert up to $\lfloor \lg n \rfloor$
+heavy solid edges into light solid edges. None of the other tree
+operations eliminates any heavy solid edges outside those eliminated
+by the expose. Consequently $y\leq 3m\lfloor \lg n \rfloor+1$
+and the number of splices is $\leq n+4m\lfloor \lg n \rfloor$
+and hence, the total number of path set operations is $O(n +m\log n)$.
+If the path set were implemented using balanced binary trees,
+the time per path set operation would be $O(\lg n)$, so
+the time for a sequence of $m$ dynamic tree operations would be
+$O(n\log n+m(\log n)^2)$.
+<p>
+By implementing the path set using splay trees, this can be improved
+to $O(n+m\log n)$.
+Showing this requires extending the
+analysis of the splay tree data structure to account for the expose
+and other other dynamic tree operations.
+Before proceeding with that analysis, it's useful to consider two
+alternate ways to look at dynamic trees, illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="450" src="figs/viewpoints.png"><br>
+</div>
+<p>
+The <i>tree of paths</i> viewpoint was used earlier, when describing how
+each dynamic tree could be represented as a set of linked paths.
+The <i>tree of trees</i> viewpoint, shows each path as a binary search
+tree, where the left-to-right order in each search tree matches
+the bottom to top order of the path it represents.
+For clarity, each of the trees representing a path is referred
+to as a <i>path tree</i>.
+<p>
+The time required for a sequence of tree operations is dominated
+by the time for the splices, and these are dominated by the time
+for the path operations, most particularly for the splays that are
+performed during those path operations.
+As in the original splay tree analysis,
+credits are allocated to each path operation and used to pay for
+the operation while maintaining enough credits on hand to satisfy the
+following credit policy.
+<p style="padding-left:5%;">
+For each node of $u$, maintain $\rank(u)$ credits, where
+$\rank(u)= \lfloor \lg tw(u)\rfloor$ and $tw(u)$ is the sum of
+the node weights in the subtree of $u$ within its path tree.
+<p>
+In the diagram below, nodes in the tree of paths viewpoint are labeled
+with their individual weights, while those in the tree of trees are
+labeled with their total weights.
+<p>
+<div  style="text-align:center;">
+<img width="450" src="figs/dtreeWeights.png"><br>
+</div>
+<p>
+Observe that within each path tree, the rank of a node is no larger
+than that of its parent. Similarly, the rank of a path tree root
+is no larger than the rank of the path tree's successor.
+Recall that each splice within an expose includes a $\findpath$ operation,
+which involves a splay within one of the path trees.
+As an expose progresses up through a sequence of path trees, the ranks
+never decrease.
+Also, the total weight of a node is never more than $n$,
+so its rank is never more than $\lg n$.
+<p>
+The splay tree lemma (repeated below) can now be applied
+using the definition of $\rank$ given above.
+<p>
+<i>Lemma</i>. Let $u$ be a node in a splay tree with root $v$.
+If $3(\rank(v)-\rank(u))+1$ credits are allocated to a splay operation
+at $u$, the operation can be fully paid for while continuing to
+satisfy the credit policy.
+<p>
+This implies that the number of credits needed to pay for an expose
+while continuing to satisfy the credit policy is at
+most $3\lfloor\lg n\rfloor+1$.
+The only other tree operation that requires additional credits
+to satisfy the credit policy is the link operation.
+Recall that the operation $\link(t, u)$ is implemented by
+performing expose operations at $t$ and $u$, followed by a join
+creating a solid path from $u$ to the tree root, with $u$ as
+the root of the path tree representing this path.
+To satisfy the credit policy, up to $lfloor \lg n\rfloor$ additional
+credits may be needed, so if $1+lfloor \lg n\rfloor$
+are allocated to each link, there is one credit to pay for
+operation while still satisfying the credit policy.
+Since every operation is paid for with allocated credits and the number
+of credits allocated to a sequence of $m$ tree operations is $O(n+m\log n)$
+the time required for the operations is also $O(n+m\log n)$.
+
+<a id=dleftHashing><h2>2-Left Hashing</h2></a>
+
+coming attraction
+
+<h2>References</h2>
+<dt> [Tarjan87]
+<dd> <i>Network Algorithms and Data Structures</i> by Robert E. Tarjan.
+     Society for Industrial and Applied Mathematics, 1987.
+<dt> [Vocking03]
+<dd> &ldquo;How asymmetry helps load balancing,&rdquo; by B. Vocking.
+     In <i>Journal of the ACM</i>, 2003.
+</dl>
+<script src="../googleAnalytics.js"></script>
+</body>
+</html>
