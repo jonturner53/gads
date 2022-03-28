@@ -282,7 +282,7 @@ This produces the output below.
 The third line shows a detailed view of the data structure,
 with parentheses enclosing subtrees and roots marked with an asterisk.
 
-<a id=sortedSets><h2>BalancedSets</h2></a>
+<a id=balancedSets><h2>BalancedSets</h2></a>
 While unbalanced search trees can perform well when subjected to
 random inputs, they can also become unbalanced, leading to poor performance.
 There are many ways to keep the trees balanced, so that the
@@ -551,7 +551,7 @@ export default class BalancedSets extends SortedSets {
 }
 </textarea> <p>
 
-<a id=sortedSets><h2>SplaySets</h2></a>
+<a id=splaySets><h2>SplaySets</h2></a>
 Self-adjusting binary search trees [Tarjan87] offer another way of ensuring
 efficient operation. The idea is to restructure trees during normal
 tree operations in a way that makes later operations more efficient.
@@ -690,7 +690,7 @@ $\lfloor \lg tw(u) \rfloor$. The argument used earlier still works with
 this definition. The more general version is used in a later section
 to analyze the performance of the dynamic trees data structure.
 
-<a id=sortedSets><h2>DualkeySets</h2></a>
+<a id=dualkeySets><h2>DualkeySets</h2></a>
 
 A dual key search tree is an extension of a binary search tree that
 includes a secondary key for each node $u$, referred to as $key_2(u)$.

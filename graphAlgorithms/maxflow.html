@@ -768,8 +768,9 @@ to and from the central subgraph on each path search.
 The time spent following those chains can be significantly reduced
 using the <i>dynamic trees</i> data structure of Sleator and Tarjan.
 
-<h3>Using Dynamic Trees to Represent Unsaturated Paths</h3>
-The dynamic trees data structure can be used to speed up
+<a id=maxflowST><h3>Using Dynamic Trees to Represent Unsaturated Paths</h3></a>
+The <a href="../dataStructures/miscellany.html#dtrees">dynamic trees</a>
+data structure can be used to speed up
 augmenting path searches, by storing information about previously
 explored paths with positive residual capacity.
 Each vertex $u$ with parent $v$ in the dynamic trees data
