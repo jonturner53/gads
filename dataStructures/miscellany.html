@@ -49,7 +49,7 @@ The <i>dynamic trees</i> data structure represents a collection of
 trees with each tree node $u$ having a cost denoted $\cost(u)$.
 It was invented by Sleator and Tarjan [Tarjan87] to enable faster
 implementations of algorithms for the
-<a href="../graphAlgoriths/maxflow.html#maxflowST">maximum flow problem</a>.
+<a href="../graphAlgorithms/maxflow.html#maxflowST">maximum flow problem</a>.
 It provides the following methods.
 <ul>
 <li>    $\findroot(u)$ returns the root of the tree containing $u$.
@@ -455,8 +455,8 @@ Recall that the operation $\link(t, u)$ is implemented by
 performing expose operations at $t$ and $u$, followed by a join
 creating a solid path from $u$ to the tree root, with $u$ as
 the root of the path tree representing this path.
-To satisfy the credit policy, up to $lfloor \lg n\rfloor$ additional
-credits may be needed, so if $1+lfloor \lg n\rfloor$
+To satisfy the credit policy, up to $\lfloor \lg n\rfloor$ additional
+credits may be needed, so if $1+\lfloor \lg n\rfloor$
 are allocated to each link, there is one credit to pay for
 operation while still satisfying the credit policy.
 Since every operation is paid for with allocated credits and the number
