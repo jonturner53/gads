@@ -151,7 +151,7 @@ as a scratch pad that you can use to enter and run programs.
 To run the <code>components</code> module first enter the following text
 in the top window.
 <pre style="padding-left:5%">
-let g = new Graph(10);
+let g = new Graph();
 g.fromString('{a[b d e] b[a c f] c[b d f] d[a c e] e[a d] f[b c] ' +
              'g[h] h[g i] i[h]}');
 log(g);
@@ -169,18 +169,11 @@ The <code>log()</code> method can be viewed as a shorthand for
 If you click on the <i>run</i> button at right, the following text
 will appear in the lower window.
 <pre style="padding-left:5%">
-{a[b d e] b[a c f] c[b d f] d[a c e] e[a d] f[b c] g[h] h[g i] i[h] j[]}
-3 [(a b d e c f), (g h i)]
+{a[b d e] b[a c f] c[b d f] d[a c e] e[a d] f[b c] g[h] h[g i] i[h]} 
+2 {[a b c d e f][g h i]} 
 </pre>
-The first line shows the graph as a string. Note that an empty
-adjacency list appears for vertex <code>j</code>, which
-is included in <code>g</code>, since <code>g</code> was declared to
-have 10 vertices.
-Also note that 3 components are reported, but only the two non-singleton
-components are shown explicitly,
-since the <code>toString</code> method of the
-<code>ListSet</code> object omits singleton lists for brevity.
-The missing component is the isolated vertex <code>j</code>.
+The first line shows the graph as a string.
+The second shows the number of components and the vertices in each component.
 <p>
 If you replace the last three lines in the top window with
 <pre style="padding-left:5%">
@@ -191,18 +184,17 @@ and click on the <i>run</i> button agin, you will get
 <p>
 <textarea rows="13" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-{a[b d e] b[a c f] c[b d f] d[a c e] e[a d] f[b c] g[h] h[g i] i[h] j[]}
+{a[b d e] b[a c f] c[b d f] d[a c e] e[a d] f[b c] g[h] h[g i] i[h]}
 selected vertex, queue, components
-a [b d e] [(a b d e)]
-b [d e c f] [(a b d e c f)]
-d [e c f] [(a b d e c f)]
-e [c f] [(a b d e c f)]
-c [f] [(a b d e c f)]
-f [] [(a b d e c f)]
-g [h] [(a b d e c f), (g h)]
-h [i] [(a b d e c f), (g h i)]
-i [] [(a b d e c f), (g h i)]
-j [] [(a b d e c f), (g h i)]
+a [b d e] {[a b d e]}
+b [d e c f] {[a b d e c f]}
+d [e c f] {[a b d e c f]}
+e [c f] {[a b d e c f]}
+c [f] {[a b d e c f]}
+f [] {[a b d e c f]}
+g [h] {[a b d e c f][g h]}
+h [i] {[a b d e c f][g h i]}
+i [] {[a b d e c f][g h i]}
 </textarea>
 <p>
 The menus at the top right provide access to all the available code
@@ -238,20 +230,18 @@ If <code>assert</code> is called with just two argments, the first
 is assumed to be a boolean expression.
 A failed call to <code>assert</code> also triggers an exception
 which terminates the test.
-For example, if you change the 3 in the first <code>assert</code>
-statement to 2, you will get the message
+For example, if you change the 2 in the first <code>assert</code>
+statement to 3, you will get the message
 <pre style="padding-left:5%">
-AssertError: a1 3 2 
+AssertError: a1 2 3 
 </pre>
 <p>
 If you spend some time reviewing the code for the <code>List</code>
-and <code>Dlist</code> modules,
-you will be able to see for yourself how the data structures are
-implemented. You will also find that they share some common methods.
-For example, both have <code>toString</code>, <code>fromString</code>
-and <code>equals</code>
-methods and some underlying machinery to expand the required
-storage space as needed.
+module, you will be able to see for yourself of how it is implemented.
+You will also see some features that are common to most of the data
+structures in this collection.
+For example, most have <code>toString</code>, <code>fromString</code>
+and <code>equals</code> methods.
 <p>
 The application, is available at
 <pre style="padding-left:5%">
@@ -262,37 +252,45 @@ library, which can be downloaded from
 <pre style="padding-left:5%">
 https://github.com/jonturner53/grafalgo
 </pre>
-The library includes <i>C</i>++ implementations of the code described here,
-in addition to the <i>javascript</i> version.
+The library includes <i>C</i>++ implementations of most of the code described
+here, in addition to the <i>javascript</i> version.
 The <i>C</i>++ version pre-dates the <i>javascript</i> version.
 Do not expect them to fully consistent.
 There is also the beginnings of a <i>java</i> version, which may (or may not)
 be completed at some point.
+
 <h2>Common Methods</h2>
 All the provided data structure have a common super-class <code>Top</code>,
 which defines an index range $1\ldots n$ for some integer $n$ and provides
-the following methods.
+the methods listed below.
 <ul>
 <li> <code>constructor(n=5)</code> constructs an object with an index range
     of <code>n</code>.
 <li> <code>n</code> returns the index range of the object.
 <li> <code>valid(i)</code> returns true if <code>i</code> is a valid
     index (that is, falls within the index range, or is zero).
-<li> <code>toString()</code> is a dummy method which every sub-class
-    instantiates. It returns a string representation of the object.
-    Many also support two boolean arguments, <code>details</code>,
-    <code>pretty</code> and a function argument <code>label</code>.
-    These are used to modify the default string that is displayed.
-<li> <code>equals(a)</code> returns true if <code>this</code> object
-    is equal to the argument <code>a</code>. Most classes define their
-    own version of this method, but a default is provided, which compares
-    the string representations of the two objects and returns true when
-    they are identical. Where class-specific versions are provided,
-    they typically support comparison of <code>this</code> object to
-    a string argument. In this case, the string is used to
-    construct an object, which is then compared to <code>this</code>.
+<li> <code>reset(..)</code> constructs a new object passing the provided
+    arguments to its constructor and transfers the contents of the
+    constructed object to <code>this</code> object.
+<li> <code>expand(n)</code> is a default version of a method used to
+    expand the index range of an object and if necessary, the storage
+    space associated with it. 
+<li> <code>equals(other)</code> returns true if <code>this</code> object
+    is equal to the argument <code>other</code>. Most classes define their
+    own version of this method, but a default is provided, which handles
+    some common cases. Specifically, if <code>other</code> is a string
+    and <code>this</code> does not have a <code>fromString</code> method,
+    the provided string is compared to the string representation of
+    this object and a value of true or false is returned based on the string
+    comparison. If <code>this</code> does define a <code>fromString</code>
+    method, <code>other</code> is replaced with a new object which is
+    initialized using <code>fromString</code>. If <code>other</code>
+    is not a string and not an instance of the same class as <code>this</code>,
+    or its index range is different, false is returned. In all other cases,
+    a reference to <code>other</code> is returned. This can be used
+    to complete the equality comparison.
 <li> <code>index2string(i, label)</code> creates a string
-    representation of the index $i$. <code>Label</code> is an optional
+    representation of the index $i$. <code>Label(i)</code> is an optional
     function argument.
     If present, it is used to generate the string.
     The default label function uses a lower-case letter in place of the integer
@@ -300,24 +298,22 @@ the following methods.
     To force numeric values in all cases, use
     <code>index2string(i, x => x)</code>. To use a string from an array
     of tags, use<code>index2string(i, x => tag[x])</code>.
+    <code>index2string</code> can be abbreviated <code>x2s</code>.
 <li> <code>ilist2string(l, label)</code> creates a string representation
     of a list of index values. Argument <code>l</code> is a one-dimensional
     array of index values for the object. The <code>label</code> argument
     is the same is in <code>index2string(i)</code>.
+<li> <code>toString()</code> is a dummy method which every sub-class
+    instantiates. It returns a string representation of the object.
+    Most also support a format argument that can be used to specify
+    various formatting options.
+    Many also include a function argument <code>label(i)</code> that
+    returns an alternate string to display for an item with index <i>i</i>.
 </ul>
 Most classes also define the following methods.
 <ul>
 <li> <code>fromString(s)</code> instantiates an object based on the
     string <code>s</code>.
-<li> <code>reset(n, capacity=n)</code> discards the contents of the current
-    object and allocates space for for an object with an index range of $n$.
-    The optional capacity argument allows extra space to be allocated,
-    so that the index range can be increased later, without additional space
-    allocation.
-<li> <code>expand(n)</code> increases the index range to $n$ and if necessary,
-    allocates additional space. The value of the object is preserved.
-    To limit the frequency of allocation operations, when a space expansion
-    is needed, the space is increased by at least a constant factor of 25%.
 <li> <code>assign(x)</code> assigns the value of object <code>x</code> to
     <code>this</code> by copying its contents.
 <li> <code>xfer(x)</code> assigns the value of object <code>x</code> to
@@ -326,9 +322,9 @@ Most classes also define the following methods.
 <li> <code>clear()</code> clears the value of the object (so for example,
     in the case of a list, the list becomes empty).
 <li> <code>getStats()</code> returns a statistics object that contains
-	one or more counters that count events of interest for a particular
-	data structure. This method is typically defined only for classes
-	that have operations that take more than constant time.
+    one or more counters that count events of interest for a particular
+    data structure. This method is typically defined only for classes
+    that have operations that take more than constant time.
 <li> <code>clearStats()</code> sets an object's statistic counters to zero.
 </ul>
 
@@ -363,7 +359,7 @@ a limited range $1\ldots n$ and supports the following methods.
 <li> <code>top()</code> is an alias for <code>first()</code>.
 <li> <code>enq(i)</code> is an alias for <code>insert(i, last())</code>.
 <li> <code>deq()</code> is an alias for <code>deleteNext(0)</code>.
-<li> <code>matches(a)</code> is similar to <code>equals</code>,
+<li> <code>setEquals(a)</code> is similar to <code>equals</code>,
     but returns true if <code>this</code> object
     contains the same list items as <code>a</code>, but not necessarily
     in the same order.
@@ -387,7 +383,7 @@ In addition, the <code>at()</code> method of the extended <code>List</code>
 object supports negative arguments, specifiying items relative to the
 end of the list.
 One can extend a <code>List</code> implicitly, simply by using one of
-the methods that requries a doubly linked list.
+the methods that requires a doubly linked list.
 <p>
 The <code>List</code> object can also be extended to associate a set
 of <i>values</i> with the list items, using the method <code>addValues</code>.
@@ -406,51 +402,96 @@ The core methods for the <code>List</code> class are shown below.
 <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 import Top from '../Top.mjs';
-import { assert } from '../../common/Errors.mjs';
+import { assert, fassert } from '../../common/Errors.mjs';
 import Scanner from './Scanner.mjs';
 
 export default class List extends Top {
-    #first;     ///< first item in list
-    #last;      ///< last item in list
-    #length;    ///< number of items in list
-    #next;      ///< #next[i] is successor of i in list
-    #prev;      ///< #prev[i] is predecessor of i in list
-                ///< allocated dynamically as required
-    #value;     ///< allocated dynamically as required
+    #first;     // first item in list
+    #last;      // last item in list
+    #length;    // number of items in list
+    #next;      // #next[i] is successor of i in list
+    #prev;      // #prev[i] is predecessor of i in list
+                // allocated dynamically as required
+    #value;     // allocated dynamically as required
     
     /** Constructor for List object.
      *  @param n is the range for the list
-     *  @param capacity is the max range to allocate space for
+     *  @param capacity is the max storage capacity
      */
-    constructor(n, capacity=n) {
+    constructor(n=10, capacity=n) {
         super(n);
-        if (!capacity) capacity = this.n;
-        this.#init(capacity);
-    }
-
-    #init(capacity) {
-        assert(capacity >= this.n);
         this.#next = new Int32Array(capacity+1).fill(-1);
         this.#next[0] = this.#first = this.#last = this.#length = 0;
-        if (this.#prev) {
-            this.#prev = new Int32Array(capacity+1);
-        }
-        if (this.#value) {
-            this.#value = new Array(capacity+1).fill(null);
-        }
+        this.#prev = this.#value = null;
     }
 
+    /** Convert to a doubly-linked list. */
     addPrev() {
-        this.#prev = new Array(this.#next.length).fill(0, 1, this.n+1);
-        this.#prev[this.first()] = 0;
-        for (let i = this.first(); i != 0; i = this.next(i))
-            if (this.next(i) != 0) this.#prev[this.next(i)] = i;
+        if (this.hasPrev) return;
+        this.#prev = new Int32Array(this.capacity+1);
+        for (let i = this.first(); i; i = this.next(i))
+            if (this.next(i)) this.#prev[this.next(i)] = i;
     }
 
+    /** Determine if this object is doubly-linked. */
+    get hasPrev() { return this.#prev ? true : false; }
+
+    /** Add a value for each list item */
     addValues() {
-        this.#value = new Array(this.#next.length).fill(null, 0, this.n+1);
+        if (this.hasValues) return;
+        this.#value = new Array(this.#next.length).fill(null);
     }
 
+    /** Determine if this object includes item values. */
+    get hasValues() { return this.#value ? true : false; }
+
+    /** Get the value of an item.
+     *  @param i is an integer
+     *  @param val is an optional value to be assigned to i
+     *  @return the value of i or null if i is not a valid item or no
+     *  value has been assigned to it
+     */
+    value(i, val=null) {
+        if (val != null) {
+            if (!this.hasValues) this.addValues();
+            this.#value[i] = val;
+        }
+        return (this.valid(i) && this.hasValues ? this.#value[i] : null);
+    }
+
+    /** Assign new value to list from another. 
+     *  @paran l is a list whose value is to be assigned to this
+     */
+    assign(l) {
+        fassert(l instanceof List);
+        if (l == this) return;
+        if (l.n > this.capacity) this.reset(l.n);
+        else { this.clear(); this._n = l.n; }
+        if (l.hasPrev && !this.hasPrev) this.addPrev();
+        if (l.hasValues && !this.hasValues) this.addValues();
+        if (this.hasValues) {
+            for (let i = 0; i <= this.n; i++) this.value(i,l.value(i));
+        }
+        for (let i = l.first(); i != 0; i = l.next(i)) {
+            if (this.hasValues) this.enq(i, l.value(i));
+            else this.enq(i);
+        }
+    }
+
+    /** Assign a new value to this, by transferring contents of another list.
+     *  @param l is a list whose contents are to be transferred to this
+     */
+    xfer(l) {
+        fassert(l instanceof List);
+        if (l == this) return;
+        this._n = l.n;
+        this.#first = l.first(); this.#last = l.last();
+        this.#length = l.length;
+        this.#next = l.#next; l.#next = null;
+        this.#prev = l.#prev; l.#prev = null;
+        this.#value = l.#value; l.#value = null;
+    }
+    
     /** Remove all elements from list. */
     clear() { while (!this.empty()) this.pop(); }
 
@@ -516,26 +557,6 @@ export default class List extends Top {
      */
     contains(i) { return this.valid(i) && i != 0 && this.#next[i] != -1; } 
 
-    /** Get the value of an item.
-     *  @param i is an integer
-     *  @return the value of i or null if i is not a valid item or no value
-     *  has been assigned to it
-     */
-    value(i) {
-        return this.#value && this.valid(i) && this.#value[i] ?
-                    this.#value[i] : null;
-    }
-
-    /** Set the value of an item.
-     *  @param i is a list item
-     *  @param value is a for i
-     */
-    setValue(i, value) {
-        assert(this.valid(i) && i != 0);
-        if (!this.#value) this.addValues();
-        this.#value[i] = value;
-    }
-
     /** Insert an item into the list, relative to another. 
      *  @param i is item to insert
      *  @param j is item after which i is to be inserted;
@@ -544,16 +565,17 @@ export default class List extends Top {
      */
     insert(i, j, value=null) {
         if (i > this.n) this.expand(i);
-        assert(this.valid(i) && i != 0 && !this.contains(i) &&
-                       (j == 0 || this.contains(j)));
-        if (value) this.setValue(i, value);
+        fassert(this.valid(i) && i != 0 && !this.contains(i) &&
+                       (j == 0 || this.contains(j)),
+                `List.enq: ${this.x2s(i)} ${this.x2s(j)} ${this.toString()}`);
+        if (value != null) this.value(i, value);
         if (j == 0) {
             if (this.empty()) this.#last = i;
             this.#next[i] = this.#first; this.#first = i; this.#length++;
-            return;
+        } else {
+            this.#next[i] = this.#next[j]; this.#next[j] = i; this.#length++;
+            if (this.#last == j) this.#last = i;
         }
-        this.#next[i] = this.#next[j]; this.#next[j] = i; this.#length++;
-        if (this.#last == j) this.#last = i;
         if (this.#prev) {
             this.#prev[i] = j;
             if (i != this.last()) this.#prev[this.next(i)] = i;
@@ -564,34 +586,36 @@ export default class List extends Top {
     /** Remove the item following a specified item. 
      *  @param i is item whose successor is to be deleted;
      *  if zero, the first item is deleted
-     *  @return the deleted item
+     *  @return the item that follows the deleted item
      */
     deleteNext(i) {
-        assert(i == 0 || this.contains(i));
-        if (i == this.last()) return;
+        fassert(i == 0 || this.contains(i));
+        if (i == this.last()) return 0;
         let j;
         if (i == 0) { j = this.#first;   this.#first = this.#next[j]; }
         else        { j = this.#next[i]; this.#next[i] = this.#next[j]; }
         if (this.#last == j) this.#last = i;
         this.#next[j] = -1; this.#length--;
-        if (this.#prev && this.next(i) != 0)
-            this.#prev[this.next(i)] = i;
-        if (this.#value) this.#value[j] = null;
-        return j;
+        if (this.#prev) {
+            if (i == 0)
+                this.#prev[this.first()] = 0;
+            else if (this.next(i) != 0)
+                this.#prev[this.next(i)] = i;
+            this.#prev[j] = 0;
+        }
+        if (this.hasValues) this.value(j,null);
+        return (i == 0 ? this.first() : this.next(i));
     }
 
     /** Remove a specified item.
      *  @param i is an item to be removed
+     *  @return item that follows i
      */
     delete(i) {
-        assert(this.valid(i));
+        fassert(this.valid(i));
         if (!this.contains(i)) return;
-        if (i == this.first()) {
-            return this.deleteNext(0);
-        } else {
-            if (!this.#prev) this.addPrev();
-            return this.deleteNext(this.prev(i));
-        }
+        return (i == this.first() ? this.deleteNext(0) :
+                                    this.deleteNext(this.prev(i)));
     }
     
     /** Push item onto front of a list. 
@@ -603,7 +627,7 @@ export default class List extends Top {
     /** Remove the first item in the list. 
      *  @return the item removed, or 0
      */
-    pop() { return this.deleteNext(0); }
+    pop() { let i = this.first(); this.deleteNext(0); return i; }
 
     /** Remove the last item on the list.
      *  @return true if the list was modified, else false
@@ -626,164 +650,155 @@ export default class List extends Top {
 
 <a id=listPair><h2>ListPair</h2></a>
 The <code>ListPair</code> class defines two complementary lists over
-the same index range. One is referred to as the <code>in-list</code>,
-the other as the <code>out-list</code>.
+the same index range. One is referred to as <code>list 1</code>,
+the other as <code>list 2</code>.
 <ul>
 <li> <code>constructor(n, cap=n)</code> constructs a <code>ListPair</code>
     object with an index range of <code>n</code> and capacity of
     <code>cap</code>. Both arguments may be omitted.
-    Initially, all items are in the <code>out-list</code>.
-<li> <code>isIn(i)</code> returns true if <code>i</code> is in the 
-    in-list.
-<li> <code>isOut(i)</code> returns true if <code>i</code> is in the 
-    out-list.
-<li> <code>firstIn()</code> returns the first item in the
-    in-list or 0 if the list is empty.
-<li> <code>firstOut()</code> returns the first item in the
-    out-list or 0 if the list is empty.
-<li> <code>lastIn()</code> returns the last item in the
-    in-list or 0 if the list is empty.
-<li> <code>lastOut()</code> returns the last item in the
-    out-list or 0 if the list is empty.
-<li> <code>nextIn(i)</code> returns the next item in the
-    in-list following <code>i</code> or 0 if <code>i</code> is the last item.
-<li> <code>nextOut(i)</code> returns the next item in the
-    out-list following <code>i</code> or 0 if <code>i</code> is the last item.
-<li> <code>prevIn(i)</code> returns the previous item in the
-    in-list following <code>i</code> or 0 if <code>i</code> is the first item.
-<li> <code>prevOut(i)</code> returns the previous item in the
-    out-list following <code>i</code> or 0 if <code>i</code> is the first item.
+    Initially, all items are in <code>list 2</code>.
+<li> <code>in1(i)</code> returns true if <code>i</code> is in
+    list 1.
+<li> <code>in2(i)</code> returns true if <code>i</code> is in
+    list 2.
+<li> <code>first1()</code> returns the first item in
+    list 1 or 0 if the list is empty.
+<li> <code>first2()</code> returns the first item in
+    list 2 or 0 if the list is empty.
+<li> <code>last1()</code> returns the last item in
+    list 1 or 0 if the list is empty.
+<li> <code>last2()</code> returns the last item in
+    list 2 or 0 if the list is empty.
+<li> <code>next1(i)</code> returns the next item in
+    list 1 following <code>i</code> or 0 if <code>i</code> is the last item.
+<li> <code>next2(i)</code> returns the next item in
+    list 2 following <code>i</code> or 0 if <code>i</code> is the last item.
+<li> <code>prev1(i)</code> returns the previous item in
+    list 1 following <code>i</code> or 0 if <code>i</code> is the first item.
+<li> <code>prev2(i)</code> returns the previous item in
+    list 2 following <code>i</code> or 0 if <code>i</code> is the first item.
 <li> <code>swap(i)</code> transfers <code>i</code> from its current list to
     the other.
 </ul>
 <code>ListPair</code> implements both lists using shared <code>next</code>
-and <code>prev</code> arrays. For items in the out-list, the
-<code>next</code> and <code>prev</code> values are negative integers.
+and <code>prev</code> arrays. For items in list 2, the
+<code>prev</code> values are negative integers.
 All operations listed above take constant time.
 The core methods for the <code>ListPair</code> class are shown below.
 <p>
 <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import Top from '../Top.mjs';
-import { assert } from '../../common/Errors.mjs';
-import Scanner from './Scanner.mjs';
-
 export default class ListPair extends Top {
-    #nIn;         ///< number of items in in-list
-    #nOut;        ///< number of items in out-list
+    #n1;        // number of items in list 1
+    #n2;        // number of items in list 2
 
-    #firstIn;     ///< first item in the in-list
-    #lastIn;      ///< last item in the in-list
-    #firstOut;    ///< first item in the out-list
-    #lastOut      ///< last item in the out-list
-    #next;        ///< #next[i] defines next item after i
-                  ///< in items use positive #next values
-                  ///< out items use negative #next values
-    #prev;        ///< #prev[i] defines item preceding i
-                  ///< in items use positive #prev values
-                ///< out items use negative #prev values
+    #first1;    // first item in the list 1
+    #last1;     // last item in the list 1
+    #first2;    // first item in the list 2
+    #last2      // last item in the list 2
+    #next;      // #next[i] defines next item after i
+                // in items use positive #next values
+                // out items use negative #next values
+    #prev;      // #prev[i] defines item preceding i
+                // in items use positive #prev values
+                // out items use negative #prev values
     
     /** Constructor for list pair.
      *  @param n specifies the range of integer values
      *  @param capacity specifies the maximum range to provide space for
      */
-    constructor(n, capacity=n) { super(n); this.#init(capacity); }
-
-    /** Allocate space and initialize.
-     *  @param capacity is the maximum range
-     */
-    #init(capacity) {
-        assert(this.n <= capacity);
+    constructor(n=10, capacity=n) {
+        super(n);
         this.#next = new Int32Array(capacity+1);
         this.#prev = new Int32Array(capacity+1);
-        this.#firstIn = this.#lastIn = 0;
-        this.#firstOut = 1; this.#lastOut = this.n;
-        for (let i = 1; i <= this.n; i++) {
-            this.#next[i] = -(i+1); this.#prev[i] = -(i-1);
+        this.#first1 = this.#last1 = 0;
+        this.#first2 = 1; this.#last2 = this.n;
+        for (let i = 1; i <= capacity; i++) {
+            this.#next[i] = i+1; this.#prev[i] = -(i-1);
         }
         this.#next[this.n] = this.#prev[1] = 0;
-        this.#next[0] = this.#prev[0] = 0;
-        this.#nIn = 0; this.#nOut = this.n;
+        this.#n1 = 0; this.#n2 = this.n;
     }
-    
-    /** Determine if an item belongs to the "in-list".
+
+    /** Determine if an item belongs to list 1
      *  @param i is a valid list item
-     *  @param return true if i is a member of the "in-list", else false.
+     *  @param return true if i is a member of the list 1, else false.
      */
-    isIn(i) {
-        assert(this.valid(i));
-        return this.#next[i] > 0 || i == this.#lastIn;
+    in1(i) {
+        fassert(this.valid(i), `ListPair.in1: invalid item ${i} (n=${this.n})`);
+        return this.#prev[i] > 0 || i == this.#first1;
     }
     
-    /** Determine if an int belongs to the "out-list".
+    /** Determine if an int belongs to the list 2.
      *  @param i is a valid list item
-     *  @param return true if i is a member of the "out-list", else false.
+     *  @param return true if i is a member of the list 2, else false.
      */
-    isOut(i) {
-        assert(this.valid(i));
-        return this.#next[i] < 0 || i == this.#lastOut;
+    in2(i) {
+        fassert(this.valid(i), `ListPair.in2: invalid item ${i} (n=${this.n})`);
+        return this.#prev[i] < 0 || i == this.#first2;
     }
     
-    /** Get the number of elements in the "in-list".  */
-    nIn() { return this.#nIn; }
+    /** Get the number of elements in list 1.  */
+    n1() { return this.#n1; }
     
-    /** Get the number of elements in the "in-list".  */
-    nOut() { return this.#nOut; }
+    /** Get the number of elements in list 2  */
+    n2() { return this.#n2; }
     
-    /** Get the first item in the in-list.
-     *  @return the first value on the in-list or 0 if the list is empty.
+    /** Get the first item in list 1.
+     *  @return the first value on the list 1 or 0 if the list is empty.
      */
-    firstIn() { return this.#firstIn; }
+    first1() { return this.#first1; }
     
-    /** Get the first item in the out-list.
-     *  @return the first value on the out-list or 0 if the list is empty.
+    /** Get the first item in list 2.
+     *  @return the first value on the list 2 or 0 if the list is empty.
      */
-    firstOut() { return this.#firstOut; }
+    first2() { return this.#first2; }
     
-    /** Get the last item in the in-list.
-     *  @return the last value on the in-list or 0 if the list is empty.
+    /** Get the last item in list 1.
+     *  @return the last value on the list 1 or 0 if the list is empty.
      */
-    lastIn() { return this.#lastIn; }
+    last1() { return this.#last1; }
     
-    /** Get the first item in the out-list.
-     *  @return the last value on the out-list or 0 if the list is empty.
+    /** Get the first item in list 2.
+     *  @return the last value on the list 2 or 0 if the list is empty.
      */
-    lastOut() { return this.#lastOut; }
+    last2() { return this.#last2; }
     
-    /** Get the next item in the inlist.
+    /** Get the next item in list 1.
      *  @param i is the "current" value
-     *  @return the next int on the in-list or 0 if no more values
+     *  @return the next int on the list 1 or 0 if no more values
      */
-    nextIn(i) {
-        assert(this.isIn(i)); return this.#next[i];
+    next1(i) {
+        fassert(this.in1(i), `ListPair.next: item ${i} not in list1`);
+        return this.#next[i];
     }
     
-    /** Get the next value in the outlist.
+    /** Get the next value in the list2.
      *  @param i is the "current" value
-     *  @return the next value on the out-list or 0 if no more values
+     *  @return the next value on the list 2 or 0 if no more values
      */
-    nextOut(i) {
-        assert(this.isOut(i)); return -this.#next[i];
+    next2(i) {
+        fassert(this.in2(i)); return this.#next[i];
     }
     
-    /** Get the previous value in the inlist.
+    /** Get the previous value in list 1.
      *  @param i is the "current" value
-     *  @return the previous value on the in-list or 0 if no more values
+     *  @return the previous value on the list 1 or 0 if no more values
      */
-    prevIn(i) {
-        assert(this.isIn(i)); return this.#prev[i];
+    prev1(i) {
+        fassert(this.in1(i)); return this.#prev[i];
     }
     
-    /** Get the previous value in the outlist.
+    /** Get the previous value in list 2.
      *  @param i is the "current" value
-     *  @return the previous value on the out-list or 0 if no more values
+     *  @return the previous value on the list 2 or 0 if no more values
      */
-    prevOut(i) {
-        assert(this.isOut(i)); return -this.#prev[i];
+    prev2(i) {
+        fassert(this.in2(i)); return -this.#prev[i];
     }
     
-    /** Remove all elements from inSet. */
-    clear() { while (this.firstIn() != 0) this.swap(this.firstIn()); }
+    /** Remove all elements from list 1. */
+    clear() { while (this.first1() != 0) this.swap(this.first1()); }
     
     /** Move an item from one list to the other.
      *  Inserts swapped item at end of the other list
@@ -792,56 +807,56 @@ export default class ListPair extends Top {
      *  into the other list, following item j, or at the start if j=0.
      */
     swap(i, j=-1) {
-        if (j < 0) j = this.isIn(i) ? this.lastOut() : this.lastIn();
+        if (j < 0) j = this.in1(i) ? this.last2() : this.last1();
 
-        assert(this.valid(i) && i != 0 && this.valid(j));
-        assert((this.isIn(i)  && (j == 0 || this.isOut(j))) ||
-               (this.isOut(i) && (j == 0 || this.isIn(j))));
+        fassert(this.valid(i) && i != 0 && this.valid(j));
+        fassert((this.in1(i)  && (j == 0 || this.in2(j))) ||
+               (this.in2(i) && (j == 0 || this.in1(j))));
 
-        if (this.isIn(i)) {
-            // first remove i from in-list
-            if (i == this.lastIn()) this.#lastIn = this.#prev[i];
+        if (this.in1(i)) {
+            // first remove i from list 1
+            if (i == this.last1()) this.#last1 = this.#prev[i];
             else this.#prev[this.#next[i]] = this.#prev[i];
-            if (i == this.firstIn()) this.#firstIn = this.#next[i];
+            if (i == this.first1()) this.#first1 = this.#next[i];
             else this.#next[this.#prev[i]] = this.#next[i];
     
-            // now add i to out-list
-            if (this.#nOut == 0) {
+            // now add i to list 2
+            if (this.#n2 == 0) {
                 this.#next[i] = this.#prev[i] = 0;
-                this.#firstOut = this.#lastOut = i;
+                this.#first2 = this.#last2 = i;
             } else if (j == 0) {
-                this.#next[i] = -this.#firstOut; this.#prev[i] = 0;
-                this.#prev[this.#firstOut] = -i; this.#firstOut = i;
-            } else if (j == this.#lastOut) {
-                this.#next[j] = -i; this.#prev[i] = -j;
-                this.#next[i] = 0; this.#lastOut = i;
+                this.#next[i] = this.#first2; this.#prev[i] = 0;
+                this.#prev[this.#first2] = -i; this.#first2 = i;
+            } else if (j == this.#last2) {
+                this.#next[j] = i; this.#prev[i] = -j;
+                this.#next[i] = 0; this.#last2 = i;
             } else {
                 this.#next[i] = this.#next[j]; this.#prev[i] = -j; 
-                this.#prev[-this.#next[j]] = -i; this.#next[j] = -i;
+                this.#prev[this.#next[j]] = -i; this.#next[j] = i;
             }
-            this.#nIn--; this.#nOut++;
+            this.#n1--; this.#n2++;
         } else {
-            // first remove i from out-list
-            if (i == this.lastOut()) this.#lastOut = -this.#prev[i];
-            else this.#prev[-this.#next[i]] = this.#prev[i];
-            if (i == this.firstOut()) this.#firstOut = -this.#next[i];
+            // first remove i from list 2
+            if (i == this.last2()) this.#last2 = -this.#prev[i];
+            else this.#prev[this.#next[i]] = this.#prev[i];
+            if (i == this.first2()) this.#first2 = this.#next[i];
             else this.#next[-this.#prev[i]] = this.#next[i];
     
-            // now add i to in-list
-            if (this.#nIn == 0) {
+            // now add i to list 1
+            if (this.#n1 == 0) {
                 this.#next[i] = this.#prev[i] = 0;
-                this.#firstIn = this.#lastIn = i;
+                this.#first1 = this.#last1 = i;
             } else if (j == 0) {
-                this.#next[i] = this.#firstIn; this.#prev[i] = 0;
-                this.#prev[this.#firstIn] = i; this.#firstIn = i;
-            } else if (j == this.#lastIn) {
+                this.#next[i] = this.#first1; this.#prev[i] = 0;
+                this.#prev[this.#first1] = i; this.#first1 = i;
+            } else if (j == this.#last1) {
                 this.#next[j] = i; this.#prev[i] = j;
-                this.#next[i] = 0; this.#lastIn = i;
+                this.#next[i] = 0; this.#last1 = i;
             } else {
                 this.#next[i] = this.#next[j]; this.#prev[i] = j; 
                 this.#prev[this.#next[j]] = i; this.#next[j] = i;
             }
-            this.#nIn++; this.#nOut--;
+            this.#n1++; this.#n2--;
         }
         return;
     }
@@ -853,12 +868,8 @@ export default class ListPair extends Top {
 The <code>ListSet</code> class implements a collection of disjoint
 lists on a common index set $1\ldots n$.
 Each list in the collection is identified by its first list item.
-The provided methods are listed below.
+The primary methods are listed below.
 <ul>
-<li> <code>constructor(n, cap=n)</code> constructs a <code>ListSet</code> object
-    with an index range of <code>n</code> and capacity of <code>cap</code>.
-    Both arguments may be omitted.
-    Initially, each item forms a singleton list.
 <li>    <code>isFirst(i)</code> returns true if item <code>i</code> is
         the first item in some list.
 <li>    <code>singleton(i)</code> returns true if item <code>i</code> is
@@ -882,7 +893,14 @@ The provided methods are listed below.
         <code>f1</code> and <code>f2</code> and return the identifier of
         the new list. The new list is the concatenation of the two lists.
         If either argument is 0, the other is returned.
-<li>    <code>sort()</code> sorts the items on all lists.
+<li>    <code>sort(compare=0)</code> sorts the items on all lists;
+        <code>compare(a,b)</code> is an optional comparison function,
+        that returns $-1$ if <code>a</code> should precede <code>b</code>
+        in the list, $+1$ if <code>a</code> should follow <code>b</code>
+        and 0 otherwise; the default function is <code>(a,b)=>a-b</code>.
+<li>    <code>setEquals(other)</code> is similar to <code>equals</code>
+        but compares the two objects based on set equality,
+        rather than list equality.
 </ul>
 <code>ListSet</code> is implemented using shared <code>next</code> and
 <code>prev</code> arrays.
@@ -894,32 +912,20 @@ The core methods for the <code>ListSet</code> class are shown below.
 <p>
 <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import Top from '../Top.mjs';
-import { assert } from '../../common/Errors.mjs';
-import Scanner from './Scanner.mjs';
-
 export default class ListSet extends Top {
-    #next;        // #next[i] is next item on list or 0 for last item
-    #prev;        // #prev[i] is previous item on list or last for first item,
+    #next;      // #next[i] is next item on list or 0 for last item
+    #prev;      // #prev[i] is previous item on list or last for first item,
                 // where last is the last item on the list
 
-    constructor(n, capacity=n) {
+    constructor(n=10, capacity=n) {
         super(n);
-        if (!capacity) capacity = this.n;
-        this.#init(capacity);
-    }
-
-    #init(capacity) {
-        assert(this.n <= capacity);
         this.#next = new Int32Array(capacity+1);
         this.#prev = new Int32Array(capacity+1);
         // initialize to singleton lists
-        for (let i = 0; i <= this.n; i++) {
-            this.#prev[i] = i;
-        }
-        this.#prev[0] = 0;
+        this.#next.fill(0);
+        for (let i = 0; i <= this.capacity; i++) this.#prev[i] = i;
     }
-
+    
     /** Clear the data structure, moving all items into single node lists.
     */
     clear() {
@@ -928,14 +934,16 @@ export default class ListSet extends Top {
         }
     }
 
-    isfirst(i) { assert(this.valid(i)); return this.#next[this.#prev[i]] == 0; }
+    isfirst(i) {
+        fassert(this.valid(i)); return this.#next[this.#prev[i]] == 0;
+    }
     
     /** Get the last item in a list.
      *  @param f is the first item on a list.
      *  @return the last item in the list
      */
     last(f) {
-        assert(this.isfirst(f));
+        fassert(this.isfirst(f));
         return this.#prev[f];
     }
 
@@ -944,7 +952,7 @@ export default class ListSet extends Top {
      *  @return the item that follows i in its list
      */
     next(i) {
-        assert(this.valid(i)); return this.#next[i];
+        fassert(this.valid(i)); return this.#next[i];
     }
     
     /** Get the previous list item.
@@ -955,12 +963,18 @@ export default class ListSet extends Top {
         return (this.isfirst(i) ? 0 : this.#prev[i]);
     }
 
+    /** Find the first item in a list. */
+    find(i) {
+        while (this.prev(i)) i = this.prev(i);
+        return i;
+    }
+
     /** Determine if an item is in a singleton list.
      *  @param i is the index of an item
      *  @return true if it is the only item in its list, else false
      */
     singleton(i) {
-        assert(this.valid(i));
+        fassert(this.valid(i));
         return this.#prev[i] == i;
     }
     
@@ -969,12 +983,12 @@ export default class ListSet extends Top {
      *  @return the first item on the list
      */
     findList(i) {
-        assert(this.valid(i));
+        fassert(this.valid(i));
         while (this.prev(i) != 0) i = this.prev(i);
         return i;
     }
 
-    /** Rotate list l to make i it's first item.
+    /** Rotate list to make i it's first item.
      *  @param f is the first item on a list.
      *  @param i is another item on the same list
      *  @return the modified list
@@ -994,7 +1008,7 @@ export default class ListSet extends Top {
      *  @return the first item of the modified list, or 0 if f was a singleton
      */
     delete(i, f) {
-        assert(this.valid(i) && this.valid(f) && this.isfirst(f));
+        fassert(this.valid(i) && this.valid(f) && this.isfirst(f));
         if (this.singleton(f)) return 0;
         let l = this.last(f); let nf = this.next(f);
         let pi = this.prev(i); let ni = this.next(i);
@@ -1016,10 +1030,9 @@ export default class ListSet extends Top {
      *  defined to be f1, for non-zero f1
      */
     join(f1, f2) {
-        assert(this.valid(f1) && this.valid(f2));
+        fassert(this.valid(f1) && this.valid(f2));
         if (f2 == 0 || f1 == f2) return f1;
         if (f1 == 0) return f2;
-        assert(this.isfirst(f1) && this.isfirst(f2));
         let l1 = this.last(f1); let l2 = this.last(f2);
         this.#next[l1] = f2;
         this.#prev[f2] = l1;
@@ -1027,8 +1040,22 @@ export default class ListSet extends Top {
         return f1;
     }
 
-    /** Sort the lists by item number */
-    sort() {
+    /** Split a list at an item. */
+    split(f, i) {
+        fassert (this.valid(f) && this.valid(i) && this.isfirst(f));
+        if (i == 0 || i == f) return;
+        let p = this.prev(i); let s = this.next(i);
+        this.#next[p] = s; this.#prev[s] = p;
+        this.#next[i] = 0; this.#prev[i] = i;
+    }
+
+    /** Sort the lists in ascending order.
+     *  @param cmp(a,b) is an optional comparison funcion used to compare two
+     *  items; it returns -1 if a<b, 0 if a=b and +1 if a>b. If no comparison
+     *  function is provided, the function (a,b) => a-b is used.
+     */
+    sort(cmp=0) {
+        if (!cmp) cmp = ((a,b) => a-b);
         let vec = [];
         for (let i = 1; i <= this.n; i++) {
             if (this.singleton(i) || !this.isfirst(i)) continue;
@@ -1037,17 +1064,40 @@ export default class ListSet extends Top {
                 vec.push(j); j = this.delete(j, j);
             }
             vec.push(j);
-            vec.sort((a,b) => a-b);
+            vec.sort(cmp);
             for (j = 1; j < vec.length; j++)
                 this.join(vec[0], vec[j])
         }
+    }
+
+    /** Determine if two ListSets define the same sets.
+     *  @param other is a second ListSet or a string representing a
+     *  ListSet object
+     *  @return true if the two ListSet objects define identical sets.
+     */
+    setEquals(other) {
+        let ls = super.equals(other);
+        if (typeof ls == 'boolean') return ls;
+        let l = new List(this.n);
+        for (let i = 1; i < this.n; i++) {
+            if (!this.isfirst(i)) continue;
+            l.clear();
+            for (let j = i; j; j = this.next(j)) l.enq(j);
+            let lng = 0;
+            for (let j = ls.find(i); j; j = ls.next(j)) {
+                if (!l.contains(j)) return false;
+                lng++;
+            }
+            if (lng != l.length) return false;
+        }
+        return ls;
     }
 }
 </textarea>
 <h2>ReverseLists</h2>
 <p>
 The <code>ReverseLists</code> class is similar to <code>ListSet</code> in
-that it partitions the index range into a set of lists. The distinct
+that it partitions the index range into a set of lists. The distinctive
 feature of the <code>ReverseLists</code> class is that its lists can
 be <i>reversed</i> in constant time.
 The new methods are listed below.
@@ -1072,73 +1122,68 @@ A list is reversed by effectively complementing a bit that determines which
 of two neighbors of the first item is the next item on the list and which is
 the last item. With this information, one can traverse the list in
 either direction using a &ldquo;trailing pointer.&rdquo;
-In the <i>Javascript</i> implementation, a positive value is used for
-the <code>nabor</code> that identifies the next list item and
-a negative value is used for the other <code>nabor</code>.
-The implementation of the new methods is shown below.
+In the <i>Javascript</i> implementation, the first list item uses a
+positive value for the <code>nabor</code> that identifies the next list item
+and a negative value for the other <code>nabor</code>.
 <p>
 <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-    /** Reverse a list.
-     *  @param f is the first item on a list
-     *  @return the first item on the reversed list
-     */
-    reverse(f) {
-        if (this.singleton(f)) return f;
-        let l = this.last(f);
-        if (this.#nabor1[f] < 0)  this.#nabor1[f] = 0;
-        else                      this.#nabor2[f] = 0;
-        if (this.#nabor1[l] == 0) this.#nabor1[l] = -f;
-        else                      this.#nabor2[l] = -f;
-        return l
-    }
-
-    /** Get the next list item.
-     *  @param i is a list item
-     *  @param j is the list item preceding i, or 0 if i is the first item.
-     *  @return the pair [next(i), i] where next(i) is next list item or 0.
-     */
-    next(i, j) {
-        assert(this.valid(i) && i != 0 && this.valid(j));
-        let n1 = this.#nabor1[i]; let n2 = this.#nabor2[i];
-        return [j == 0 ? (n1 >= 0 ? n1 : n2) :
-                         (j == n1 ? n2 : n1), i];
-    }
+/** Get the next list item.
+ *  @param i is a list item
+ *  @param j is the list item preceding i, or 0 if i is the first item.
+ *  @return the pair [next(i), i] where next(i) is next list item or 0.
+ */
+next(i, j) {
+    fassert(this.valid(i) && i != 0 && this.valid(j));
+    let n1 = this.#nabor1[i]; let n2 = this.#nabor2[i];
+    return [j == 0 ? (n1 >= 0 ? n1 : n2) :
+                     (j == n1 ? n2 : n1), i];
+}
    
-    /** Get the previous list item.
-     *  @param i is a list item
-     *  @param j is the list item following i, or 0 if i is the last item.
-     *  @return the item that precedes j on the list, or 0 if j is the first
-     *  item.
-     */
-    prev(i, j) {
-        assert(this.valid(i));
-        if (this.isFirst(i)) return [0, i];
-        let n1 = this.#nabor1[i]; let n2 = this.#nabor2[i];
-        return [j == 0 ? (n1 != 0 ? n1 : n2) :
-                         (j == n1 ? n2 : n1), i];
-    }
+/** Get the previous list item.
+ *  @param i is a list item
+ *  @param j is the list item following i, or 0 if i is the last item.
+ *  @return the item that precedes j on the list, or 0 if j is the first
+ *  item.
+ */
+prev(i, j) {
+    fassert(this.valid(i));
+    if (this.isFirst(i)) return [0, i];
+    let n1 = this.#nabor1[i]; let n2 = this.#nabor2[i];
+    return [j == 0 ? (n1 != 0 ? n1 : n2) :
+                     (j == n1 ? n2 : n1), i];
+}
+
+/** Reverse a list.
+ *  @param f is the first item on a list
+ *  @return the first item on the reversed list
+ */
+reverse(f) {
+    if (this.singleton(f)) return f;
+    let l = this.last(f);
+    if (this.#nabor1[f] < 0)  this.#nabor1[f] = 0;
+    else                      this.#nabor2[f] = 0;
+    if (this.#nabor1[l] == 0) this.#nabor1[l] = -f;
+    else                      this.#nabor2[l] = -f;
+    return l
+}
 </textarea>
 
-<a id=dsets><h2>Sets</h2></a>
+<a id=dsets><h2>MergeSets</h2></a>
 
-The <code>Sets</code> class defines a collection of disjoint sets
+The <code>MergeSets</code> class defines a collection of disjoint sets
 over the index set $1\ldots n$ and provides methods to efficiently identify
 the subset containing a given item and to combine subsets.
 Each subset is identified by one of its members.
-The class provides the following methods.
+The key methods are listed below.
 <ul>
-<li> <code>constructor(n, cap=n)</code> constructs a <code>Sets</code> object
-    with an index range of <code>n</code> and capacity of <code>cap</code>.
-    Both arguments may be omitted.
-    Initially, every item defines a singleton subset.
 <li> <code>find(i)</code> returns the item in the set containing
     <code>i</code> that serves as its identifier.
-<li> <code>link(i, j)</code> combines the two sets identified by
+<li> <code>merge(i, j)</code> combines the two sets identified by
     items <code>i</code> and <code>j</code> and returns the item
     that identifies the combined set.
 </ul>
-Each subset in the <code>Sets</code> object is implemented as a tree,
+Each subset in the <code>MergeSets</code> object is implemented as a tree,
 defined using <i>parent pointers</i>. That is, $p(i)$ identifies the
 parent of $i$ in its tree and the root of the tree serves as its
 identfier. If $i$ is a root, $p(i)=i$.
@@ -1149,15 +1194,15 @@ This is illustrated below.
 </div>
 <p>
 The <code>find</code> method follows parent pointers up the tree to
-find the root and the <code>link</code> operation combines two trees
+find the root and the <code>merge</code> operation combines two trees
 by directing the parent pointer of one of the two tree roots to the other,
 essentially making one tree a subtree of the other's root.
 <p>
 Two heuristics are used to make the data structure efficient.
-The <i>link-by-rank</i> heuristic defines a
+The <i>merge-by-rank</i> heuristic defines a
 property $rank(i)$ for each item $i$ and uses it when combining
 trees to limit the depth of the trees.
-Initially, the $rank$ values are 0 and when two trees are linked,
+Initially, the $rank$ values are 0 and when two trees are merged,
 the parent pointer of the tree root with the smaller rank is directed 
 to the other root. If the two roots have equal ranks, the rank of
 the new root (chosen arbitrarily) is incremented.
@@ -1171,42 +1216,22 @@ Specifically, after finding the root of a tree, the <code>find</code> method
 makes a second pass over the path, redirecting all of the parent pointers
 along the path, so that they point directly to the root.
 This speeds up subsequent calls to <code>find</code> and ensures
-that any sequence of calls to <code>find</code> and <code>link</code> takes
+that any sequence of calls to <code>find</code> and <code>merge</code> takes
 essentially linear time. A detailed performance analysis is given in the
 following subsection.
-The core methods for the <code>Sets</code> class are shown below.
+The core of the <i>Javascript</i> implementation is shown below.
 <p>
 <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-import Top from '../Top.mjs';
-import { assert } from '../../common/Errors.mjs';
-import ListSet from './ListSet.mjs';
-import Scanner from './Scanner.mjs';
-import Digraph from '../graphs/Digraph.mjs';
+export default class MergeSets extends Top {
+    #p;            // #p[i] is parent of i
+    #rank;         // #rank[i] is rank of i
 
-export default class Sets extends Top {
-    #p;            ///< #p[i] is parent of i
-    #rank;         ///< #rank[i] is rank of i
-
-    #linkCount;
-    #findCount;
-    #findSteps;
-    
-    constructor(n, capacity=n) {
+    constructor(n=10, capacity=n) {
         super(n);
-        if (!capacity) capacity = this.n;
-        this.#init(capacity);
-    }
-
-    #init(capacity) {
-        assert(this.n <= capacity);
         this.#p = new Int32Array(capacity+1); 
         this.#rank = new Int32Array(capacity+1);
         this.clear();
-    
-        this.#linkCount = 0;
-        this.#findCount = 0;
-        this.#findSteps = 0;
     }
     
     /** Return parent of a set element in the tree representation of the set.
@@ -1227,12 +1252,9 @@ export default class Sets extends Top {
      *  @return the canonical element of the set containing i
      */
     find(i) {
-        this.#findCount++;
-        assert(this.valid(i));
+        fassert(this.valid(i));
         let root;
-        for (root = i; this.p(root) != root; root = this.p(root)) {
-            this.#findSteps++;
-        }
+        for (root = i; this.p(root) != root; root = this.p(root)) { }
         while (i != root) { let pi = this.p(i); this.#p[i] = root; i = pi; }
         return root;
     }
@@ -1243,9 +1265,8 @@ export default class Sets extends Top {
      *  @return the canonical element of the set obtained by combining
      *  the given sets
      */
-    link(i, j) {
-        this.#linkCount++;
-        assert(this.valid(i) && this.valid(j) &&
+    merge(i, j) {
+        fassert(this.valid(i) && this.valid(j) &&
                this.p(i) == i && this.p(j) == j && i != j);
         if (this.rank(i) < this.rank(j)) {
             let t = i; i = j; j = t;
@@ -1269,10 +1290,10 @@ with each successive step giving a tighter bound on the performance.
 <h4>Basic Analysis</h4>
 
 The initialization of the data structure takes $O(n)$ time
-and the link operation takes constant time. So, the only question
+and the merge operation takes constant time. So, the only question
 is how much time is required for the find operations?
 This depends on the depth of the tree. We start by noting
-that the link-by-rank heuristic ensures that the rank of
+that the merge-by-rank heuristic ensures that the rank of
 any item is strictly less than the rank of its parent.
 Consequently, $\textit{rank}(x)$ is
 an upper bound on the height of $x$ in the tree.
@@ -1282,7 +1303,7 @@ So, an upper bound on $\textit{rank}(x)$, yields a
 bound on the running time of the find operation.
 The key to bounding $\textit{rank}(x)$ is to observe that
 the number of nodes in $x$'s subtree is at least $2^{\textit{rank}(x)}$.
-This can be proved by induction on the number of link
+This can be proved by induction on the number of merge
 operations, as illustrated below.
 <p>
 <div  style="text-align:center;">
@@ -1291,7 +1312,7 @@ operations, as illustrated below.
 <p>
 This implies that if a tree root has rank $k$,
 then $2^k \leq n$ and so $k \leq \lg n$.
-This implies an $O(\log n)$ bound on the time required for the find operations.
+This implies an $O(\log n)$ bound on the time required for each find operation.
 Note that this result does not depend on the path compression heuristic.
 Also, note that some find operations can take time proportional to
 $\log n$, so there can be no better bound on the time for an
@@ -1306,10 +1327,10 @@ As a first step in a more detailed analysis,
 let's make a few observations about the ranks.
 First, as noted earlier, the rank of a non-root node is strictly
 less than the rank of its parent. Also, the rank of a node
-can increase as a result of link operations, but it can never decrease,
+can increase as a result of merge operations, but it can never decrease,
 and once a node becomes a child of another node, its rank can no
 longer change.
-Finally, $rank(p(x))$ can increase (as a result of either link
+Finally, $rank(p(x))$ can increase (as a result of either merge
 operations or find operations that change $p(x)$), but it can
 never decrease. These observations are collected in the following lemma.
 <p>
@@ -1327,7 +1348,8 @@ along the path followed by the operation.
 The objective is to put an upper bound on the total number
 of find steps.
 Note that the number of find steps at root nodes is
-at most $m$, so the remaining analysis considers only find steps
+equal to the number of find operations,
+so the remaining analysis considers only find steps
 at non-root nodes.
 <p>
 Define $\Delta(x)=rank(p(x)) - \textit{rank}(x)$ and note that
@@ -1368,7 +1390,7 @@ This is illustrated below.
 
 Since every find step that occurs at $x$ at times when $x$ is not
 dominant causes $\Delta(x)$ to increase by a factor of 1.5, there can be
-fewer than $2 \lg\lg n$ find steps at a node $x$
+no more than $2 \lg\lg n$ find steps at a node $x$
 when it is not dominant. Consequently, the total number
 of find steps at non-dominant nodes is $O(n \log\log n)$
 and the total number of find steps is $O((m+n)\log\log n)$.
@@ -1682,7 +1704,7 @@ As before, the analysis can be broken down into cases.
     It is shown below that the number of find steps covered by
     this case is $O(n\alpha(m,n))$.
 <li> <i>Steps at non-singular nodes on level $\alpha(m,n)+1$</i>. 
-	By the argument used previously,
+    By the argument used previously,
     a node can experience at most $\lceil m/n \rceil$ find
     steps while it is non-singular and on level $\alpha(m,n)+1$.
     Hence the total number of find steps covered by this case is
@@ -1754,8 +1776,8 @@ in the string; the cursor is updated as portions of the string are parsed.
         cursor is reset to <code>i</code> (default value 0)
         and the string is optionally reset to the argument <code>s</code>
         (if <code>s</code> is omitted, the string remains unchanged).
-		If <code>i</code> is negative, it is added to the cursor,
-		effectively moving it back the specified number of positions.
+        If <code>i</code> is negative, it is added to the cursor,
+        effectively moving it back the specified number of positions.
 <li>    <code>cursor</code> returns the position of the cursor in the string.
 <li>    <code>length</code> is the number of unscanned characters remaining.
 <li>    <code>toString()</code> returns the unparsed portion of the string.
@@ -1795,14 +1817,20 @@ in the string; the cursor is updated as portions of the string are parsed.
         and returns the string up to and including the newline.
         If there is no complete line remaining in the string,
         it returns an empty string and leaves the cursor unchanged.
-<li>    <code>nextIndex()</code> scans the string for a either a single
+<li>    <code>nextIndex(prop=0)</code> scans the string for a either a single
         lower-case letter or an integer, skipping
         past leading space characters. If it finds a letter, it returns
         the letter's position in the alphabet
         (1 for $a$, 2 for $b$ and so forth) and advances the cursor.
         If it finds an integer, it returns the integer and advances the cursor.
         Otherwise, it returns 0 and leaves the cursor unchanged.
-<li>    <code>nextIndexList(ld, rd)</code> scans the string for a
+		The optional argument <code>prop(i)</code> is called with index
+		<code>i</code>just before <code>nextIndex</code> returns <code>i</code>.
+		It can be used to enable parsing of input tokens that include
+		additional information. For example, in a list data structure,
+		the string <code>'c:5'</code> might represent an item <code>c</code>
+		with some associated numerical property.
+<li>    <code>nextIndexList(ld, rd, prop=0)</code> scans the string for a
         list of index values (either lower-case letters or integers)
         separated by spaces and delimited by the delimiter characters
         <code>ld</code> and <code>rd</code>.
@@ -1811,18 +1839,12 @@ in the string; the cursor is updated as portions of the string are parsed.
         <code>"[ a b 5 )"</code>, then
         <code>scanner.nextIndexList('[', ')')</code>
         returns the array <code>[1, 2, 5]</code>.
+		The individual index values in the list are parsed using
+		<code>nextIndex</code> and the optional argument <code>prop(i)</code>
+		is passed to <code>nextIndex</code>. This allows one to use
+		<code>nextIndexList</code> to parse strings like 
+		<code>"[1:3 e:2 c:1]"</code>, for example.
         If a valid list is found, it is returned as an array and the
-        cursor is advanced.
-        Otherwise, <code>null</code> is returned and
-        the cursor is left unchanged.
-<li>    <code>nextPairList(ld, rd)</code> is similar to
-		<code>nextIndexList()</code>
-		but parses a list of pairs of the form <code>i:x</code>
-		whenre <code>i</code> is an index and <code>x</code> 
-		is a numerical value.
-		So for example, <code>"[ a:1 b:5 f:2.1 ]"</code>
-		is a possible list of pairs.
-        If a valid list is found, is returned as an array of pairs and the
         cursor is advanced.
         Otherwise, <code>null</code> is returned and
         the cursor is left unchanged.

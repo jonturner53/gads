@@ -1218,6 +1218,39 @@ export default class LeftistHeaps extends Top {
 </textarea>
 <p>
 
+<a id=oheaps><h2>Ordered Heaps</h2></a>
+
+The <i>ordered heaps</i> data structure implements a collection of heaps
+in which the items within each heap has a list ordering, in addition
+to the ordering based on keys. It also includes a method to insert an item to
+a heap at a specified position in the list ordering, another to divide
+a heap into two parts at a specified position in the list ordering
+and a third method to increment the keys of all items in a heap by
+a specified amount.
+<li>	<code>find(i)</code> returns the id of the heap
+		containing <code>i</code>.
+<li>	<code>first(h)</code> returns the first item in heap <code>h</code>.
+<li>	<code>next(i)</code> returns the next item following <code>h</code>
+		in its heap.
+<li>    <code>key(i,h)</code> returns the key of item <code>i</code>
+		in heap <code>h</code>.
+<li>    <code>insert(i,h,k)</code> inserts item <code>i</code> into heap
+        <code>h</code> with key <code>k</code>.
+<li>    <code>insertAfter(i,h,k,j)</code> inserts item <code>i</code> into heap
+        <code>h</code> with key <code>k</code>, placing it immediately
+		after item j.
+<li>    <code>findmin(h)</code> returns the item of minimum key in the
+        heap identified by item <code>h</code>.
+<li>    <code>delete(i,h)</code> deletes item <code>i</code> from
+        heap <code>h</code>.
+<li>    <code>deletemin(h)</code> deletes an item of minimum key from
+        heap <code>h</code> and returns the pair <code>[i,h]</code>
+		where <code>i</code> is the deleted item and
+        <code>h</code> is the id of the modified heap.
+</ul>
+
+<h2>Partitioned Heap</h2>
+
 <h2>References</h2>
 <dt> [Crane72]
 <dd>  &ldquo;Linear lists and priority queues as balanced binary trees,&rdquo;

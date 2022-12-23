@@ -743,8 +743,8 @@ to the next vertex on the list whenever the search determines that
 the current <code>nextedge</code> value leads to a deadend.
 <p>
 From the earlier analysis of the shortest augmenting path algorithm,
-the value of $level(t)$ increase with each phase of Dinic's algorithm,
-which means the number of phases is $<n$.
+the value of $level(t)$ increases with each phase of Dinic's algorithm,
+which means the number of phases is $< n$.
 The computation of $level$ at the start of each phase takes $O(m)$ time
 and the number of path searches per phase is at most $m$. To determine
 the number of steps required for the path searches, let $N_i$ be

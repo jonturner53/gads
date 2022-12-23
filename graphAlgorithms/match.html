@@ -1,0 +1,800 @@
+<html>
+<head>
+<title>Matching</title>
+<link type="text/css" rel="stylesheet" href="../main.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+</head>
+<body bgcolor=ffffff>
+\(
+\newcommand{\match}{\textit{match}}
+\newcommand{\link}{\textit{link}}
+\)
+
+<h1>Matchings in Graphs (in progress)</h1>
+
+A <i>matching</i> in an undirected graph is a subset of the edges,
+in which each vertex is incident to at most one edge.
+The objective of the matching problem is to find a matching of
+maximum size, or maximum weight, in the case of edge-weighted graphs.
+<p>
+<div  style="text-align:center;">
+<img width="400" src="figs/matching.png"><br>
+</div>
+<p>
+In bipartite graphs, finding matchings can be done more simply than
+in general graphs, so there are specialized algorithms for this case.
+
+<h2>Matchings in Bipartite Graphs</h2>
+The maximum size matching problem can be reduced to a maximum flow
+problem using the transformation sketched below.
+<p>
+<div  style="text-align:center;">
+<img width="500" src="figs/match2flow.png"><br>
+</div>
+<p>
+Given a bipartite graph with edges joining vertices in complementary
+subsets $X$ and $Y$, a flow graph is created with directed edges from
+$X$ to $Y$ corresponding to the original undirected edges. Edges are
+also included from a source vertex to each vertex in $X$ and from
+each vertex in $Y$ to a sink vertex. All edges are assigned a capacity
+of 1, which creates a one-to-one correspondence between matchings in
+the original graph and integer flows in the flow graph.
+In the weighted case, the edge weights in the flow graph are negated,
+turning the maximum weight matching problem into a minimum cost flow problem
+and the algorithm terminates early if it finds an augmenting path with
+non-negative cost.
+<p>
+The maximum size matching problem can be solved using any max flow algorithm,
+but Dinic's algorithm makes a particularly good choice since the graphs
+used here have a special property that speeds up the execution of
+Dinic's algorithm by a substantial factor.
+Recall that for general graphs, Dinic's algorithm performs up to $n$
+phases, which may each take $O(mn)$ time. The graphs used here belong to
+the class of <i>unit graphs</i>, meaning that all edges have capacity 1
+and every vertex either has $\leq 1$ incoming edge or $\leq 1$ outgoing edge.
+For graphs in this class, the number of phases
+performed by Dinic's algorithm is $O(\sqrt{n})$ and the time per phase
+is $O(m)$. This reduces the run time from $O(mn^2)$ to $O(m\sqrt{n})$.
+<p>
+To analyze the time per phase, let $N_i$ be the number of edges examined
+by the $i$-th top level call to <code>findpath</code> in a phase
+and note that a <code>nextedge</code> pointer is advanced for every edge
+that is not returned as part of the augmenting path. If $k_i$ is the length
+of the returned path, the <code>nextedge</code> pointers are advanced
+$N_i-k_i$ times during the $i$-th execution of <code>findpath</code> and
+all $k_i$ edges on the path are saturated. Consequently, $\sum_i k_i\leq m$
+and $\sum_i(N_i-k_i)\leq 2m$.
+This implies that $\sum_i N_i\leq 2m+\sum_ik_i \leq 3m$ and so the
+time per phase is $O(m)$.
+<p>
+To bound the number of phases, suppose that $k$ phases have been completed
+and let $f$ be the current flow, $f^\ast$ be a maximum flow and
+let $R$ be the flow graph defined by edges with positive residual capacity.
+Note that $R$ is a unit network and $f^\ast - f$ defines a flow on $R$.
+The number of remaining phases is at most $|f|-|f^\ast|$, so the total
+number of phases is at most $k+|f|-|f^\ast|$.
+<p>
+The edges with a flow of 1 in $f^\ast - f$ can be partitioned into a collection
+of paths from $s$ to $t$, and possibly some cycles. Since $R$ is a unit network,
+no vertex is on more than one of these paths; hence the number of augmenting
+paths in $R$ is at most $(n-2)/(|f|-|f^\ast|) +1$ edges. Since $k$ phases
+have been completed, the next augmenting path has at least $k+1$ edges, so
+$$
+k+1\leq (n-2)/(|f|-|f^\ast|) +1 \quad \textrm{or} \quad
+|f|-|f^\ast|\leq (n-2)/k
+$$
+Hence the total number of phases is $\leq k +(n-2)/k$ no matter what value
+$k$ has. Choosing $k=\left\lceil(n-2)^{1/2}\right\rceil$ gives a bound of
+$2\left\lceil(n-2)^{1/2}\right\rceil$ on the number of phases.
+<p>
+This algorithm can be implemented without actually reducing it to a flow
+problem and it was first described by Hopcroft and Karp in this form.
+Even and Tarjan later noted the connection to the maximum flow problem.
+The Hopcroft-Karp version is significantly faster, as it avoids the
+substantial overhead associated with the use of flow graphs.
+A <i>Javascript</i> implementation of the Hopcroft-Karp algorithm is
+shown below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let g;            // shared copy of graph
+let match;        // match[u] is edge incident to u in matching or 0
+let link = null;  // link[u] is parent edge of u in augmenting path
+let free;         // free contains unmatched vertices in first subset
+let level;        // level[u] is distance to u from a free vertex
+let nextedge;     // nextedge[u] is next edge at u to be processed
+let q;            // q is List used by newPhase
+
+export default function bimatchHK(bg) {
+    g = bg;
+    match = new Int32Array(g.n+1); // match is returned
+    if (link == null || link.length != g.n+1) {
+        link = new Int32Array(g.n+1);
+        level = new Int32Array(g.n+1);
+        nextedge = new Int32Array(g.n+1);
+        free = new List(g.n); free.addPrev();
+        q = new List(g.n);
+    } else {
+        free.clear();
+    }
+
+    // divide vertices into two independent sets
+    subsets = findSplit(g);
+    assert(subsets != null, "bimatchHK: graph not bipartite");
+
+    // add edges to match, yielding maximal (not maximum) matching
+    for (let u = 1; u <= g.n; u++) {
+        if (match[u]) continue;
+        for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
+            steps++;
+            let v = g.mate(u,e);
+            if (!match[v]) { match[u] = match[v] = e; break; }
+        }
+    }
+
+    // add unmatched vertices from first subset to free
+    for (let u = subsets.first1(); u != 0; u = subsets.next1(u)) {
+        if (match[u] == 0 && g.firstAt(u) != 0) free.enq(u);
+    }
+    while (newPhase()) {
+        let r = free.first();
+        while (r != 0) {
+            link[r] = 0;
+            let u = findpath(r);
+            if (u == 0) {
+                r = free.next(r);
+            } else {
+                augment(u); r = free.delete(r);
+            }
+        }
+    }
+    return match;
+}
+
+/** Prepare for new phase. 
+ *  @return true if there is an augmenting path.
+ */
+function newPhase() {
+    for (let u = 1; u <= g.n; u++) {
+        level[u] = g.n; nextedge[u] = g.firstAt(u);
+    }
+    q.clear();
+    for (let u = free.first(); u != 0; u = free.next(u)) {
+        level[u] = 0; q.enq(u);
+    }
+    let stopLevel = g.n; // used to terminate early
+    // label each vertex with its distance from the nearest root
+    // in matching forest
+    while (!q.empty()) {
+        let u = q.deq(); // u in first subset
+        for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
+            if (e == match[u]) continue;
+            let v = g.mate(u,e); // v in second subset
+            if (level[v] != g.n) continue;
+            // first time we've seen v
+            level[v] = level[u] + 1; 
+            let ee = match[v];
+            if (ee == 0) stopLevel = level[v]; // alt-path here too
+            if (stopLevel == level[v]) continue;
+            let w = g.mate(v,ee);
+            level[w] = level[v] + 1;
+            q.enq(w);
+        }
+    }
+    return (stopLevel != g.n);
+}
+
+/** Find an augmenting path from specified vertex.
+ *  @param u is a vertex in the first subset
+ *  @return an unmatched vertex in the second subset, or 0 if there is no
+ *  admissible path to such a vertex in the current phase;
+ *  on successful return, the link array defines
+ *  the augmenting path from the returned vertex back to u
+ */
+function findpath(u) {
+    for (let e = nextedge[u]; e != 0; e = g.nextAt(u,e)) {
+        let v = g.mate(u,e);
+        if (level[v] != level[u] + 1) continue;
+        let ee = match[v];
+        if (ee == 0) { nextedge[u] = e; link[v] = e; return v; }
+        let w = g.mate(v,ee);
+        if (level[w] != level[v] + 1) continue;
+        let t = findpath(w);
+        if (t != 0) {
+            nextedge[u] = e; link[v] = e; link[w] = ee; return t;
+        }
+    }
+    nextedge[u] = 0; return 0;
+}
+
+/** Flip the edges along an augmenting path
+ *  @param u is an endpoint of an augmenting path; the edges in
+ *  the path can be found using the link pointers
+ */
+function augment(u) {
+    while (true) {
+        let e = link[u];
+        if (e == 0) break;
+        let v = g.mate(u,e);
+        match[u] = match[v] = e;
+        let ee = link[v];
+        if (ee == 0) break;
+        u = g.mate(v,ee);
+    }
+}
+</textarea> <p>
+Notice that the program starts by constructing an initial matching
+by simply scanning the graph looking for edges that can be included
+in the matching without a path search.
+This is a simple optimization that can avoid a large fraction
+of the path searches that would otherwise be required.
+<p>
+When path searches are required they start from unmatched vertices
+in the first of the two subsets defining the bipartition. These are
+maintained in a list of <i>free</i> vertices.
+When a path is found, it is specified by an array of
+<i>links</i> identifying the edge joining a path vertex to its predecessor.
+Observe that the code effectively mimics Dinic's maxflow algorithm.
+<p>
+The following code can be used to demonstrate the operation of the
+algorithm.
+<p> <pre style="padding-left:5%">
+let g = randomBigraph(5,3);
+log(g.toString(0,1));
+let [match,ts] = bimatchHK(g,1);
+log(ts);
+</pre> <p>
+Here is some sample output.
+<p> <pre style="padding-left:5%">
+{
+a[f g i j]
+b[f h]
+c[f g h i j]
+d[f g i]
+e[f]
+f[a b c d e]
+g[a c d]
+h[b c]
+i[a c d]
+j[a c]
+}
+ 
+initial matching: [{a,g} {b,f} {c,i}]
+augmenting paths
+[{d,f} {b,f} {b,h} h]
+[{e,f} {d,f} {d,g} {a,g} {a,j} j]
+final matching: [{d,g} {c,i} {a,j} {b,h} {e,f}]
+</pre> <p>
+In this case, the initial matching has three edges,
+requiring two augmenting path searches to match the
+previously unmatched vertices $d$, $e$, $h$ and $j$.
+<p>
+The following code can be used to evaluate the performance
+on random graphs.
+<p> <pre style="padding-left:5%">
+let g = randomBigraph(1000,1);
+let t0 = Date.now();
+let [,,stats] = bimatchHK(g);
+let t1 = Date.now();
+let mm = 0; for (let e of match) mm += (e>0);
+log(`${g.n} ${g.m} ${t1-t0}ms ${JSON.stringify(stats)} ${mm/2}`);
+</pre> <p>
+The first group of results shown below shows how the
+performance changes as the average vertex degree increases
+from 1 to 10. Notice that the number of augmenting paths found
+is far smaller than the matching size reported at the end of each line.
+This indicates that a large fraction of the matching edges are
+found in the initial scan.
+As the vertex degree grows, the number of path searches first
+increases, as the growing connectedness of the graph leads
+to an increase in the matching size. As the degree grows further,
+the number of path searches drops, as the growing abundance
+of edges creates more opportunities for the initial scan to
+find matching edges.
+Note that the time savings afforded by the initial scan is
+generally fairly modest, since the path searches it avoids
+would terminate quickly. Still, it's an easy optimization 
+and seems worthwhile even for a modest improvement.
+<p> <pre style="padding-left:5%">
+2000  1000 2ms {"phases":2, "paths":46, "steps":13165}  549 
+2000  2000 3ms {"phases":7, "paths":123,"steps":34112}  788 
+2000  3000 9ms {"phases":12,"paths":176,"steps":71311}  926 
+2000  4000 8ms {"phases":8, "paths":176,"steps":63040}  971 
+2000  6000 8ms {"phases":6, "paths":153,"steps":67450}  998 
+2000  8000 8ms {"phases":4, "paths":100,"steps":65509}  999 
+2000 10000 6ms {"phases":3, "paths":92, "steps":58416} 1000 
+
+ 2000  3000   8ms {"phases":8, "paths":174, "steps":55333}     920 
+ 4000  6000  17ms {"phases":11,"paths":348, "steps":116267}   1839 
+ 8000 12000  31ms {"phases":15,"paths":711, "steps":305489}   3721 
+16000 24000  70ms {"phases":18,"paths":1379,"steps":685496}   7382 
+32000 48000 196ms {"phases":20,"paths":2800,"steps":1792674} 14822 
+</pre> <p>
+The second group of results shows how the performance changes
+as the number of vertices increases while the average vertex degree
+is held at 3. While the number of phases grows more slowly than $n^{1/2}$,
+in other respects the performance is
+consistent with the worst-case analysis.
+<p>
+The code below can be used to compare the Hopcroft-Karp algorithm
+to the algorithm that computes the matching by explicitly reducing
+it to a max flow problem.
+<p> <pre style="padding-left:5%">
+let g = randomBigraph(32000,1);
+let t0; let t1; let stats;
+t0 = Date.now(); [,,stats] = bimatchHK(g); t1 = Date.now();
+let s = `${g.n} ${g.m} ${t1-t0}ms ${stats.steps}`
+t0 = Date.now(); [,,stats] = bimatchF(g); t1 = Date.now();
+log(`${s} ${t1-t0}ms ${stats.steps}`);
+</pre> <p>
+Some results are shown below. They show that the Hopcroft-Karp
+algorithm is nearly five times faster than the flow-based algorithm.
+<p> <pre style="padding-left:5%">
+ 2000  3000   8ms   59503  37ms  201865 
+ 4000  6000  14ms  139105  78ms  508484 
+ 8000 12000  37ms  358093 174ms 1159534 
+16000 24000  89ms  851754 431ms 2922459 
+32000 48000 185ms 1747493 865ms 5989467 
+</pre> <p>
+There are some advantages to the flow-based algorithm. In particular,
+it can be used to solve a more general version of the matching problem
+in which the objective is to find a maximum size subgraph with at
+most $k$ edges per vertex, rather than at most 1 edge per vertex. This is
+done simply by making the capacities of the source/sink edges $k$.
+One can also find subgraphs with a minimum number of edges at some vertices,
+by specifying flow floors on some source/sink edges.
+A <i>Javascript</i> implementation of this generalized algorithm is
+shown below.
+Generalized matching is also known as $b$-matching, where $b$ can be
+a constant or an integer function on the vertices.
+
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+/** Compute a maximum matching in a bipartite graph by reducing it to a
+ *  max flow problem and applying Dinic's algorithm.
+ *  @param g is an undirected bipartite graph
+ *  @param trace causes a trace string to be returned when true
+ *  @param subsets is an optional ListPair that defines the bipartite
+ *  vertex subsets
+ *  @param dmin is an array mapping vertices to degree lower bounds
+ *  in a generalized matching; if omitted 0 is used
+ *  @param dmax is an array mapping vertices to degree upper bounds
+ *  in a generalized matching; if omitted 1 is used for all vertices
+ *  @return a triple [match, ts, stats] where match is a Graph containing
+ *  just the matching edges, ts is a possibly empty trace string
+ *  and stats is a statistics object, both from Dinic's algorithm;
+ *  @exceptions throws an exception if graph is not bipartite
+ */
+export default function bimatchF(g, trace=false, subsets=null,
+                                 dmin=null, dmax=null) {
+    // divide vertices into two independent sets
+    let steps = 0;
+    if (!subsets) { subsets = findSplit(g); steps += g.m; }
+    assert(subsets != null, "bimatchF: graph not bipartite");
+
+    // create flow graph, taking care to maintain edge numbers
+    let fg = new Flograph(g.n+2, g.n+g.edgeRange);
+    if (dmin) fg.addFloors();
+    fg.setSource(g.n+1); fg.setSink(g.n+2);
+    for (let e = g.first(); e != 0; e = g.next(e)) {
+        steps++;
+        let u = (subsets.in1(g.left(e)) ? g.left(e) : g.right(e));
+        fg.join(u,g.mate(u,e),e); fg.setCapacity(e,1);
+    }
+    for (let u = subsets.first1(); u != 0; u = subsets.next1(u)) {
+        steps++;
+        let e = fg.join(fg.source,u); fg.setCapacity(e, (dmax ? dmax[u] : 1));
+        if (dmin) fg.setFloor(e,dmin[u]);
+    }
+    for (let u = subsets.first2(); u != 0; u = subsets.next2(u)) {
+        steps++;
+        let e = fg.join(u,fg.sink);
+        fg.setCapacity(e, (dmax!=null ? dmax[u] : 1));
+        if (dmin) fg.setFloor(e,dmin[u]);
+    }
+
+    // compute flow(s)
+    if (dmin) {
+        let [,ts,stats] = flowfloor(fg, trace);
+        steps += stats.steps;
+    }
+    let [ts,stats] = maxflowD(fg, trace);
+    steps += stats.steps;
+
+    // construct matching from flow
+    let match = (dmax ? new Graph(g.n,g.edgeRange) : new Int32Array(g.n+1));
+    if (trace) ts += '['; let first = true;
+    for (let e = g.first(); e != 0; e = g.next(e)) {
+        steps++;
+        if (fg.f(e) != 0) {
+            if (first) first = false;
+            else if (trace) ts += ' ';
+                if (trace) ts += g.edge2string(e);
+            if (dmax) { // generalized matching
+                match.join(g.left(e),g.right(e),e);
+            } else {
+                match[g.left(e)] = match[g.right(e)] = e
+            }
+        }
+    }
+    if (trace) ts += ']\n';
+    return [match, ts, { 'steps': steps}];
+}
+</textarea> <p>
+The flow-based algorithm for weighted graphs is similar and
+includes the same extensions for generalized matchings.
+In this case also, the flow-based algorithm was preceded by
+one that operates directly on the original graph, finding a series
+of maximum weight augmenting paths to extend the matching.
+This algorithm was first described by Kuhn who called it
+the Hungarian algorithm in honor of earlier work on matching
+by Konig and Egervary [Kuhn55]. A <i>Javascript</i> implementation
+is shown below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let g;            // shared copy of graph
+let match;        // match[u] is edge incident to u in matching or 0
+let lab;          // lab[u] is vertex label at u
+let link = null;  // link[u] is edge to parent of u in shortest path forest
+let free;         // list containing free vertices in first subset
+let leaves;       // heap containing leaves in forest
+let cost;         // cost[u]=cost of shortest path to u in forest
+
+export default function wbimatchH(bg) {
+    g = bg;
+    if (link == null || link.length < g.n+1) {
+        link = new Int32Array(g.n+1);
+        match = new Int32Array(g.n+1);
+        lab = new Int32Array(g.n+1);
+        free = new List(g.n); free.addPrev();
+        leaves = new ArrayHeap(g.n,4);
+        cost = new Float32Array(g.n+1);
+    } else {
+        free.clear(); S.clear();
+    }
+
+    // divide vertices into two independent sets
+    subsets = findSplit(g);
+    assert(subsets != null, "wbimatchH: graph not bipartite");
+
+    // add unmatched vertices from first subset to free
+    for (let u = subsets.first1(); u != 0; u = subsets.next1(u)) {
+        if (g.firstAt(u)) free.enq(u);
+    }
+
+    // initialize vertex labels
+    initLabels(subsets);
+
+    // augment the matching until no augmenting path remains
+    let u = findpath();
+    while (u != 0) {
+        augment(u); u = findpath(); paths++;
+    }
+    return match;
+}
+
+/** Compute values for labels that give non-negative transformed costs.
+ *  The labels are the least cost path distances from an imaginary
+ *  vertex with a length 0 edge to every vertex in subsets's set1.
+ *  Edges are treated as directed from set1 to set2.
+ */
+function initLabels(subsets) {
+    lab.fill(0);
+    for (let u = subsets.first1(); u != 0; u = subsets.next1(u)) {
+        for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
+            let v = g.mate(u,e);
+            if (lab[v] > lab[u] - g.weight(e))
+                lab[v] = lab[u] - g.weight(e);
+        }
+    }
+}
+
+/** Find a least cost augmenting path.
+ *  Unmatched edges are "directed" from subsets's set1 to its set2.
+ *  Matched edges are "directed" from set2 to set1.
+ *  The cost of a path is the weight of its matched edges minus the
+ *  weight of its unmatched edges.
+ *  @returns the sink vertex of the path found, or 0 if no such path
+ */
+function findpath() {
+    link.fill(0); cost.fill(Infinity); leaves.clear();
+    for (let u = free.first(); u != 0; u = free.next(u)) {
+        cost[u] = 0; leaves.insert(u,0);
+    }
+
+    let bestSink = 0; let bestPathCost = Infinity;
+    let maxcost = -Infinity;
+    while (!leaves.empty()) {
+        let u = leaves.deletemin(); // u is in set1
+        maxcost = Math.max(maxcost, cost[u]);
+        for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
+            if (e == match[u]) continue;
+            let v = g.mate(u,e);
+            if (cost[v] > (cost[u]-g.weight(e)) + (lab[u]-lab[v])) {
+                link[v] = e;
+                cost[v] = (cost[u]-g.weight(e)) + (lab[u]-lab[v]);
+                let ee = match[v];
+                if (ee == 0) {
+                    if (cost[v] + lab[v] < bestPathCost) {
+                        bestSink = v; bestPathCost = cost[v] + lab[v];
+                    }
+                    continue;
+                }
+                let x = g.mate(v,ee);
+                link[x] = ee;
+                cost[x] = cost[v]+g.weight(ee) + (lab[v]-lab[x]);
+                if (!leaves.contains(x)) leaves.insert(x,cost[x]);
+                else leaves.changekey(x,cost[x]);
+            }
+        }
+    }
+    if (bestSink == 0) return 0;
+
+    // update labels for next round
+    for (let u = 1; u <= g.n; u++) {
+        lab[u] += Math.min(cost[u],maxcost);
+    }
+
+    // determine true weight of path
+    let u = bestSink; let e = link[u]; let pathCost = 0;
+    while (e != 0) {
+        pathCost += g.weight(e);
+        u = g.mate(u,e); e = link[u];
+        if (e == 0) break;
+        pathCost -= g.weight(e);
+        u = g.mate(u,e); e = link[u];
+    }
+    return (pathCost > 0 ? bestSink : 0);
+}
+
+/** Flip the edges along an augmenting path
+ *  @param[in] u is an endpoint of an augmenting path; the edges in
+ *  the path can be found using the link pointers
+ */
+function augment(u) {
+    let e = link[u];
+    while (e != 0) {
+        match[u] = e; u = g.mate(u,e); match[u] = e; e = link[u];
+        if (e == 0) break;
+        u = g.mate(u,e); e = link[u];
+    }
+    free.delete(u);
+}
+</textarea> <p>
+The code below can be used to demonstrate the Hungarian algorithm.
+<p> <pre style="padding-left:5%">
+let g = randomBigraph(5,3); g.randomWeights(randomInteger, 0, 9);
+let [match,ts] = wbimatchH(g,1);
+log(ts);
+</pre> <p>
+Sample output appears below.
+<p> <pre style="padding-left:5%">
+{
+a[g:2 h:4 j:5]
+b[h:7 k:8 l:7]
+c[k:1 l:6]
+d[g:5 l:2]
+e[g:2 h:5 i:3 k:6]
+f[g:9 i:3 k:8 l:4]
+g[a:2 d:5 e:2 f:9]
+h[a:4 b:7 e:5]
+i[e:3 f:3]
+j[a:5]
+k[b:8 c:1 e:6 f:8]
+l[b:7 c:6 d:2 f:4]
+}
+augmenting path, path weight
+f {f,g,9} g 9
+b {b,k,8} k 8
+c {c,l,6} l 6
+a {a,j,5} j 5
+e {e,h,5} h 5
+d {d,g,5} {f,g,9} {f,k,8} {b,k,8} {b,h,7} {e,h,5} {e,i,3} i 1
+matching: [{d,g,5} {f,k,8} {c,l,6} {b,h,7} {e,i,3} {a,j,5}]
+</pre> <p>
+The code below can be used to evaluate the performance of the
+Hungarian algorithm and compare it to the similar algorithm
+using minimum cost flows.
+<p> <pre style="padding-left:5%">
+let g = randomBigraph(1600,3); 
+g.randomWeights(randomInteger, 0, 999);
+let t0; let t1; let stats;
+t0 = Date.now(); [,,stats] = wbimatchH(g); t1 = Date.now();
+let s = `${g.n} ${g.m} ${t1-t0}ms ${stats.paths} ${stats.steps}`
+t0 = Date.now(); [,,stats] = wbimatchF(g); t1 = Date.now();
+log(`${s} ${t1-t0}ms ${stats.paths} ${stats.steps}`);
+</pre> <p>
+Some sample results appear below.
+Note that the for both algorithms, the number of path searches grows
+directly with the number of vertices and the number
+of steps per path grows directly with the number of edges.
+and the 
+<p> <pre style="padding-left:5%">
+200 300 25ms 83 92492 36ms 84 244913 
+400 600 43ms 172 427012 77ms 173 1106388 
+800 1200 90ms 337 1700237 255ms 338 4430702 
+1600 2400 340ms 668 6856527 1004ms 669 18499202 
+</pre> <p>
+
+<h2>Maximum Size Matchings in General Graphs</h2>
+Finding a maximum matching in a general graph is more complicated
+than for bipartite graphs, due to the presence of odd length cycles.
+A cycle with $2k+1$ edges has at most $k$ matching edges in the cycle,
+leaving one vertex that is either unmatched or connected to a vertex
+outside the cycle by a matching edge. The choice of matching edges
+within the cycle determines which vertices in the cycle can have
+matching edges outside the cycle, making the task of finding a maximum
+matching very dependent on how the odd cycles are matched.
+This is fundamentally why odd cycles make the task of finding matchings
+more challenging.
+<h3>Augmenting Paths</h3>
+Let $M$ be a matching in a graph. An <i>alternating path</i> with respect
+to $M$ is a path in which every other edge is in the matching and
+the remainder are not. If both endpoints of an alternating path are
+unmatched, the size of the matching can be increased by flipping the
+status of the edges on the path, as illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="500" src="figs/augmentingPath.png"><br>
+</div>
+<p>
+Because such paths can be used to increase the size of a matching,
+they are referred to as augmenting paths.
+This suggests that maximum matchings can be found by repeatedly identifying
+augmenting paths and expanding the current by matching by flipping the
+status of the path's edges.
+<p>
+To justify this method, let $M$ be a matching and $M'$ be a matching with
+exactly $k$ more edges than $M$. Let $N$ be the graph consisting of edges
+that are either in $M$ or $M'$ but not both. Since the vertices in $N$
+have a maximum degree of 2, $M$ consists of vertex-disjoint paths that are
+alternating with respect to $M$ and possibly some cycles that are
+alternating with respect to $M$. Since $M'$ has $k$ more edges than $M$,
+$k$ of the alternating paths must be augmenting paths with respect to $M$
+so their edges cann all be flipped, yielding a matching of the same
+size as $M'$. This argument establishes the following theorem.
+<p>
+<i>Theorem 1</i> A matching $M$ is a maximum size matching for a graph
+$G$ if and only if $G$ has no augmenting paths with respect to $M$.
+<p>
+What remains is to find an efficient algorithm for finding an augmenting
+path when one exists.
+
+<h3>Edmond's Algorithm</h3>
+
+Most algorithms for finding maximum matchings can be viewed as
+refinements of Edmonds' algorithm, described in [xx].
+Edmond's algorithm finds an augmenting path by constructing a
+collection of trees rooted at unmatched vertices and with
+leaf-to-root paths that are alternating with respect to the
+current matching.
+The current matching is defined by a mapping $\match(u)$
+that maps each mapped vertex to its incident matching edge.
+The trees are defined by mapping each tree vertex $u$ to
+an edge $\link(u)$ that joins $u$ to its parent in the tree.
+Tree vertices are classified as <i>even</i> or <i>odd</i> depending
+on the length of their path to the root in the tree and leaves
+are always even, implying that for a leaf $u$, $\link(u)$ is a
+matching edge. An example of such a collection of trees
+is illustrated below, along with some non-tree edges (dashed)
+and with the even and odd vertices indicated
+by plus or minus symbols, respectively.
+<p>
+<div  style="text-align:center;">
+<img width="300" src="figs/altPathTrees.png"><br>
+</div>
+<p>
+A path search begins by making every unmatched vertex a tree root.
+For bipartite graphs, the algorithm then simply repeats the following
+basic step until an augmenting path is found.
+<p style="padding-left:5%">
+Let $e=\{u,v\}$ be a previously unexamined edge with $u$ even.
+Process $e$ using the appropriate case below:
+<ul style="padding-left:8%">
+<li> If $v$ is not yet in any tree, add $v$ to $u$'s tree by
+     setting $\link(v)=u$; and if $w$ is the other endpoint of
+     $\match(v)$, add $w$ to the tree by making
+     $\link(w)=v$.
+<li> If $v$ is an even vertex in some other tree, then an augmenting
+     path can be formed by linking the tree path from $u$ to the root
+     of its tree to the tree path from $v$ to the root of its tree
+     through $e$. 
+<li> If $v$ is odd, just ignore $e$.
+</ul>
+Note that in the first case, $v$ must be matched since unmatched vertices
+are tree roots. Also note that for bipartite graphs, there can be no
+edge $e$ joining vertices in the same tree, since this would imply the
+presence of an odd length cycle.
+
+<p>
+add code for bipartite case?
+
+
+<p>
+To handle general graphs, Edmonds algorithm must be generalized to deal
+with odd cycles. An odd cycle with $2k+1$ vertices and $k$ matching edges
+is referred to as a <i>blossom</i>. The vertex that is not incident to
+a matching edge in the blossom is called the <i>base</i> of the blossom.
+Edmonds algorithm deals with blossoms by <i>condensing</i> them;
+that is, by treating each blossom cycle it encounters as if it is
+a single vertex in a <i>condensed graph</i>.
+<p>
+It's easy to show that if a condensed graph contains an augmenting path,
+then the original graph does also. 
+Let $P$ be an augmenting path in a condensed graph and let $B$ be a blossom.
+If $B$ is not on $P$, then clearly $P$ is an augmenting path in the original
+graph. If $B$ is on $P$, then a new path segment can be inserted into
+$P$ by expanding $B$ and proceeding in one of two directions around the cycle,
+as illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="350" src="figs/blossomPath.png"><br>
+</div>
+<p>
+In this example, the path $a,c,B,d,e,f$ in the condensed graph
+expands into $a,c,u,y,x,w,v,d,e,f$.
+If a path contains multiple blossoms (possibly including nested blossoms),
+they can be expanded in turn.
+<p>
+implementation using Blossom?
+
+<h3>Gabow's Version of Edmond's Algorithm</h3>
+
+<h3>Stable Matchings</h3>
+Gale and Shepley algorithm
+
+<h2>An Aside on Linear Programming</h2>
+
+<h2>Maximum Weight Matchings in General Graphs</h2>
+<h3>Linear Programming Essentials</h3>
+<h3>Edmond's Algorithm</h3>
+start with bipartite, then got to weighted
+
+<h3>Galil, Micali and Gabow's Algorithm</h3>
+start with bipartite
+
+
+<h2>References</h2>
+<dl>
+<dt> [AhMaOr93]
+<dd> <i>Network Flows, Theory, Algorithms and Applications</i>
+     by R. K Ahuja, T. L. Magnanti and J. B. Orlin.
+     Prentice Hall, 1993.
+<dt> [ChatMc17]
+<dd> &ldquo;A note on finding minimum mean cycles&rdquo; by
+     Mmanu Chaturvedi and Ross M. McConnell. In
+     <i>Information Processing Letters</i> 11/2017.
+<dt> [GolTar87]
+<dd> &ldquo;Finding Minimum-Cost Circulations by Cancelling
+     Negative Cycles,&rdquo; by A. V. Goldberg and R. E. Tarjan. In
+     <i>Proceedings of the ACM Symposiumm on Theoretical Computer Science</i>,
+     1988.
+<dt> [Karp78]
+<dd> &ldquo;A characterization of the minimum cycle mean in a diagraph,&rdquo;
+     by R. Karp. In <i>Discrete Mathematics</i>, 1978.
+<dt> [Klein67]
+<dd> &ldquo;A primal method for minimal cost flows.&rdquo;
+     <i>Management Science</i>, 1967.
+<dt> [Kuhn55]
+<dd> &ldquo;The Hungarian method for the assignment problem,&rdquo;
+     by H. W. Kuhn. In <i>Naval Research Logistics</i>, 1955.
+<dt> [Tarjan87]
+<dd> <i>Network Algorithms and Data Structures</i> by Robert E. Tarjan.
+     Society for Industrial and Applied Mathematics, 1987.
+</dl>
+<script src="../googleAnalytics.js"></script>
+</body>
+</html>
