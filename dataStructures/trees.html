@@ -33,7 +33,7 @@ While trees can be represented using the graph data structures already
 defined, it is often convenient to have a data structure that is
 designed for the special case of trees and forests.
 
-<h2>Forest</h2>
+<a id=forest><h2>Forest</h2></a>
 The <code>Forest</code> class defines a collection of directed trees
 that partition a common vertex set.
 Each vertex has a defined <i>parent</i> and a <i>first child</i>.
@@ -213,7 +213,7 @@ export default class Forest extends Top {
 }
 </textarea>
 
-<h2>Binary Forests</h2>
+<a id=binaryForest><h2>Binary Forest</h2></a>
 
 A <i>binary tree</i> is a tree in which each vertex has at most two children,
 and the children are explicitly identified as either the <i>left child</i>
@@ -284,7 +284,7 @@ straightforward. Others require more explanation. The figure below
 illustrates the operation <code>insertAfter(c,a,n)</code> operation.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/insertAfter.png"><br>
+<img width="65%" src="figs/insertAfter.png"><br>
 </div>
 <p>
 The inserted vertex <code>c</code> becomes the leftmost leaf in the
@@ -300,7 +300,7 @@ At that point, it has at most one child, making the deletion easy.
 This is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/btreeDelete.png"><br>
+<img width="65%" src="figs/btreeDelete.png"><br>
 </div>
 <p>
 The operation <code>join(t1,u,t2)</code> operation is easy. Simply make 
@@ -315,7 +315,7 @@ the vertices to the left of <code>u</code> and <code>R</code> contains
 the vertices to its right. This is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="400" src="figs/btreeSplit.png"><br>
+<img width="60%" src="figs/btreeSplit.png"><br>
 </div>
 <p>
 Observe that the first step completes a split of the subtree of
@@ -329,7 +329,7 @@ the left-to-right order of the search tree vertices matches the
 increasing order of the key values, as illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="250" src="figs/btreeKeys.png"><br>
+<img width="35%" src="figs/btreeKeys.png"><br>
 </div>
 <p>
 The operation <code>search(k,t,key)</code> uses the provided key values to
@@ -353,7 +353,7 @@ right child of <code>e</code>.
 The operation <code>rotate(x)</code> is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="300" src="figs/bstRotate.png"><br>
+<img width="45%" src="figs/bstRotate.png"><br>
 </div>
 <p>
 Notice that the operation moves <code>x</code> one step closer
@@ -371,14 +371,14 @@ a double-rotation at $x$ consists of a first rotation at its parent,
 then a rotation at $x$, as illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="350" src="figs/bstRotate2a.png"><br>
+<img width="45%" src="figs/bstRotate2a.png"><br>
 </div>
 <p>
 When $x$ is an <i>inner grandchild</i>,
 both rotations are done at $x$.
 <p>
 <div  style="text-align:center;">
-<img width="350" src="figs/bstRotate2b.png"><br>
+<img width="45%" src="figs/bstRotate2b.png"><br>
 </div>
 <p>
 The core of the <i>Javascript</i> implementation appears below.
@@ -797,7 +797,7 @@ These functions can be used to assist in balancing the data structure,
 and/or maintaining client data that may be affected by the
 tree structure.
 
-<h2>Balanced Forest</h2>
+<a id=balancedForest><h2>Balanced Forest</h2></a>
 The <i>balanced forest</i> data structure extends the <i>binary forest</i>
 in order to improve its worst-case performance.
 There are many ways to keep the trees balanced, so that the maximum
@@ -812,7 +812,7 @@ Vertices with fewer than two children are assigned a rank of 1.
 An example of such a tree is shown below.
 <p>
 <div  style="text-align:center;">
-<img width="250" src="figs/bstb.png"><br>
+<img width="35%" src="figs/bstb.png"><br>
 </div>
 <p>
 One can show by induction that any node of rank $k$ has height at
@@ -835,7 +835,7 @@ a double-rotation at $x$ is required.
 This is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="400" src="figs/bstbBalanced1.png"><br>
+<img width="50%" src="figs/bstbBalanced1.png"><br>
 </div>
 <p>
 If $rank(x)=rank(gp(x))=rank(aunt(x))$, $rank(gp(x))$ is
@@ -850,7 +850,7 @@ If $x$'s sibling also has rank $r+2$, a rotation is performed
 at the sibling, as illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="300" src="figs/bstbBal2a.png"><br>
+<img width="40%" src="figs/bstbBal2a.png"><br>
 </div>
 <p>
 This rotation does not fix the rank violation at $x$,
@@ -864,7 +864,7 @@ $p(x)$ and its parent. In this case, the checking process is repeated,
 with $p(x)$ replacing $x$.
 <p>
 <div  style="text-align:center;">
-<img width="150" src="figs/bstbBal2b.png"><br>
+<img width="20%" src="figs/bstbBal2b.png"><br>
 </div>
 <p>
 (Case 3) If $x$'s sibling has rank $r+1$ and $x$'s <i>nephew</i>
@@ -874,7 +874,7 @@ the sibling and the ranks of $x$'s parent and its new grandparent
 are changed to $r+1$ and $r+2$ respectively.
 <p>
 <div  style="text-align:center;">
-<img width="300" src="figs/bstbBal2c.png"><br>
+<img width="40%" src="figs/bstbBal2c.png"><br>
 </div>
 <p>
 (Case 4) Finally, if $x$'s sibling has rank $r+1$
@@ -883,7 +883,7 @@ the neice and the ranks of $x$'s parent and grandparent
 are changed to $r+1$ and $r+2$.
 <p>
 <div  style="text-align:center;">
-<img width="300" src="figs/bstbBal2d.png"><br>
+<img width="40%" src="figs/bstbBal2d.png"><br>
 </div>
 <p>
 Note that the last two cases eliminate the violation at $x$ and create
@@ -902,7 +902,7 @@ resulting subtree takes the original place of $v$ in $t_1$.
 This is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/bstbJoin.png"><br>
+<img width="60%" src="figs/bstbJoin.png"><br>
 </div>
 <p>
 Since this procedure may produce a violation of the second rank condition,
@@ -1111,7 +1111,7 @@ final single rotation is used to bring $u$ to the root.
 An example is shown below.
 <p>
 <div  style="text-align:center;">
-<img width="650" src="figs/bstSplay.png"><br>
+<img width="80%" src="figs/bstSplay.png"><br>
 </div>
 <p>
 To understand why the splay is helpful,
@@ -1177,7 +1177,7 @@ This implies that after the operation $w$ has fewer than
 $2^r$ descendants, making $rank'(w) < r$.
 <p>
 <div  style="text-align:center;">
-<img width="400" src="figs/bstCredit1.png"><br>
+<img width="50%" src="figs/bstCredit1.png"><br>
 </div>
 <p>
 So again, one less credit is needed to satisfy the credit policy and

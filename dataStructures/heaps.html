@@ -19,6 +19,26 @@
 </script>
 </head>
 <body bgcolor=ffffff>
+\(
+\newcommand{\key}{\texttt{key}}
+\newcommand{\insert}{\texttt{insert}}
+\newcommand{\deletemin}{\texttt{deletemin}}
+\newcommand{\changekey}{\texttt{changekey}}
+\newcommand{\empty}{\texttt{empty}}
+\newcommand{\contains}{\texttt{contains}}
+\newcommand{\findmin}{\texttt{findmin}}
+\newcommand{\delete}{\texttt{delete}}
+\newcommand{\addtokeys}{\texttt{add2keys}}
+\newcommand{\meld}{\texttt{meld}}
+\newcommand{\rank}{\texttt{rank}}
+\newcommand{\heapify}{\texttt{heapify}}
+\newcommand{\lazyMeld}{\texttt{lazyMeld}}
+\newcommand{\retire}{\texttt{retire}}
+\newcommand{\Forest}{\texttt{Forest}}
+\newcommand{\ArrayHeap}{\texttt{ArrayHeap}}
+\newcommand{\FibHeaps}{\texttt{FibHeaps}}
+\newcommand{\LeftistHeaps}{\texttt{LeftistHeaps}}
+\)
 
 <h1>Heaps<sup>&copy;</sup></h1>
 
@@ -55,13 +75,12 @@ three standard ones mentioned earlier.
 <li>    <code>d</code> returns the &ldquo;arity&rdquo; of the heap-ordered tree.
 <li>    <code>m</code> returns the number of items in the heap
         (note, this is not the same as the index range).
-<li>    <code>key(i)</code> returns the key of item <code>i</code>.
-<li>    <code>empty()</code> returns true if the heap is empty.
-<li>    <code>contains(i)</code> returns true if item <code>i</code>
-        is in the heap.
-<li>    <code>findmin()</code> returns the item with the smallest key.
-<li>    <code>delete(i)</code> deletes item <code>i</code> from the heap.
-<li>    <code>add2keys(delta)</code> adds the value <code>delta</code>
+<li>    $\key(i)$ returns the key of item $i$.
+<li>    $\empty()$ returns true if the heap is empty.
+<li>    $\contains(i)$ returns true if item $i$ is in the heap.
+<li>    $\findmin()$ returns the item with the smallest key.
+<li>    $\delete(i)$ deletes item $i$ from the heap.
+<li>    $\addtokeys(\Delta)$ adds the value $\Delta$
         to the keys of all heap items.
 </ul>
 <p>
@@ -80,7 +99,7 @@ This produces the output
 e 1 {f:2 d:2 a:5 j:8 b:6 g:4 c:5 h:7 i:7} 
 </pre>
 The first line shows a detailed view of the heap,
-before the <code>deletemin</code> operation.
+before the $\deletemin$ operation.
 Parentheses are used to indicate the tree structure.
 Specifically, each item with children in the tree is
 immediately followed by a parenthesized list of its children.
@@ -130,7 +149,7 @@ into its final position.
 <p>
 $\textit{Deletemin}$ is implemented in a similar way.
 Let $i$ be the last item in the <i>item</i> array and let
-Let $k = \textit{key}(i)$.
+$k = \textit{key}(i)$.
 Starting from the root, scan down the heap looking for a
 new place to insert $i$. 
 At each step, select the
@@ -147,128 +166,74 @@ from the last example, yields the configuration shown below.
 <p>
 The search process described above is implemented by
 a helper method called <i>siftdown</i>.
-The core methods for the <code>Dheap</code> class are shown below.
+<p>
+The $\addtokeys$ method is implemented by adding an
+increment to an internal <i>offset</i>
+The key of an item is equal to the sum of the stored key value and the offset.
+When an item is inserted into the heap, the key value stored must adjusted to
+match the offset.
+<p>
+The core methods for the $\ArrayHeap$ class are shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class ArrayHeap extends Top {
-    #d;            ///< base of heap
-    #m;            ///< # of items in the heap set
+    #d;          // base of heap
+    #m;          // # of items in the heap set
 
-    #item;         ///< {#item[1],...,#item[m]} is the items in the heap
-    #pos;          ///< #pos[i] gives position of i in #item
-    #key;          ///< #key[i] is key of item i
-    #offset;       ///< offset for key values, allowing all to shift at once
+    #item;       // {#item[1],...,#item[m]} is the items in the heap
+    #pos;        // #pos[i] gives position of i in #item
+    #key;        // #key[i] is key of item i
+    #offset;     // offset for key values, allowing all to shift at once
 
-    #insertCount;        // calls to insert
-    #deleteCount;        // calls to delete
-    #changekeyCount;    // calls to changekey
-    #siftupSteps;        // steps taken by siftup
-    #siftdownSteps;        // steps taken by siftdown
-
-    /** Constructor for ArrayHeap object.
-     *  @param n is index range for object
-     *  @parm d is the base of the heap (defaults to 4)
-     *  @param capacity is maximum index range (defaults to n)
-     */
-    constructor(n, d=4, capacity=n) { super(n); this.#init(d, capacity); }
-    
-    /** Allocate space and initialize ArrayHeap object.
-     *  @param d is the base of the heap.
-     *  @param capacity is the maximum range
-     */
-    #init(d, capacity) {
-        this.#item = new Int32Array(capacity+1);
-        this.#pos = new Int32Array(capacity+1);
-        this.#key = new Float32Array(capacity+1);
+    constructor(n=10, d=4) {
+        super(n);
+        this.#item = new Int32Array(n+1);
+        this.#pos = new Int32Array(n+1);
+        this.#key = new Float32Array(n+1);
         this.#item[0] = this.#m = 0; this.#d = d;
         this.#offset = 0;
-        this.clearStats();
     }
-
-    /** Remove all elements from heap. */
-    clear() {
-        for (let x = 1; x <= this.#m; x++) this.#pos[this.#item[x]] = 0;
-        this.#m = 0; this.#offset = 0;
-        this.clearStats();
-    }
-
-    get capacity() { return this.#item.length-1; }
 
     get d() { return this.#d; }
 
     get m() { return this.#m; }
 
-    /** Return position of parent of a heap item.
-     *  @param p is position of item in heap
-     *  @param return position where parent would go if there were one
-     */
+    itemAt(pos) { return this.#item[pos]; };
+
     p(pos) { return Math.ceil((pos-1)/this.d); }
 
-    /** Return position of leftmost child of a heap item.
-     *  @param pos is position of item in heap
-     *  @param return position where left child would go if there were one
-     */
     left(pos) { return this.d*(pos-1)+2; }
 
-    /** Return position of rightmost child of a heap item.
-     *  @param pos is position of item in heap
-     *  @param return position where right child would go if there were one
-     */
     right(pos) { return this.d*pos+1; }
+
+    findmin() { return this.empty() ? 0 : this.itemAt(1); }
     
-    /** Find an item in the heap with the smallest key.
-     *  @return the number of an item that has the smallest key
-     */
-    findmin() { return this.empty() ? 0 : this.#item[1]; }
-    
-    /** Delete a minimum key item from the heap and return it.
-     *  @return an item of minimum key from the heap, after deleting it
-     *  from the heap
-     */
-    deletemin() {
-        if (this.empty()) return 0;
-        let i = this.#item[1]; this.delete(i);
-        return i;
-    }
-    
-    /** Get the key of an item.
-     *  @param i is an item in the heap
-     *  @return the value of i's key
-     */
     key(i) { return this.#offset + this.#key[i]; }
+
+    get offset() { return this.#offset; }
 
     add2keys(delta) { this.#offset += delta; }
     
-    /** Determine if an item is in the heap.
-     *  @param i is an item
-     *  @return true if i is in the heap, else false
-     */
     contains(i) { return this.#pos[i] != 0; }
     
-    /** Determine if the heap is empty.
-     *  @return true if heap is empty, else false
-     */
     empty() { return this.m == 0; };
     
-    /** Add index to the heap.
-     *  @param i is an index that is not in the heap
-     *  @param key is the key value under which i is to be inserted
-     */
     insert(i, key) {
-        assert(i > 0);
-        this.#insertCount++;
-        if (i > this.capacity) this.expand(i);
+        if (this.contains(i)) { this.changekey(i,key); return; }
+        if (i > this.n) this.expand(i);
         this.#key[i] = key - this.#offset; this.#m++; this.#siftup(i, this.m);
     }
     
-    /** Remove an index from the heap.
-     *  @param i is an index in the heap
-     */
+    deletemin() {
+        if (this.empty()) return 0;
+        let i = this.itemAt(1); this.delete(i);
+        return i;
+    }
+    
     delete(i) {
-        assert(i > 0);
-        this.#deleteCount++;
-        let j = this.#item[this.#m--];
+        if (!this.contains(i)) return;
+        let j = this.itemAt(this.#m--);
         if (i != j) {
             if (this.#key[j] <= this.#key[i])
                 this.#siftup(j, this.#pos[i]);
@@ -278,27 +243,15 @@ export default class ArrayHeap extends Top {
         this.#pos[i] = 0;
     }
     
-    /** Perform siftup operation to restore heap order.
-     *  This is a private helper function.
-     *  @param i is an item to be positioned in the heap
-     *  @param x is a tentative position for i in the heap
-     */
     #siftup(i, x) {
-        this.#siftupSteps++;
         let px = this.p(x);
-        while (x > 1 && this.#key[i] < this.#key[this.#item[px]]) {
-            this.#item[x] = this.#item[px]; this.#pos[this.#item[x]] = x;
+        while (x > 1 && this.#key[i] < this.#key[this.itemAt(px)]) {
+            this.#item[x] = this.itemAt(px); this.#pos[this.itemAt(x)] = x;
             x = px; px = this.p(x);
-            this.#siftupSteps++;
         }
         this.#item[x] = i; this.#pos[i] = x;
     }
     
-    /** Perform siftdown operation to restore heap order.
-     *  This is a private helper function.
-     *  @param i is an item to be positioned in the heap
-      *  @param x is a tentative position for i in the heap
-      */
     #siftdown(i, x) {
         let cx = this.#minchild(x);
         while (cx != 0 && this.#key[this.#item[cx]] < this.#key[i]) {
@@ -308,35 +261,21 @@ export default class ArrayHeap extends Top {
         this.#item[x] = i; this.#pos[i] = x;
     }
     
-    /** Find the position of the child with the smallest key.
-     *  This is a private helper function, used by siftdown.
-     *  @param x is a position of an index in the heap
-     *  @return the position of the child of the item at x, that has
-     *  the smallest key
-     */
     #minchild(x) {
-        this.#siftdownSteps++;
         let minc = this.left(x);
         if (minc > this.m) return 0;
         for (let y = minc + 1; y <= this.right(x) && y <= this.m; y++) {
-            this.#siftdownSteps++;
             if (this.#key[this.#item[y]] < this.#key[this.#item[minc]])
                 minc = y;
         }
         return minc;
     }
     
-    /** Change the key of an item in the heap.
-     *  @param i is an item in the heap
-     *  @param k is a new key value for item i
-     */
     changekey(i, k) {
-        this.#changekeyCount++;
-        let ki = this.#key[i] - this.#offset;
+        let ki = this.#key[i] + this.#offset;
         this.#key[i] = k - this.#offset;
-        if (k == ki) return;
-        if (k < ki) this.#siftup(i, this.#pos[i]);
-        else this.#siftdown(i, this.#pos[i]);
+             if (k < ki) this.#siftup(i, this.#pos[i]);
+        else if (k > ki) this.#siftdown(i, this.#pos[i]);
     }
 }
 </textarea>
@@ -352,9 +291,6 @@ In some applications key reductions may occur more frequently than
 other operations. In such cases, the overall performance can be
 improved by selecting a value of $d$ that makes these operations faster
 at the expense of the others.
-The <code>add2keys</code> method is implemented by adding a value
-to a hidden offset that is used to interpret the key values.
-This allows the operation to be done in constant time.
 
 <a id=fheaps><h2>Fibonacci Heaps</h2></a>
 
@@ -370,58 +306,56 @@ More precisely, in a sequence of $m$ heap operations including
 $d$ <i>delete</i>, <i>deletemin</i> and increasing <i>changekey</i>
 operations, the total running time is $O(m + d\log n)$.
 <p>
-The <i>Javascript</i> implementation includes the following methods.
+The provided <i>Javascript</i> implementation extends the
+<a href="./trees.html#forest">$\Forest$ data structure</a> and
+includes the following methods.
 <ul>
-<li>    <code>key(i)</code> returns the key of item <code>i</code>.
-<li>    <code>setKey(i, k)</code> sets the key of item <code>i</code>
-        to <code>k</code>; item <code>i</code> must define a singleton
-        heap.
-<li>    <code>singleton(i)</code> returns true if <code>i</code> is the
-        only item in its heap.
-<li>    <code>findmin(h)</code> returns the item of minimum key in the
-        heap identified by item <code>h</code>.
-<li>    <code>deletemin(h)</code> returns the item of minimum key in the
-        heap identified by <code>h</code> and removes it from
-        <code>h</code>.
-<li>    <code>delete(i, h)</code> deletes <code>i</code> from the
-        heap identified by <code>h</code>.
-<li>    <code>meld(h1, h2)</code> combines the two heaps identified by
-        <code>h1</code> and <code>h2</code> and returns the identifier of
+<li>    $\key(i,k)$ sets the key of item $i$
+        to $k$ if $k$ is provided;
+        returns the key  of $i$.
+<li>    $\findmin(h)$ returns the item of minimum key in the
+        heap identified by item $h$.
+<li>    $\deletemin(h)$ returns the item of minimum key in the
+        heap identified by $h$ and removes it from
+        $h$.
+<li>    $\delete(i, h)$ deletes $i$ from the
+        heap identified by $h$.
+<li>    $\meld(h1, h2)$ combines the two heaps identified by
+        $h_1$ and $h_2$ and returns the identifier of
         the combined heap.
-<li>    <code>insert(i, h, k)</code> inserts <code>i</code> into the
-        heap identified by <code>h</code> with key <code>k</code>.
-<li>    <code>changekey(i, h, k)</code> changes the key of item
-        <code>i</code> in the heap identified by <code>h</code>
-        to <code>k</code>.
+<li>    $\insert(i, h, k)$ inserts $i$ into the
+        heap identified by $h$ with key $k$.
+<li>    $\changekey(i, h, k)$ changes the key of item
+        $i$ in the heap identified by $h$
+        to $k$.
 </ul>
-Each heap in the data structure is represented by a collection
-of heap-ordered trees. Each heap item $i$ has
-a parent pointer $p(i)$ and a child pointer $c(i)$.
-Siblings are linked by lists within a <code>ListSet</code> data structure.
-That is, each set of siblings (in all the trees, in all the heaps)
-defines a list within a single <code>ListSet</code> object.
-The roots of the trees within each heap are also linked by
-lists in the same object.
-This structure is illustrated in the figure below that shows
-a single heap consisting of three trees.
+Each heap in the data structure is represented by a <i>collection</i>
+of heap-ordered trees.
+The trees forming a heap are implemented as a <i>tree group</i> in
+the <a href="./trees.html#forest"><i>forest</i></a> data structure.
+Each heap item has a <i>key</i> and two auxiliary fields,
+a <i>rank</i> and a <i>mark</i>. For each item $i$,
+$\rank(i)$ equals the number of children of $i$.
+The figure below shows a single heap consisting of three trees.
+Note that marks are shown by the presence or absence of check symbol.
 <p>
 <div  style="text-align:center;">
-<img width="75%" src="figs/fheaps1.png"><br>
+<img width="40%" src="figs/fheaps1.png"><br>
 </div>
 <p>
-Each item in the heap has a <i>key</i> and two auxiliary properties,
-a <i>rank</i> and a <i>mark</i>. For each item $i$,
-$\textit{rank}(i)$ equals the number of children of $i$.
 <p>
-The first item in the root list of a heap is used as the heap identifier.
-This is also the item with the smallest key.
-Two heaps can be melded simply by combining their root lists.
+The root of the first tree in the tree group defining a heap is
+used as the heap identifier.
+This is also an item with the smallest key.
+Two heaps can be melded simply by combining their groups.
 An insert is essentially just a meld of a singleton heap with another heap.
 <p>
-The <code>deletemin</code> operation for a heap identified by <code>h</code>
-is implemented by first removing <code>h</code> from the root list,
-then combining its child list  with the root list.
-Next, the root list is scanned to find the root with the smallest key.
+The $\deletemin$ operation for a heap identified by $h$
+is implemented by removing each of $h$'s subtrees and adding
+them as additional trees in the heap; $h$ is then removed
+from the tree group.
+Next, the roots of the trees still in the heap are scanned to find the root
+with the smallest key.
 The heap is restructured at the same time to speed up later operations.
 In particular, trees with roots of equal rank are combined, with one tree
 becoming a subtree of the other's root.
@@ -442,7 +376,7 @@ the root of the new tree is inserted at the position determined
 by its new rank. If this leads to a new collision, the process is repeated.
 <p>
 This restructuring process reduces the number of trees, speeding up
-subsequent <code>deletemin</code> operations.
+subsequent $\deletemin$ operations.
 It also leads to a useful property, that can be
 observed in the example above. Note that after the process completes,
 the root node has a rank of 3, while its children have ranks of 2, 1 and 0,
@@ -451,22 +385,22 @@ Also observe, that every node in the tree with a rank of $k$ has $2^k$
 nodes in its subtree. 
 This leads to an upper bound of $\lg n$ on the rank of any node.
 <p>
-Before discussing the <code>changekey</code> operation, let's analyze
-the performance of a sequence of <code>insert</code> and
-<code>deletemin</code> operations only.
+Before discussing the $\changekey$ operation, let's analyze
+the performance of a sequence of $\insert$ and
+$\deletemin$ operations only.
 Let's start by showing that the property observed in the example
 is in fact a general property.
 <p>
 <i>Lemma 1</i>. Let $x$ be any node with rank $r$ and children $y_1,\ldots,y_r$,
 where the children are listed in the order that they became children of $x$.
-Then, $\textit{rank}(y_i) \geq i-1$.
+Then, $\rank(y_i) \geq i-1$.
 <p>
 <i>Proof</i>.
-First note, that if the only operations are <code>insert</code> and 
-<code>deletemin</code>, then only tree roots are ever removed from a heap.
+First note, that if the only operations are $\insert$ and 
+$\deletemin$, then only tree roots are ever removed from a heap.
 That means that no node in the heap ever loses a child.
 Also, a node can only become the child of another during the
-restructuring process performed by the <code>deletemin</code> operation.
+restructuring process performed by the $\deletemin$ operation.
 Consequently, just before $y_i$ became a child of $x$, $x$ had
 $i-1$ children. Since $y_i$ became a child of $x$ it must have collided
 with $x$ during the restructuring process and hence it must have had
@@ -483,7 +417,7 @@ $1 + 2^0+2^1+\cdots+2^{r-1} = 2^r$ descendants. $\Box$
 This implies that the maximum rank is $\leq \lg n$,
 and that can be used to show that the initialization of the
 data structure followed by any sequence $m$ operations
-including $d$ <code>deletemin</code> operations
+including $d$ $\deletemin$ operations
 takes $O(n + m + d\log n)$ time.
 This is done using a form of <i>amortized analysis</i> in which a set
 fictitious <i>credits</i> are allocated for each operation and
@@ -500,41 +434,40 @@ and leaves us with exactly $n$ trees. So, if $2n$ credits are allocated
 for the initialization, $n$ can be used to pay for the computation,
 leaving us with $n$ credits that can be used to satisfy the credit
 policy.
-Since an <code>insert</code> operation takes constant time and does not
+Since an $\insert$ operation takes constant time and does not
 change the number of trees, a single credit can be allocated for each
-<code>insert</code> and used to pay for the operation.
+$\insert$ and used to pay for the operation.
 <p>
-For the <code>deletemin</code> operation the inital step of 
-removing the minimum key item from the root list and merging
-its children into the root list takes constant time,
-so can be payed for with a single credit.
-The remaining time is determined by the number of steps in
-the restructuring process. If the deleted item has rank $r$,
+For the $\deletemin$ operation the time required is
+bounded by the number of trees at the start of the restructuring process.
+If the deleted item has rank $r$,
 then the first step increases the number of trees by $r$, while the
 restructuring process may decrease the number of trees.
 If $p$ is the number of restructuring steps that involve a collision
 and $q$ is number that do not, then the total number of steps is $p+q$
 and the number of trees at the completion of the process is $r-p$
 larger than at the start. So, to pay for the operation and ensure
-that the credit policy is satisfied, $1+(p+q)+(r-p)=1+q+r$ credits must
-be allocated to the <code>deletemin</code> operation.
-Since both $q$ and $r$ are bounded by the maximum rank,
-$1+ 2\lg n $ credits are sufficient.
+that the credit policy is satisfied, $(p+q)+(r-p)=q+r$ credits must
+be allocated to the $\deletemin$ operation.
+To account for the case where $q$ and $r$ are both zero, one extra
+credit is allocated, and
+since both $q$ and $r$ are bounded by the maximum rank,
+$1+ 2\lg n$ credits are enough to pay for the operation and
+maintain the credit invariant.
 <p>
 This implies that the total number of credits allocated
 for the initialization plus
 $m$ operations including
-$d$ <code>deletemin</code> operations is
+$d$ $\deletemin$ operations is
 $O(n+m+d\log n)$.
 Since every computational step was paid for from allocated credits,
 the running time is also $O(n+m+d\log n)$.
 <p>
-Now, it's time to consider the <code>changekey(i,h,k)</code>
+Now, it's time to consider the $\changekey(i,h,k)$
 operation.  When decreasing the key value, it can be
-implemented by first changing the key value, removing the edge
-from $i$ to its parent, then moving the resulting tree into the
-root list.
-This is a perfectly fine way of implementing <code>changekey</code>
+implemented by first changing the key value, removing the subtree
+at $i$ and making it another tree in the heap's tree group.
+This is a perfectly fine way of implementing $\changekey$
 but has the unfortunate side effect of breaking the analysis just
 completed. In particular, the key lemma requires that no item ever
 loses a child.
@@ -543,13 +476,14 @@ Fortunately, an alternate version of the lemma can be applied if
 the operation is modified to ensure that no non-root
 item loses more than one child.
 The new version sets the mark bit of
-a node $x$ whenever $x$ loses one of its children. If $x$ was
-already marked, the edge from $x$ to its parent is also removed
-(assuming $x$ is not a tree root) and the detached subtree is
-added to the root list. If the parent was already marked, its subtree
-is also removed and added to the root list.
-This procedure is repeated until the parent of the subree to be
-removed is unmarked.
+a node $x$ whenever $x$ loses one of its children. If $x$ is
+already marked when $x$ loses a child,
+the subtree at $x$ is also removed and added to the heap's tree group
+(assuming $x$ is not already a tree root).
+If $x$'s parent is already marked, its subtree
+is also removed and added to the heap's tree group.
+This procedure is repeated until the parent of the subtree being
+removed is unmarked or is a root.
 The mark bits of all the new tree roots are cleared.
 This process is illustrated below.
 <p>
@@ -561,18 +495,18 @@ Here is the new version of the lemma.
 <p>
 <i>Lemma 2</i>. Let $x$ be any item with rank $r$ and children $y_1,\ldots,y_r$,
 where the children are listed in the order that they became children of $x$.
-Then, $\textit{rank}(y_i) \geq i-2$.
+Then, $\rank(y_i) \geq i-2$.
 <p>
 <i>Proof</i>.
-As before, note that a item becomes the child of another during the
-restructuring process performed by the <code>deletemin</code> operation.
+As before, note that an item becomes the child of another during the
+restructuring process performed by the $\deletemin$ operation.
 Consequently, just before $y_i$ became a child of $x$, $x$ had
 at least $i-1$ children. Since $y_i$ became a child of $x$ it must have collided
 with $x$ during the restructuring process and hence it must have had
 at least $i-1$ children, and since it has lost no more than one child
 since it became a child of $x$, it must still have at least $i-2$. $\Box$
 <p>
-<i>Corallary 2</i>. A item $x$ with rank $r$ has at least $F_r$ descendants in
+<i>Corallary 2</i>. An item $x$ with rank $r$ has at least $F_r$ descendants in
 its subtree, where $F_r$ is the $r$-th Fibonacci number.
 <p>
 <i>Proof</i>. 
@@ -587,7 +521,7 @@ where $\phi = (1 + \sqrt{5})/2$. Consequently, the maximum rank
 is $\leq 2 + \log_\phi n$.
 <p>
 To complete the analysis, the amortized complexity argument must be
-extended to handle the decreasing <code>changekey</code> operation.
+extended to handle the decreasing $\changekey$ operation.
 Here is a modified version of the credit policy.
 <p style="padding-left:5%;">
 Maintain one credit on-hand for every tree in all the heaps
@@ -597,18 +531,18 @@ As before, if $2n$ credits are allocated
 for the initialization, $n$ can be used to pay for the computation,
 and the remainder is enough to satisfy the credit policy.
 <p>
-Since an <code>insert</code> or <code>meld</code> operation takes
+Since an $\insert$ or $\meld$ operation takes
 constant time and does not change the number of trees or the number of
 marked item, a single credit can be allocated for each
-<code>insert</code> or <code>meld</code> and used to pay for the operation.
+$\insert$ or $\meld$ and used to pay for the operation.
 <p>
-Since the <code>deletemin</code> operation makes no change to the number
+Since the $\deletemin$ operation makes no change to the number
 of marked items, the previous argument can be applied directly.
 The only change required is that the number of credits allocated to the step
 must increased to $1 +  2(2+\log_\phi n)$.
 <p>
 To determine the number of credits needed for
-a decreasing <code>changekey</code> operation,
+a decreasing $\changekey$ operation,
 let $k$ be the number of new subtrees created by the
 operation. Observe that the number of marked non-root items decreases
 by $k-1$, while the number of trees increases by $k$.
@@ -617,277 +551,166 @@ following the operation.
 These $k-2$ credits plus 2 more are sufficient to pay for
 the computational steps.
 <p>
-All that remains is to analyze the <code>delete</code> and the
-increasing <code>changekey</code>. These can both be implemented in terms
+All that remains is to analyze the $\delete$ and the
+increasing $\changekey$. These can both be implemented in terms
 of the other operations. Specifically,
-the <code>delete</code> operation can be implemented by doing
-a decreasing <code>changekey</code> followed by a <code>deletemin</code>.
-The increasing <code>changekey</code> can be implemented as a
-<code>delete</code> followed by an <code>insert</code>.
+the $\delete$ operation can be implemented by doing
+a decreasing $\changekey$ followed by a $\deletemin$.
+The increasing $\changekey$ can be implemented as a
+$\delete$ followed by an $\insert$.
 Consequently
 the total number of credits allocated for the initialization plus
 $m$ heap operations that include 
-$d$ <code>delete</code>, <code>deletemin</code> and increasing
-<code>changekey</code> operations is $O(n+ m + d\log n)$.
+$d$ $\delete$, $\deletemin$ and increasing
+$\changekey$ operations is $O(n+ m + d\log n)$.
 Since every computational step is paid for with allocated credits,
 the running time is also $O(n+m+d\log n)$.
 If $m\geq n$ (as it usually is), the bound can expressed more
 simply as $O(m+d\log n)$.
 <p>
-The core methods of the <code>FibHeaps</code> class are shown below.
+The core methods of the $\FibHeaps$ class are shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default class FibHeaps extends Top {
-    #key;         ///< #key[i] is key of item i
-    #rank;        ///< #rank[i] gives rank of item i
-    #mark;        ///< #mark[i] is true if item i is considered marked
-    #p;           ///< #p[i] is the parent of item i in its heap
-    #c;           ///< #c[i] is some child of item i in its heap
-    #sibs;        ///< #sibs is a ListSet object containing sibling lists
+export default class FibHeaps extends Forest {
+    #key;        // #key[i] is key of item i
+    #rank;        // #rank[i] gives rank of item i
+    #mark;        // #mark[i] is true if item i is considered marked
 
-    #rankVec;     ///< #rankVec is an auxiliary array used during restructuring
-    #tmpq;        ///< #tmpq is a List object used as a temporary queue 
-
-    #insertCount;
-    #deleteCount;
-    #changekeyCount;
-    #decreasekeySteps;
-    #mergeSteps;
+    #rankVec;    // #rankVec is an auxiliary array used during restructuring
+    #tmpq;        // #tmpq is a List object used as a temporary queue 
 
     #MAXRANK = 32;
 
-    /** Constructor for FibHeaps object.
-     *  @param n is index range for object
-     *  @parm d is the base of the heap (defaults to 2)
-     *  @param capacity is maximum index range (defaults to n)
-     */
-    constructor(n, capacity=n) { super(n); this.#init(capacity); }
-    
-    /** Allocate space and initialize FibHeaps object.
-     *  @param nMax is the maximum range
-     */
-    #init(capacity) {
-        this.#key = new Float32Array(capacity+1);
-        this.#rank = new Int32Array(capacity+1);
-        this.#mark = new Int8Array(capacity+1);
-        this.#p = new Int32Array(capacity+1);
-        this.#c = new Int32Array(capacity+1);
-        this.#sibs = new ListSet(this.n, capacity);
-
+    constructor(n=10) {
+        super(n);
+        this.#key = new Float32Array(this.n+1);
+        this.#rank = new Int32Array(this.n+1);
+        this.#mark = new Int8Array(this.n+1);
         this.#rankVec = new Int32Array(this.#MAXRANK+1);
-        this.#tmpq = new List(this.n, capacity);
-
-        this.#insertCount = 0;
-        this.#deleteCount = 0;
-        this.#changekeyCount = 0;
-        this.#decreasekeySteps = 0;
-        this.#mergeSteps = 0;
+        this.#tmpq = new List(this.n);
     }
 
-    get capacity() { return this.#key.length-1; }
-
-    /** Remove all elements from heap. */
-    clear() {
-        this.#sibs.clear();
-        for (let i = 0; i < this.n; i++) {
-            this.#key[i] = this.#rank[i] = this.#p[i] = this.#c[i] = 0;
-            this.#mark[i] = false;
-        }
+    key(i, v=false) {
+        if (v !== false) this.#key[i] = v;
+        return this.#key[i];
     }
 
-    /** Return key of a heap item. */
-    key(i) { return this.#key[i]; }
-
-    /** Return ran k of a heap item. */
-    rank(i) { return this.#rank[i]; }
-
-    /** Return mark of a heap item. */
-    mark(i) { return this.#mark[i]; }
-
-    /** Return parent of a heap item. */
-    p(i) { return this.#p[i]; }
-
-    /** Return a child of a heap item. */
-    c(i) { return this.#c[i]; }
-
-    /** Set the key of a singleton heap item. */
-    setkey(i, k) { assert(this.singleton(i)); this.#key[i] = k; }
-
-    /** Determine if an item is defines a singleton heap.
-     *  @param i is a heap item
-     *  @return true if it is a singleton.
-     */
-    singleton(i) {
-        return this.#sibs.singleton(i) && this.#p[i] == 0 && this.#c[i] == 0;
+    rank(i, r=false) {
+        if (r !== false) this.#rank[i] = r;
+        return this.#rank[i];
     }
 
-    /** Return the item of minimum key in a heap.
-     *  @param h is a heap.
-     *  @return the item in h that has the smallest key
-     */
+    mark(i, m=-1) {     
+        if (m != -1) this.#mark[i] = m;
+        return this.#mark[i];
+    }
+
+    c(i) { return this.firstChild(i); }
+
     findmin(h) { return h; }
 
-    /** Built a heap from a list of singletons.
-     *  @param hl is a List object containing singleton items
-     *  @param return the heap containing the listed items
-     */
-    makeheap(hl) {
-        let h = hl.first();
-        if (h == 0) return 0;
-        let minh = h;
-        for (let h1 = hl.next(h); h1 != 0; h1 = hl.next(h1)) {
-            if (this.key(h1) < this.key(minh)) minh = h1;
-            this.#sibs.join(h, h1);
-        }
-        return minh;
-    }
-
     meld(h1, h2) {
-        assert((h1 == 0 || (this.valid(h1) && this.p(h1) == 0)) &&
-               (h2 == 0 || (this.valid(h2) && this.p(h2) == 0)));
         if (h1 == 0) return h2;
         if (h2 == 0 || h1 == h2) return h1;
-        return (this.key(h1) <= this.key(h2) ? this.#sibs.join(h1, h2) :
-                                               this.#sibs.join(h2, h1));
+        return (this.key(h1) <= this.key(h2) ?
+                    this.joinGroups(h1, h2) : this.joinGroups(h2, h1));
     }
 
-    /** Insert item into a heap. 
-     *  @param i is a singleton.
-     *  @param h is a heap to which i is inserted.
-     *  @param k is the key under which i is inserted
-     */
     insert(i, h, k) {
-        this.#insertCount++;
         if (i > this.n) this.expand(i);
-        this.setkey(i, k); return this.meld(i, h);
+        this.key(i,k); return this.meld(i, h);
     }
     
-    /** Decrease the key of an item in a heap.
-     *  @param i is an item
-     *  @param delta is the amount by which i is to be decreased
-     *  @param h is the heap containing i
-     *  @return the modified heap
-     */
     changekey(i, h, k) {
-        this.#changekeyCount++;
-        let key = this.#key; let rank = this.#rank; let mark = this.#mark;
-        let p = this.#p; let c = this.#c; let sibs = this.#sibs;
-        assert(this.valid(i) && this.valid(h) && p[h] == 0);
-        if (k > key[i]) {
+        if (k > this.key(i)) {
             h = this.delete(i, h);
             return this.insert(i, (h != 0 ? h : i), k);
         }
-        key[i] = k;
-        if (p[i] == 0) {
-            if (key[h] > key[i]) h = sibs.rotate(h, i);
+        this.key(i,k);
+        if (this.p(i) == 0) {
+            if (this.key(h) > this.key(i)) {
+                this.rotate(h,i); h = i;
+            }
             return h;
         }
-        let pi = p[i];
-        if (key[i] >= key[pi]) return h;
+        let pi = this.p(i);
+        if (this.key(i) >= this.key(pi)) return h;
         do {
-            this.#decreasekeySteps++;
-            rank[pi]--;
-            c[pi] = sibs.delete(i, c[pi]);
-            p[i] = 0; mark[i] = false; h = this.meld(h, i);
-            i = pi; pi = p[i];
-        } while (mark[i]); // note: if i is marked, it's not a root
-        if (pi != 0) mark[i] = true;
-    
+            this.cut(i); this.rank(pi,this.rank(pi)-1);
+            this.mark(i,false);
+            h = this.meld(h, i);
+            i = pi; pi = this.p(i);
+        } while (this.mark(i)); // note: if i is marked, it's not a root
+        if (pi != 0) this.mark(i,true);
         return h;
     }
 
     /** Merge the tree roots in heap, to eliminate repeated ranks.
-     *  @param r is a tree root in a heap; all tree roots are assumed
-     *  to be non-deleted nodes; also r is the id of the root list in sibs
-     *  @return the resulting root with the smallest key
+     *  @param r0 is the first tree root in a tree group for a heap;
+     *  it is called after the node with the smallest key is removed from heap
+     *  @return the root of the the tree root with the smallest key,
+     *  following the merging
      */
-    #mergeRoots(r) {
-        let key = this.#key; let rank = this.#rank; let mark = this.#mark;
-        let p = this.#p; let c = this.#c; let sibs = this.#sibs;
-        let tmpq = this.#tmpq; let rankVec = this.#rankVec;
-
-        assert(this.valid(r) && p[r] == 0);
+    #mergeRoots(r0) {
+        let key = this.#key; let rank = this.#rank;
+        let tmpq = this.#tmpq; let rvec = this.#rankVec;
 
         // Build queue of roots and find root with smallest key
-        let minRoot = r;
-        for (let sr = r; sr != 0; sr = sibs.next(sr)) {
-            this.#mergeSteps++;
+        let minRoot = r0;
+        for (let sr = r0; sr; sr = this.nextSibling(sr)) {
             if (key[sr] < key[minRoot]) minRoot = sr;
-            tmpq.enq(sr); p[sr] = 0; mark[sr] = false;
+            tmpq.enq(sr); this.mark(sr,false);
         }
-        r = sibs.rotate(r, minRoot); // r is now is min root
+        r0 = this.rotate(r0, minRoot); // r0 is now min root
         // scan roots, merging trees of equal rank
         let maxRank = -1; // maxRank = maximum rank seen so far
         while (!tmpq.empty()) {
-            this.#mergeSteps++;
-            let r1 = tmpq.pop();
-            assert(rank[r1] <= this.#MAXRANK);
-            let r2 = rankVec[rank[r1]];
-            if (maxRank < rank[r1]) {
-                for (maxRank++; maxRank < rank[r1]; maxRank++)
-                    rankVec[maxRank] = 0;
-                rankVec[rank[r1]] = r1;
+            let r1 = tmpq.pop(); let r2 = rvec[rank[r1]];
+            let rank1 = rank[r1];
+            if (maxRank < rank1) {
+                rvec[rank1] = r1;
+                for (maxRank++; maxRank < rank1; maxRank++)
+                    rvec[maxRank] = 0;
             } else if (r2 == 0) {
-                rankVec[rank[r1]] = r1;
-            } else if (key[r1] < key[r2] || (key[r1] == key[r2] && r1 == r)) {
-                r = sibs.delete(r2, r);
-                c[r1] = sibs.join(c[r1], r2);
-                rankVec[rank[r1]] = 0;
-                rank[r1]++; p[r2] = r1;
-                tmpq.enq(r1);
+                rvec[rank1] = r1;
+            } else if (key[r1] < key[r2] || (key[r1] == key[r2] && r1 == r0)) {
+                this.ungroup(r2,r0);
+                this.link(r2,r1); tmpq.enq(r1);
+                rvec[rank1] = 0; rank[r1]++;
             } else {
-                r = sibs.delete(r1, r);
-                c[r2] = sibs.join(c[r2], r1);
-                rankVec[rank[r1]] = 0;
-                rank[r2]++; p[r1] = r2;
-                tmpq.enq(r2);
+                this.ungroup(r1,r0);
+                this.link(r1,r2); tmpq.enq(r2);
+                rvec[rank1] = 0; rank[r2]++;
             }
         }
-        return r;
+        return r0;
     }
         
-    /** Remove the item with smallest key from a heap.
-     *  @param h is the canonical element of some heap
-     *  @return the pair [min, hnew] where min is the deleted item
-     *  and hnew is the modified heap
-     */
     deletemin(h) {
-        this.#deleteCount++;
-        let p = this.#p; let c = this.#c; let sibs = this.#sibs;
-        assert(this.valid(h) && p[h] == 0);
-    
-        // Merge h's children into root list and delete it
-        // First, make parent pointers of new root nodes 0
-        if (c[h] != 0) {
-            for (let i = c[h]; i != 0; i = sibs.next(i))
-                p[i] = 0;
-            sibs.join(h,c[h]); c[h] = 0;
+        // Move h's children into root list and delete h
+        for (let i = this.firstChild(h); i; i = this.firstChild(h)) {
+            this.cut(i); this.joinGroups(h,i);
         }
-        this.#rank[h] = 0;
-        if (sibs.singleton(h)) return [h,0];
-        return [h, this.#mergeRoots(sibs.delete(h, h))];
+        this.rank(h,0);
+        if (!this.nextSibling(h)) return [h,0];
+        let r = this.ungroup(h,h); // r is first root remaining in tree group
+        return [h, (r ? this.#mergeRoots(r) : 0)];
     }
     
-    /** Delete an item from a heap.
-     *  @param i is an item in some heap
-     *  @param h is the heap containing i
-     *  @return the heap that results from removing i from h
-     */
     delete(i, h) {
-        assert(this.valid(i) && this.valid(h) && this.p(h) == 0);
         let k = this.key(i);
         h = decreasekey(i, (this.key(i) - this.key(h)) + 1, h);
         h = deletemin(h);
-        this.#key[i] = k;
+        this.key(i,k);
         return h;
     }
-}    
+}
 </textarea>
 
 <a id=lheaps><h2>Leftist Heaps</h2></a>
 
-As with Fibobacci heaps, the leftist heaps [Crane72, Knuth73] data structure
+As with Fibonacci heaps, the leftist heaps [Crane72, Knuth73] data structure
 maintains a collection of meldable heaps which define a partition over a
 common index range $1\ldots n$.
 Each heap is identified by one of its items.
@@ -896,33 +719,30 @@ is $O(\log n)$.
 <p>
 The <i>Javascript</i> implementation includes the following methods.
 <ul>
-<li>    <code>key(i)</code> returns the key of item <code>i</code>.
-<li>    <code>setKey(i,k)</code> sets the key of item <code>i</code>
-        to <code>k</code>; item <code>i</code> must define a singleton
-        heap.
-<li>    <code>findmin(h)</code> returns the item of minimum key in the
-        heap identified by item <code>h</code>.
-<li>    <code>deletemin(h)</code> returns the item of minimum key in the
-        heap identified by <code>h</code> and removes it from
-        <code>h</code>.
-<li>    <code>meld(h1,h2)</code> combines the two heaps identified by
-        <code>h1</code> and <code>h2</code> and returns the identifier of
+<li>    $\key(i,k)$ sets the key of item $i$
+        to $k$ if $k$ is provided;
+        returns the key of $i$.
+<li>    $\findmin(h)$ returns the item of minimum key in the
+        heap identified by item $h$.
+<li>    $\deletemin(h)$ returns the item of minimum key in the
+        heap identified by $h$ and removes it from
+        $h$.
+<li>    $\meld(h1,h2)$ combines the two heaps identified by
+        $h_1$ and $h_2$ and returns the identifier of
         the combined heap.
-<li>    <code>insert(i,h,k)</code> inserts <code>i</code> into the
-        heap identified by <code>h</code> with key <code>k</code>.
-<li>    <code>heapify(l)</code> combines the heaps in the list <code>l</code>
+<li>    $\insert(i,h,k)$ inserts $i$ into the
+        heap identified by $h$ with key $k$.
+<li>    $\heapify(l)$ combines the heaps in the list $l$
         into a single heap.
 </ul>
 The data structure represents each heap using a heap-ordered binary tree
-with a node for each heap item.
-Each node includes a <i>left</i> and <i>right</i> pointer and
-a <i>rank</i> field.
-There is an explicit <i>null</i> node which has a rank of 0;
-if a node has no proper left (or right) child, its pointer is directed
-to this null node.
+and can be implemented using the
+<a href="./trees.html#binaryForest"><i>binary forest</i></a> data structure.
+Each item has an associated <i>rank</i> field.
+The item with index 0 is assigned a rank of 0.
 For all other nodes, the rank value is one plus the minimum of
 the ranks of its two children.
-The trees are structured so that the whenever a node's children have
+The trees are structured so that whenever a node's children have
 unequal ranks, the node with the larger rank is placed on the left.
 This ensures that the shortest path from any tree node to the <i>null</i>
 node is the path defined by following right pointers. 
@@ -931,29 +751,29 @@ node is the path defined by following right pointers.
 <img width="35%" src="figs/lheap1.png"><br>
 </div>
 <p>
-The <code>meld</code> operation is implemented by merging the right-most paths
+The $\meld$ operation is implemented by merging the right-most paths
 of the two heaps, based on the key values,
 then updating the ranks along the merge path, swapping
 left and right children as needed to ensure that the larger rank value
 is always to the left. This is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="80%" src="figs/lheap2.png"><br>
+<img width="90%" src="figs/lheap2.png"><br>
 </div>
 <p>
-The <code>insert</code> operation is implemented by treating the item
+The $\insert$ operation is implemented by treating the item
 to be inserted as a single node heap and melding it with the heap it is
 to be inserted into.
-The <code>deletemin</code> operation is implemented by removing the
+The $\deletemin$ operation is implemented by removing the
 root node and melding its two subtrees.
-The <code>heapify</code> operation is implemented by
+The $\heapify$ operation is implemented by
 repeatedly removing the first two heaps from the list, melding them
 then appending the resulting heap at the end of the list.
 It terminates when there is a single heap on the list.
 Since the length of the right path from any node to the <i>null</i> node
-is at most $\lg n$, the <code>meld</code>, <code>insert</code> and
-<code>deletemin</code> operations all take $O(\log n)$ time.
-<a id="heapify">The analysis of <code>heapify</code></a>
+is at most $\lg n$, the $\meld$, $\insert$ and
+$\deletemin$ operations all take $O(\log n)$ time.
+<a id="heapify">The analysis of $\heapify$</a>
 is a bit more complicated.
 The first step is to divide the processing into <i>passes</i>,
 where a pass ends when all the heaps on the list at the start of the
@@ -967,7 +787,7 @@ $$
 O \left(\log n_1 + \cdots + \log n_r \right) = O \left( r \log n/r \right)
 $$
 since the value of the sum is maximized when all heaps are the same size.
-Consequently, the total time for <code>heapify</code> is
+Consequently, the total time for $\heapify$ is
 $$
 \begin{eqnarray*}
 O\left( \sum_{j=1}^{\lfloor \lg k \rfloor} (k/2^j) \log ( 2^j n/k) \right) &=&
@@ -975,30 +795,100 @@ O\left( k \sum_{j=1}^{\lfloor \lg k \rfloor} (j/2^j) + (1/2^j) \log ( n/k) \righ
 &=& O\left( k\max(1, \log(n/k)) \right)
 \end{eqnarray*}
 $$
+The core methods of the <i>Javascript</i> implementation
+are shown below.
+<p>
+<textarea id="components" rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default class LeftistHeaps extends BinaryForest {
+    #key;        // #key[i] is key of item i
+    #rank;        // #rank[i] gives rank of item i
+
+    constructor(n=10) {
+        super(n);
+        this.#key = new Float32Array(this.n+1)
+        this.#rank = new Int32Array(this.n+1).fill(1,1);
+    }
+
+    key(i, k=false) {
+        if (k !== false) this.#key[i] = k;
+        return this.#key[i];
+    }
+
+    rank(i, r=false) {
+        if (r !== false) this.#rank[i] = r;
+        return this.#rank[i];
+    }
+
+    meld(h1, h2) {
+        // relies on null node having rank==0
+        if (h1 == 0) return h2;
+        if (h2 == 0 || h1 == h2) return h1;
+        if (this.key(h1) > this.key(h2)) {
+            let h = h1; h1 = h2; h2 = h;
+        }
+        this.link(this.meld(this.right(h1), h2), h1, +1);
+
+        if (this.rank(this.left(h1)) < this.rank(this.right(h1))) {
+            let h = this.left(h1);
+            this.link(this.right(h1),h1,-1);
+            this.link(h,h1,+1);
+        }
+        this.rank(h1, this.rank(this.right(h1)) + 1);
+        return h1;
+    }
+
+    insert(i, h, k) {
+        fassert(this.valid(i) && this.valid(h));
+        fassert(this.left(i) == 0 && this.right(i) == 0 && this.rank(i) == 1);
+        this.key(i, k);
+        return this.meld(i, h);
+    }
+    
+    findmin(h) { return h; }
+
+    deletemin(h) {
+        let lh = this.left(h); let rh = this.right(h);
+        if (lh) this.cut(lh); if (rh) this.cut(rh);
+        let hnew = this.meld(lh, rh);
+        this.#rank[h] = 1;
+        return [h,hnew];
+    }
+
+    heapify(hlist) {
+        if (hlist.empty()) return 0;
+        while (hlist.length > 1) {
+            let h = this.meld(hlist.at(1), hlist.at(2));
+            hlist.deq(); hlist.deq(); hlist.enq(h);
+        }
+        return hlist.first();
+    }
+}
+</textarea></p>
 
 <h3>Lazy Variant</h3>
 The basic leftist heap data structure can be extended to include
-a <i>lazy deletion</i> operation called <code>retire</code>
+a <i>lazy deletion</i> operation called $\retire$
 and a <i>lazy melding</i> operation.
-The <code>retire</code> operation can be implemented by marking the
+The $\retire$ operation can be implemented by marking the
 tree node for an item, but leaving it in place.  
-The <code>lazyMeld</code> operation can be implemented similarly,
+The $\lazyMeld$ operation can be implemented similarly,
 using a <i>dummy node</i> with a key of minus infinity,
 and making the two heaps to be combined, children of this dummy node.
 <p>
 The presence of retired or dummy nodes means that the
 &ldquo;true&rdquo; minimum key node may not be at the root of a heap.
 Consequently,
-the <code>findmin</code> and <code>deletemin</code> operations must start
+the $\findmin$ and $\deletemin$ operations must start
 with an initial step that traverses the top of the heap, removing all
 the retired/dummy nodes that it finds and constructing a list of sub-heaps
 for which the roots are not retired or dummy.
 This is illustrated below, with retired/dummy nodes shown in yellow.
 <p>
 <div  style="text-align:center;">
-<img width="80%" src="figs/lheap3.png"><br>
+<img width="90%" src="figs/lheap3.png"><br>
 </div>
-This list of heaps is then merged into a single heap using <code>heapify</code>.
+This list of heaps is then merged into a single heap using $\heapify$.
 <p>
 Heap items can also be retired implicitly, using a
 a client-provided <i>retired</i> function.
@@ -1011,277 +901,93 @@ application to identify and mark each of these nodes, it can be more
 efficient to identify them with a function call when it's time to purge
 them from the heap-ordered tree.
 <p>
-The core methods of the <code>LeftistHeaps</code> class are shown below.
+The core methods of the $\LeftistHeaps$ class are shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default class LeftistHeaps extends Top {
-    #key;          ///< #key[i] is key of item i
-    #rank;         ///< #rank[i] gives rank of item i
-    #left;         ///< #left[i] is left child of i
-    #right;        ///< #right[i] is right child of i
+export default class LazyHeaps extends LeftistHeaps {
+    nn;          // largest valid index for a non-dummy node
+    #dummy;      // first node in list of free dummy nodes
+    #retired;    // #retired is either a user-supplied function
+                 // or an array of bits
+    #plist;      // temporary list used by purge
 
-    #dummy;        ///< is first node in list of unused dummy nodes
-    #retired;      ///< #retired is either a user-supplied function
-                   ///< or an array of bits
-    #plist;        ///< temporary list used by purge
-    #lazy          ///< when true, implements lazy deletion/melding
+    constructor(n=20, retired=null) {
+        super((n&1) ? n+1 : n); this.nn = this.n/2;
 
-    #insertCount;       // calls to insert
-    #deleteCount;       // calls to deletemin
-    #meldSteps;         // steps in non-lazy meld
-    #purgeSteps;        // steps in purge operation
+        for (let i = this.nn+1; i <= this.n; i++) this.rank(i,-1);
+        this.#plist = new List(this.nn);
+        if (retired != null) this.#retired = retired;
+        else this.#retired = new Int8Array(this.n+1).fill(false);
 
-    /** Constructor for LeftistHeaps object.
-     *  @param n is index range for object
-     *  @parm d is the base of the heap (defaults to 2)
-     *  @param capacity is maximum index range (defaults to n)
-     *  @param retired is an optional function that if present is used
-     *  to determine which nodes are retired.
-     */
-    constructor(n, capacity=n, lazy=false, retired=null) {
-        super(n); 
-        if (!capacity) capacity = this.n;
-        this.#init(capacity, lazy, retired);
+        // implement list of dummy nodes as a tree
+        for (let i = this.nn+1; i < this.n; i++) this.link(i+1,i,1);
+        this.#dummy = this.nn+1;
+
     }
 
-    /** Extend the data structurue to support lazy deletion and melding.
-     *  @param retired is an optional function that is used to determine
-     *  if a given heap item should be considered retired, or not;
-     *  if it is not present, an array of stored bits is used to
-     *  distinguish retired items from those that are still active
-     */
-    makeLazy(retired) {
-        let nu = new LeftistHeaps(this.n, this.n, true, retired);
-        nu.assign(this); this.xfer(nu);
-    }
+    isdummy(i) { return i > this.nn; }
 
-    /** Revert to initial state. */
-    clear() {
-        let roots = this.#findRoots();
-        for (let r = roots.first(); r != 0; r = roots.next(r)) {
-            while (r != 0) [,r] = this.deletemin(r);
-        }
-    }
+    isactive(i) { return i <= this.nn && !this.retired(i); }
 
-    /** Determine if a node is a dummy.
-     *  @param i is a node index
-     *  @return true if i is a dummy node (possibly in-use)
-     */
-    isdummy(i) { return this.#lazy && i > this.n; }
-
-    /** Determine if a node is active.
-     *  @param i is a node index
-     *  @return true if i is neither a dummy, nor a retired item.
-     */
-    isactive(i) {
-        return (!this.#lazy || i <= this.n && !this.retired(i));
-    }
-
-    /** Return key of a heap item. */
-    key(i) { return this.#key[i]; }
-
-    /** Return rank of a heap item. */
-    rank(i) { return this.#rank[i]; }
-
-    /** Return left child of a heap item. */
-    left(i) { return this.#left[i]; }
-
-    /** Return a right child of a heap item. */
-    right(i) { return this.#right[i]; }
-
-    /** Set the key of a heap item.
-     *  @param i is a heap item, assumed to be root of a singleton heap
-     *  @param k is new key value for i
-     */
-    setkey(i, k) { this.#key[i] = k; }
-
-    /** Retire a heap item.
-     *  Retired heap items do not belong to any heap and cannot be
-     *  used in the future.
-     *  @param i is a heap item to be retired.
-     */
     retire(i) {
-        if (!this.#lazy) this.makeLazy();
-        if (Array.isArray(this.#retired)) this.#retired[i] = true;
+        if (this.#retired.constructor != 'function')
+            this.#retired[i] = true;
     }
 
-    /** Determine if a heap item is retired.
-     *  @param i is a heap item
-     *  @return true if i has been retired (either explicitly or implicitly
-     *  through user-provided retired function)
-     */
     retired(i) {
-        if (!this.#lazy) return false;
-        return i <= this.n && (Array.isArray(this.#retired) ?
-                                  this.#retired[i] : this.#retired(i));
+        return i <= this.nn &&
+                        (typeof this.#retired == 'function' ?
+                            this.#retired(i) : this.#retired[i]);
     }
 
-    /** Meld two heaps.
-     *  @param h1 is a heap
-     *  @param h2 is a second heap
-     *  @return the identifier of the resulyt of melding h1 and h2
-     */
-    meld(h1, h2) {
-        this.#meldSteps++;
-        // relies on null node having rank==0
-        if (h1 == 0) return h2;
-        if (h2 == 0) return h1;
-        if (this.key(h1) > this.key(h2)) {
-            let h = h1; h1 = h2; h2 = h;
-        }
-        this.#right[h1] = this.meld(this.right(h1), h2);
-        if (this.rank(this.left(h1)) < this.rank(this.right(h1))) {
-            let h = this.left(h1);
-            this.#left[h1] = this.right(h1);
-            this.#right[h1] = h;
-        }
-        this.#rank[h1] = this.rank(this.right(h1)) + 1;
-        return h1;
-    }
-
-    /** Insert item into a heap. 
-     *  @param i is a singleton.
-     *  @param h is a heap to which i is inserted.
-     *  @param k is the key under which i is inserted
-     */
-    insert(i, h, k) {
-        this.#insertCount++;
-        let mx = Math.max(i, h);
-        if (mx > this.n) this.expand(mx);
-        assert((i == 0 || this.valid(i)) && (h == 0 || this.valid(h)));
-        assert(this.left(i) == 0 && this.right(i) == 0 && this.rank(i) == 1);
-        this.setkey(i, k);
-        return this.meld(i, h);
-    }
-    
-    /** Return the item of minimum key in a heap.
-     *  @param h is a heap.
-     *  @return the item in h that has the smallest key
-     */
     findmin(h) {
-        this.#plist.clear();
-        this.#purge(h);
+        this.#plist.clear(); this.#purge(h);
         return this.heapify(this.#plist);
     }
 
-    /** Remove the item with smallest key from a heap.
-     *  @param h is a heap
-     *  @return the pair [hmin, hnew] where hmin is the deleted
-     *  item and hnew is the modified heap
-     */
     deletemin(h) {
-        this.#deleteCount++;
-        let hmin;
-        if (this.#lazy) {
-            hmin = h = this.findmin(h);
-            h = this.lazyMeld(this.left(h), this.right(h));
+        h = this.findmin(h);  // purges top of heap
+        let lh = this.left(h); let rh = this.right(h);
+        if (lh) this.cut(lh); if (rh) this.cut(rh);
+        let hnew = this.lazyMeld(lh,rh);
+        this.rank(h,1);
+        return [h,hnew];
+    }
+
+    #purge(h) {
+        if (h == 0) return;
+        fassert(this.valid(h));
+        if (this.isactive(h)) {
+            this.#plist.enq(h);
         } else {
-            hmin = h;
-            h = this.meld(this.left(h), this.right(h));
+            this.#purge(this.left(h)); this.#purge(this.right(h));
+            if (this.isdummy(h)) {
+                this.link(this.#dummy, h, +1); this.#dummy = h;
+            }
+            this.rank(h,-1);
         }
-        this.#left[hmin] = this.#right[hmin] = 0; this.#rank[hmin] = 1;
-        return [hmin,h];
+        if (this.p(h)) this.cut(h); 
     }
 
-
-    /** Combine a list of heaps into a single heap.
-     *    @param hlist is a List object containing a list of heaps
-     *  @param return the root of the combined heap.
-     */
-    heapify(hlist) {
-        if (hlist.empty()) return 0;
-        while (hlist.length > 1) {
-            let h = this.meld(hlist.at(1), hlist.at(2));
-            hlist.deq(); hlist.deq(); hlist.enq(h);
-        }
-        return hlist.first();
-    }
-
-    /** Lazy meld a pair of heaps */
     lazyMeld(h1, h2) {
-        if (!this.#lazy) this.makeLazy();
         if (h1 == 0) return h2;
         if (h2 == 0) return h1;
-        assert((h1 == 0 || this.valid(h1)) &&
-               (h2 == 0 || this.valid(h2)) && this.#dummy != 0);
-        let d = this.#dummy; this.#dummy = this.#left[this.#dummy];
+        fassert(this.valid(h1));
+        fassert(this.valid(h1) && this.valid(h2) && this.#dummy);
         if (this.rank(h1) < this.rank(h2)) {
             let h = h1; h1 = h2; h2 = h;
         }
-        this.#left[d] = h1; this.#right[d] = h2;
-        this.#rank[d] = this.rank(h2) + 1;
-        this.#key[d] = Number.NEGATIVE_INFINITY;
+        let d = this.#dummy; this.#dummy = this.right(d);
+        this.cut(this.#dummy);
+        this.join(h1,d,h2);
+        this.rank(d, this.rank(h2) + 1);
+        this.key(d, Number.NEGATIVE_INFINITY);
         return d;
     }
 }
 </textarea>
 <p>
-
-<a id=oheaps><h2>Ordered Heaps</h2></a>
-
-The <i>ordered heaps</i> data structure implements a collection of heaps
-in which the items within each heap have a list ordering, in addition
-to the ordering based on keys. It also includes a method to insert an item to
-a heap at a specified position in the list ordering, another to divide
-a heap into two parts at a specified position in the list ordering
-and a third method to increment the keys of all items in a heap by
-a specified amount.
-<ul>
-<li>	<code>find(i)</code> returns the id of the heap
-		containing <code>i</code>.
-<li>	<code>first(h)</code> returns the first item in heap <code>h</code>.
-<li>	<code>next(i)</code> returns the next item following <code>h</code>
-		in its heap.
-<li>    <code>key(i,h)</code> returns the key of item <code>i</code>
-		in heap <code>h</code>.
-<li>    <code>insert(i,h,k)</code> inserts item <code>i</code> into heap
-        <code>h</code> with key <code>k</code>.
-<li>    <code>insertAfter(i,h,k,j)</code> inserts item <code>i</code> into heap
-        <code>h</code> with key <code>k</code>, placing it immediately
-		after item j.
-<li>    <code>delete(i,h)</code> deletes item <code>i</code> from
-        heap <code>h</code>.
-<li>    <code>findmin(h)</code> returns the item of minimum key in the
-        heap identified by item <code>h</code>.
-<li>    <code>deletemin(h)</code> deletes an item of minimum key from
-        heap <code>h</code> and returns the pair <code>[i,h]</code>
-		where <code>i</code> is the deleted item and
-        <code>h</code> is the id of the modified heap.
-<li>	<code>divide(i,h)</code> divides heap <code>h</code> into two parts,
-		the items preceding item <code>i</code> and the remaining items.
-<li>	<code>append(h1,h2)</code> combines heaps <code>h1</code> and
-		<code>h2</code> into a single heap with the items from
-		<code>h1</code> preceding those in <code>h2</code>.
-<li>	<code>add2keys(delta,h)</code> adds increment <code>delta</code>
-		to the keys of all items in heap <code>h</code>.
-<li>	<code>changekey(i,h,k)</code> changes the key of item <code>i</code>
-		in heap <code>h</code> to <code>k</code>.
-</ul>
-Unlike most heaps, the ordered heaps data structure is not implemented
-using heap-ordered trees. Instead, it is implemented using balanced
-binary trees allowing it to support a list ordering on the heap items.
-To enable it to quickly find an item of minimum key, an auxiliary field
-<code>minkey</code> is maintained for each heap item, with
-<code>minkey[u]</code> equal to the smallest key in the subtree
-with root <code>u</code>. This is illustrated below.
-<p>
-<div  style="text-align:center;">
-<img width="50%" src="figs/oheap1.png"><br>
-</div>
-The <code>minkey</code> field must be updated during rotations.
-It must also be <i>refreshed</i> following any other operation that
-changes a single key value, adds a heap item or deletes a heap item.
-The required <code>refresh</code> operation follows the path from a
-node to the root of the tree, updating the <code>minkey</code> fields
-along its path, based on the key of the current node and the
-<code>minkey</code> fields of its two children.
-<p>
-<div  style="text-align:center;">
-<img width="50%" src="figs/oheap2.png"><br>
-</div>
-
-<h2>Partitioned Heap</h2>
 
 <h2>References</h2>
 <dl>
@@ -1295,7 +1001,7 @@ along its path, based on the key of the current node and the
     <i>Journal of the ACM</i>, 1987.
 <dt> [Knuth73]
 <dd> <i>The Art of Computer Programming, Vol. 3: Sorting and Searching</i>,
-    by D. E. Knuth, AddisonWesley, Reading, MA, 1973
+    by D. E. Knuth, Addison-Wesley, Reading, MA, 1973
 <dt> [Tarjan87]
 <dd> <i>Network Algorithms and Data Structures</i> by Robert E. Tarjan.
      Society for Industrial and Applied Mathematics, 1987.
