@@ -995,17 +995,18 @@ and $c_{max}$ is the largest finite value of $c(u)$.
 <p style="padding-left:5%">
 When no augmenting paths remain, divide $\Delta$ by 2.
 <p>
-Note that when a phase ends, either no vertex has positive excess $>\Delta$
-or no vertex has negative excess $<Delta$. Until this condition holds, there must
-be an augmenting path with residual capacity $>\Delta$.
-At the start of each phase, the total positive excess is $<2n\Delta$.
+Note that when a phase ends, either no vertex has positive excess $\gt\Delta$
+or no vertex has negative excess $\lt\Delta$. Until this condition holds, there must
+be an augmenting path with residual capacity $\gt\Delta$.
+At the start of each phase, the total positive excess is $\lt 2n\Delta$.
 Initially, this is true because the maximum flow value is $\leq nU$.
 At the start of a new phase with scaling factor $\Delta$,
-every vertex has a positive excess $<2\Delta$ or every vertex has
-a negative excess $>2\Delta$. In either case, the total positive excess is $<2n\Delta$.
+every vertex has a positive excess $\lt 2\Delta$ or every vertex has
+a negative excess $\gt 2\Delta$.
+In either case, the total positive excess is $\lt 2n\Delta$.
 <p>
 In the first step of a phase, newly eligible edges increase the total positive
-excess by at most $m\Delta$, so the total positive excess is $<(2n+m)\Delta$
+excess by at most $m\Delta$, so the total positive excess is $\lt (2n+m)\Delta$
 after the first step. Since each augmenting path reduces the positive excess of
 some source by $\Delta$, there are at most $2n+m$ augmenting path steps per phase.
 This justifies the earlier statement that the number of path searches per phase
