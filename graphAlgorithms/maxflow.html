@@ -43,7 +43,7 @@ For vertices $u$ and $v$ that are not joined by an edge $f(u,v)=cap(u,v)=0$.
 An example of a graph with a flow is shown below.
 <p>
 <div  style="text-align:center;">
-<img width="200" src="figs/maxflow1.png"><br>
+<img width="25%" src="figs/maxflow1.png"><br>
 </div>
 <p>
 The sum of the flows leaving $s$ is referred to as the <i>value</i>
@@ -69,7 +69,7 @@ A cut of minimum capacity is called a <i>minimum cut</i>.
 The dashed line in the diagram below defines a minimum cut.
 <p>
 <div  style="text-align:center;">
-<img width="200" src="figs/maxflow-cut.png"><br>
+<img width="25%" src="figs/maxflow-cut.png"><br>
 </div>
 <p>
 The flow conservation property implies that for any cut $(X,X')$,
@@ -138,7 +138,7 @@ could alternate between the paths $[s,a,b,t]$ and $[s,b,a,t]$ taking
 200 steps to arrive at a maximum flow.
 <p>
 <div  style="text-align:center;">
-<img width="135" src="figs/maxflow-augpath.png"><br>
+<img width="18%" src="figs/maxflow-augpath.png"><br>
 </div>
 <p>
 Efficient algorithms can be obtained using an appropriate path
@@ -156,15 +156,14 @@ residual capacity to find each augmenting path.
 A <i>Javascript</i> implementation appears below.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-let g;            // shared reference to flow graph
-let pedge;        // pedge[u] is edge to u from its parent in shortest path tree
+let g;           // shared reference to flow graph
+let link;        // link[u] is edge to u from its parent in shortest path tree
 
 export default function maxflowFFsp(fg) {
-    g = fg; pedge = new Int32Array(g.n+1);
+    g = fg; link = new Int32Array(g.n+1);
     while (findpath(g.source)) {
-        augment(g, pedge);
+        augment(g, link);
     }
-    return g.totalFlow();
 }
 
 /** Find a shortest augmenting path from a specified vertex to the sink.
@@ -172,15 +171,15 @@ export default function maxflowFFsp(fg) {
  *  @return true if there is an augmenting path from u to the sink
  */
 function findpath(s) {
-    pedge.fill(0);
+    link.fill(0);
     let q = new List(g.n);
     q.enq(s);
     while (!q.empty()) {
         let u = q.deq();
         for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
             let v = g.mate(u,e);
-            if (g.res(e, u) > 0 && pedge[v] == 0 && v != g.source) {
-                pedge[v] = e;
+            if (g.res(e, u) > 0 && link[v] == 0 && v != g.source) {
+                link[v] = e;
                 if (v == g.sink) return true;
                 q.enq(v);
             }
@@ -191,23 +190,23 @@ function findpath(s) {
 
 /** Add flow to source/sink path.
  *  @param g is a flow graph
- *  @param pedge is an array of parent edge pointers; that is,
- *  pedge[u] is the edge to u from its parent in a shortest path tree.
- *  @return pair f where f is the amount of flow added to the path.
+ *  @param link is an array of parent edge pointers; that is,
+ *  link[u] is the edge to u from its parent in a shortest path tree.
+ *  @return pair the amount of flow added to the path.
  */
-function augment(g, pedge) {
-    let f = Infinity; let ts = g.index2string(g.sink);
-    let v = g.sink; let e = pedge[v];
+function augment(g, link) {
+    let f = Infinity;
+    let v = g.sink; let e = link[v];
     while (v != g.source) {
         let u = g.mate(v, e);
         f = Math.min(f, g.res(e, u));
-        v = u; e = pedge[v];
+        v = u; e = link[v];
     }
-    v = g.sink; e = pedge[v];
+    v = g.sink; e = link[v];
     while (v != g.source) {
         let u = g.mate(v, e);
         g.addFlow(e, u, f);
-        v = u; e = pedge[v];
+        v = u; e = link[v];
     }
     return f;
 }
@@ -224,8 +223,8 @@ let g = new Flograph();
 g.fromString('{a->[b:3 d:2] b[c:3 d:7 g:3] c[d:1 e:5] d[e:2 f:1 g:3] ' +
              'e[f:1 g:3 h:4] f[e:1 g:2 h:3] g[e:3 f:2 h:1] ' +
              'h[f:3 i:4 j:2] i[g:5 j:6] ->j[]}');
-let [f,ts] = maxflowFFsp(g,1);
-log(ts, '\n' + g.toString(0,1));
+let [ts] = maxflowFFsp(g,1);
+log(ts, '\n' + g.toString(1));
 </pre>
 This produces the output
 <p> <textarea rows="14" cols="80" readonly
@@ -249,7 +248,11 @@ i[g:5 j:6/3]
 ->j[]
 }
 </textarea> <p>
-Note that the graph is shown with the computed flow.
+Each vertex on the augmenting path is shown, with the
+capacity of the edge to the next vertex.
+Note that the path lengths are non-decreasing.
+The graph is shown with the capacity and computed flow,
+separated by a forward slash; zero flow values are omitted.
 <p>
 The time for each augmenting path step is $O(m)$.
 The number of augmenting path steps can be bounded by first showing
@@ -276,7 +279,7 @@ original assumption that $level_{i}(v)>k$.
 This argument is summarized in the diagram below.
 <p>
 <div  style="text-align:center;">
-<img width="450" src="figs/maxflow-level1.png"><br>
+<img width="55%" src="figs/maxflow-level1.png"><br>
 </div>
 $\Box$
 <p>
@@ -324,7 +327,7 @@ number of steps is $\leq mn$ and the running time of the algorithm
 is $O(m^2n)$. The example below shows how the worst-case behavior can arise.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/maxflow-hardcase.png"><br>
+<img width="60%" src="figs/maxflow-hardcase.png"><br>
 </div>
 <p>
 In this example, the first nine augmenting paths have
@@ -382,10 +385,10 @@ path algorithm is shown below.
           style="font-size: 95%;background-color:lightCyan">
 function findpath(s) {
     let border = new ArrayHeap(g.n, 2+g.m/g.n);
-    let cap = new Array(g.n+1).fill(0);
+    let cap = new Int32(g.n+1);
 
-    pedge.fill(0);
-    cap[s] = Infinity;
+    link.fill(0);
+    cap[s] = 0x7fffffff;    // largest 32 bit value
     border.insert(s, -cap[s]); // so deletemin gives max cap
     while (!border.empty()) {
         let u = border.deletemin();
@@ -393,7 +396,7 @@ function findpath(s) {
             let v = g.mate(u,e);
             if (Math.min(cap[u], g.res(e,u)) > cap[v]) {
                 cap[v] = Math.min(cap[u], g.res(e,u));
-                pedge[v] = e;
+                link[v] = e;
                 if (v == g.sink) return true;
                 if (border.contains(v))
                     border.changekey(v,-cap[v]);
@@ -416,8 +419,8 @@ let g = new Flograph();
 g.fromString('{a->[b:3 d:2] b[c:3 d:7 g:3] c[d:1 e:5] d[e:2 f:1 g:3] ' +
              'e[f:1 g:3 h:4] f[e:1 g:2 h:3] g[e:3 f:2 h:1] ' +
              'h[f:3 i:4 j:2] i[g:5 j:6] ->j[]}');
-let [f,ts] = maxflowFFmc(g,1);
-log(ts, '\n' + g.toString(0,1));
+let [ts] = maxflowFFmc(g,1);
+log(ts, '\n' + g.toString(1));
 </pre>
 This produces the output
 <p> <textarea rows="14" cols="80" readonly
@@ -453,12 +456,12 @@ the scaling threshold is halved.
 A <i>Javascript</i> implementation appears below.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-let g;            // shared reference to flow graph
-let pedge;        // pedge[u] is edge to u from its parent in shortest path tree
-let scale;        // scaling parameter
+let g;           // shared reference to flow graph
+let link;        // link[u] is edge to u from its parent in shortest path tree
+let scale;       // scaling parameter
 
 export default function maxflowFFmc(fg) {
-    g = fg; pedge = new Int32Array(g.n+1);
+    g = fg; link = new Int32Array(g.n+1);
 
     // initialize scale factor to largest power of 2
     // that is <= (max edge capacity)/2
@@ -468,7 +471,7 @@ export default function maxflowFFmc(fg) {
     for (scale = 1; scale <= maxCap/2; scale *= 2) {}   
 
     while (findpath(g.source)) {
-        augment(g, pedge, trace);
+        augment(g, link);
     }
     return g.totalFlow();
 }
@@ -481,14 +484,14 @@ function findpath(s) {
     let q = new List(g.n);
 
     while (scale >= 1) {
-        pedge.fill(0);
+        link.fill(0);
         q.enq(g.source);
         while (!q.empty()) {
             let u = q.deq();
             for (let e = g.firstAt(u); e != 0; e=g.nextAt(u,e)) {
                 let v = g.mate(u,e);
-                if (g.res(e,u) >= scale && pedge[v] == 0 && v != g.source) {
-                    pedge[v] = e; 
+                if (g.res(e,u) >= scale && link[v] == 0 && v != g.source) {
+                    link[v] = e; 
                     if (v == g.sink) return true;
                     q.enq(v);
                 }
@@ -515,15 +518,17 @@ code segment.
 <pre style="padding-left:5%">
 function hardTest(algo, label, g, k1, k2) {
     g.clearFlow();
-    let t0 = Date.now(); let [,,stats] = algo(g); let t1 = Date.now();
+    let t0 = Date.now(); let [,stats] = algo(g); let t1 = Date.now();
     let fstats = g.flowStats(); 
- 
     log(`${label} k1=${k1} k2=${k2} ${t1-t0}ms ` +
-        `paths=${stats.findpathCount} ` +
-        `steps/path=${~~(stats.findpathSteps/stats.findpathCount)}`);
+        `paths=${stats.paths} ` +
+        `steps/path=${~~(stats.steps/stats.paths)}`);
 }
 
-let k1=20; let k2=20; let g = maxflowHardcase(k1, k2); 
+let k1=10; let k2=10; let g = maxflowHardcase(k1, k2); 
+hardTest(maxflowFFmc, 'FFmc', g, k1, k2);
+
+let k1=10; let k2=10; let g = maxflowHardcase(k1, k2); 
 hardTest(maxflowFFsp, 'FFsp', g, k1, k2);
 </pre>
 The function <code>maxflowHardcase</code> produces graphs that are
@@ -535,10 +540,10 @@ central subgraph (<code>k2</code>).
 The results below show the effect of increasing <code>k1</code> from
 10 to 80, while holding <code>k2</code> fixed.
 <pre style="padding-left:5%">
-FFsp k1=10 k2=10 317ms paths=2000 steps/path=576 
-FFsp k1=20 k2=10 974ms paths=4000 steps/path=866 
-FFsp k1=40 k2=10 3347ms paths=8000 steps/path=1447 
-FFsp k1=80 k2=10 12340ms paths=16000 steps/path=2607
+FFsp k1=10 k2=10 135ms paths=2000 steps/path=575 
+FFsp k1=20 k2=10 407ms paths=4000 steps/path=866 
+FFsp k1=40 k2=10 1413ms paths=8000 steps/path=1446 
+FFsp k1=80 k2=10 5185ms paths=16000 steps/path=2606
 </pre>
 Note that the number of augmenting paths grows directly with <code>k1</code>,
 and as the paths get longer, so does the average number of steps per path. 
@@ -546,10 +551,10 @@ Consequently, the running time grows quadratically.
 The results below show the effect of increasing <code>k2</code> from
 10 to 80, while holding <code>k1</code> fixed.
 <pre style="padding-left:5%">
-FFsp k1=10 k2=10 310ms paths=2000 steps/path=576
-FFsp k1=10 k2=20 2261ms paths=8000 steps/path=1256
-FFsp k1=10 k2=40 24535ms paths=32000 steps/path=3815
-FFsp k1=10 k2=80 341067ms paths=128000 steps/path=13733
+FFsp k1=10 k2=10 133ms paths=2000 steps/path=575 
+FFsp k1=10 k2=20 988ms paths=8000 steps/path=1255 
+FFsp k1=10 k2=40 10900ms paths=32000 steps/path=3814 
+FFsp k1=10 k2=80 153753ms paths=128000 steps/path=13732 
 </pre>
 In this case, the number of augmenting paths grows quadratically with
 <code>k2</code> as does the number of steps per path.
@@ -559,15 +564,15 @@ While these graphs are not really worst case for the max capacity and
 capacity scaling algorithms, it's still interesting to see how they
 behave.
 <pre style="padding-left:5%">
-FFmc k1=10 k2=10 10ms paths=20 steps/path=325 
-FFmc k1=20 k2=10 13ms paths=40 steps/path=566 
-FFmc k1=40 k2=10 37ms paths=80 steps/path=1025 
-FFmc k1=80 k2=10 124ms paths=160 steps/path=1942 
+FFmc k1=10 k2=10 2ms paths=20 steps/path=562 
+FFmc k1=20 k2=10 6ms paths=40 steps/path=995 
+FFmc k1=40 k2=10 18ms paths=80 steps/path=1830 
+FFmc k1=80 k2=10 52ms paths=160 steps/path=3526
 
-FFmc k1=10 k2=10 5ms paths=20 steps/path=325 
-FFmc k1=10 k2=20 12ms paths=40 steps/path=508 
-FFmc k1=10 k2=40 32ms paths=80 steps/path=805 
-FFmc k1=10 k2=80 90ms paths=160 steps/path=1436 
+FFmc k1=10 k2=10 3ms paths=20 steps/path=562 
+FFmc k1=10 k2=20 6ms paths=40 steps/path=949 
+FFmc k1=10 k2=40 20ms paths=80 steps/path=1638 
+FFmc k1=10 k2=80 55ms paths=160 steps/path=2746 
 </pre>
 For the max capacity algorithm, the number of paths grows
 directly with both parameters. Note that all the paths bypass the
@@ -577,21 +582,21 @@ The average number of steps per path search also grows directly
 with both parameters, consequently the run time grows quadratically
 in both cases.
 <pre style="padding-left:5%">
-FFcs k1=10 k2=10 3ms paths=20 steps/path=568 
-FFcs k1=20 k2=10 10ms paths=40 steps/path=863 
-FFcs k1=40 k2=10 27ms paths=80 steps/path=1445 
-FFcs k1=80 k2=10 92ms paths=160 steps/path=2607 
+FFcs k1=10 k2=10 7ms paths=20 steps/path=568 
+FFcs k1=20 k2=10 7ms paths=40 steps/path=862 
+FFcs k1=40 k2=10 20ms paths=80 steps/path=1445 
+FFcs k1=80 k2=10 60ms paths=160 steps/path=2607 
 
-FFcs k1=10 k2=10 2ms paths=20 steps/path=568 
-FFcs k1=10 k2=20 10ms paths=40 steps/path=1233 
-FFcs k1=10 k2=40 41ms paths=80 steps/path=3727 
-FFcs k1=10 k2=80 256ms paths=160 steps/path=13398 
+FFcs k1=10 k2=10 3ms paths=20 steps/path=568 
+FFcs k1=10 k2=20 8ms paths=40 steps/path=1232 
+FFcs k1=10 k2=40 31ms paths=80 steps/path=3727 
+FFcs k1=10 k2=80 177ms paths=160 steps/path=13397 
 </pre>
-For capacity scaling, the number of steps per path
+For capacity scaling, the number of paths
 grows directly with <code>k1</code> but the number
-of paths per step grows quadratically with <code>k2</code>,
+of steps per path grows quadratically with <code>k2</code>,
 as most path searches must examine the edges in the central
-subgraph to detemine that their residual capacity falls below
+subgraph to determine that their residual capacity falls below
 the scale threshold. The use of the heap in the max capacity
 algorithm allows it to avoid examining most of these edges.
 <p>
@@ -600,16 +605,15 @@ algorithms on random graphs, enter the following code in the web app.
 <pre style="padding-left:5%">
 function randomTest(algo, label, g, d) {
     g.clearFlow();
-    let t0 = Date.now(); let [,,stats] = algo(g); let t1 = Date.now();
-    let fstats = g.flowStats(); 
- 
+    let t0 = Date.now(); let [,stats] = algo(g); let t1 = Date.now();
+    let fstats = g.flowStats();
+
     log(`${label} n=${g.n} d=${d} cutSize=${fstats.cutSize} ${t1-t0}ms ` +
-        `paths=${stats.findpathCount} ` +
-        `steps/path=${~~(stats.findpathSteps/stats.findpathCount)}`);
+        `paths=${stats.paths} steps/path=${~~(stats.steps/stats.paths)}`);
 }
 
-let n=402; let d=50; 
-let g = randomFlograph(n, d); 
+let n=202; let d=25;
+let g = randomFlograph(n, d);
 g.randomCapacities(randomInteger, 1, 99);
 
 randomTest(maxflowFFsp, 'FFsp', g, d);
@@ -618,79 +622,74 @@ randomTest(maxflowFFcs, 'FFcs', g, d);
 </pre>
 The <code>randomFlograph()</code> function produces a graph on $n$ vertices
 with average out-degree $d$ and a built-in &ldquo;small cut&rdquo;.
-In this case, that small cut contains 126 edges and splits the vertex
+In this case, that small cut contains 125 edges and splits the vertex
 set in half. (This function can also be used to generate graphs with multiple
 small cuts.)
 Running the code produces the output shown below.
 <pre style="padding-left:5%">
-FFsp n=202 d=25 cutSize=126 220ms paths=301 steps/path=8523 
-FFmc n=202 d=25 cutSize=126 186ms paths=140 steps/path=6171 
-FFcs n=202 d=25 cutSize=126 169ms paths=181 steps/path=7597 
+FFsp n=202 d=25 cutSize=125 214ms paths=304 steps/path=8271 
+FFmc n=202 d=25 cutSize=125 163ms paths=149 steps/path=9591 
+FFcs n=202 d=25 cutSize=125 120ms paths=183 steps/path=7373 
 </pre>
-The shortest path variant requires more path
-searches, as expected, and requires a larger number of steps per path.
-Still, the slowest only requires about 30% more time that the fastest.
+The shortest path variant requires more path searches, as expected.
+Still, the difference in running time is less than a factor of two.
 Doubling the number of vertices produces the following results.
 <pre style="padding-left:5%">
-FFsp n=402 d=25 cutSize=138 597ms paths=383 steps/path=18020 
-FFmc n=402 d=25 cutSize=138 666ms paths=162 steps/path=15583 
-FFcs n=402 d=25 cutSize=138 469ms paths=224 steps/path=15502 
+FFsp n=402 d=25 cutSize=138 565ms paths=376 steps/path=17381 
+FFmc n=402 d=25 cutSize=138 486ms paths=160 steps/path=19705 
+FFcs n=402 d=25 cutSize=138 272ms paths=214 steps/path=14700 
 </pre>
-The max capacity variant turns out to be the slowest in this case,
-which is a little surprising, since the number of paths is less
-than half the number used by the shortest path variant.
 Doubling the average vertex degree (and hence the number of edges)
 produces the results below.
 <pre style="padding-left:5%">
-FFsp n=402 d=50 cutSize=500 3776ms paths=1200 steps/path=34871 
-FFmc n=402 d=50 cutSize=500 2054ms paths=558 steps/path=16678 
-FFcs n=402 d=50 cutSize=500 3304ms paths=784 steps/path=30611 
+FFsp n=402 d=50 cutSize=500 3537ms paths=1165 steps/path=34847 
+FFmc n=402 d=50 cutSize=500 1815ms paths=552 steps/path=28355 
+FFcs n=402 d=50 cutSize=500 2048ms paths=778 steps/path=30562 
 </pre>
 Notice the large increase in the size of the small cut in this case.
 This contributes to an increase in the number of path searches by
-all three algorithms. The number of steps per path also goes up
-for all three, although the increase for the max capacity variant
-is less than 10 percent.
+all three algorithms that is roughly proportional to the increase in
+cut size. The number of steps per path also goes up
+substantially for all three.
 
 <h2>Dinic's Algorithm</h2>
 Dinic's algorithm is essentially a more efficient implementation
 of the shortest path variant of the Ford and Fulkerson algorithm.
 It explicitly divides the execution into distinct phases,
-where the augmenting paths selected in each phase all have the same length.
-This enables a more efficient path-finding procedure.
-<p>
-At the start of each phase, Dinic's algorithm computes
-a function $level(u)$, which is the length of a shortest
-path with positive residual capacity from $s$ to $u$.
-During the phase, path searches are restricted to edges $e$
-joining vertices $u$ and $v$ with $res_e(u,v)>0$
-and $level(v) = level(u)+1$ and $level(u)< level(t)$.
-<p>
-The resulting &ldquo;searchable subgraph&rdquo; can be viewed
-as a directed acyclic graph. Path searches are done using
-depth-first search in this graph, with paths leading to
-dead-ends being effectively &ldquo;pruned&rdquo;, making later searches
-more efficient. A <i>Javascript</i> implementation of Dinic's
+   where the augmenting paths selected in each phase all have the same length.
+   This enables a more efficient path-finding procedure.
+   <p>
+   At the start of each phase, Dinic's algorithm computes
+   a function $level(u)$, which is the length of a shortest
+   path with positive residual capacity from $s$ to $u$.
+   During the phase, path searches are restricted to edges $e$
+   joining vertices $u$ and $v$ with $res_e(u,v)>0$
+   and $level(v) = level(u)+1$ and $level(u)< level(t)$.
+   <p>
+   The resulting &ldquo;searchable subgraph&rdquo; can be viewed
+   as a directed acyclic graph. Path searches are done using
+   depth-first search in this graph, with paths leading to
+   dead-ends being effectively &ldquo;pruned&rdquo;, making later searches
+   more efficient. A <i>Javascript</i> implementation of Dinic's
 algorithm appears below.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 let g;            // shared reference to flow graph
 let level;        // level[u] is distance from source to u in residual graph
-let pedge;        // pedge[u] is edge to u from its parent in shortest path tree
+let link;        // link[u] is edge to u from its parent in augmenting path
 let nextEdge;    // nextEdge[u] is the next edge to be processed at u
 
 export default function maxflowD(fg) {
     g = fg;
-    level = new Array(g.n+1);
-    pedge = new Array(g.n+1).fill(0);
-    nextEdge = new Array(g.n+1);
+    nextEdge = new Int32Array(g.n+1);
+    level = new Int32Array(g.n+1);
+    link = new Int32Array(g.n+1);
 
     while (newphase()) {
         while (findpath(g.source)) {
-            augment(g, pedge, trace);
+            augment(g, link);
         }
     }
-    return g.totalFlow();
 }
 
 /** Prepare for next phase of Dinic's algorithm.
@@ -700,7 +699,7 @@ export default function maxflowD(fg) {
  */
 function newphase() {
     for (let u = 1; u <= g.n; u++) {
-        level[u] = g.n; nextEdge[u] = g.firstAt(u);
+        level[u] = g.n; nextEdge[u] = g.firstAt(u); steps++;
     }
     let q = new List(g.n);
     q.enq(g.source); level[g.source] = 0;
@@ -727,7 +726,7 @@ function findpath(u) {
         let v = g.mate(u, e);
         if (g.res(e, u) == 0 || level[v] != level[u] + 1) continue;
         if (v == g.sink || findpath(v)) {
-            pedge[v] = e; nextEdge[u] = e; return true;
+            link[v] = e; nextEdge[u] = e; return true;
         }
     }
     nextEdge[u] = 0; return false;
@@ -787,7 +786,7 @@ For flow graph edges that are not associated
 with a tree edge, flow information is maintained in the flow graph.
 <p>
 The figure illustrates the use of dynamic trees.
-It two trees overlaid on the edges of a flow graph joining vertices
+It shows two trees overlaid on the edges of a flow graph joining vertices
 $u$ and $v$ for which $level(v)=level(u)+1$.
 Note that the minimum cost on the
 tree path from $a$ to $i$ is 3, implying that the residual
@@ -796,7 +795,7 @@ Subtracting 3 from the cost of this tree path effectively adds 3 units of
 flow to all the edges on the path in the flow graph.
 <p>
 <div  style="text-align:center;">
-<img width="450" src="figs/maxflowDtrees.png"><br>
+<img width="50%" src="figs/maxflowDtrees.png"><br>
 </div>
 <p>
 <p>
@@ -814,41 +813,31 @@ of Dinic's algorithm is shown below.
           style="font-size: 95%;background-color:lightCyan">
 let g;            // shared reference to flow graph
 let level;        // level[u] is distance from source to u in residual graph
-let nextEdge;    // nextEdge[u] is the next edge to be processed at u
+let nextEdge;     // nextEdge[u] is the next edge to be processed at u
 
 let trees;        // dynamic trees data structure
-let upEdge;        // upEdge[u] is edge in g that links u to its tree parent
-let huge;        // large value used for initial cost of tree roots
-
-/** Compute a maximum flow in a graph using Dinic's algorithm with
- *  Sleator & Tarjan dynmic trees data structure.
- *  @param fg is Flograph, possibly with some initial flow already present.
- *  @return the total flow added to fg
- */
+let upEdge;       // upEdge[u] is edge in g that links u to its tree parent
+let huge;         // large value used for initial cost of tree roots
+ 
 export default function maxflowDST(fg) {
     g = fg;
-    nextEdge = new Array(g.n+1).fill(0);
-    level = new Array(g.n+1).fill(0);
+    nextEdge = new Int32Array(g.n+1);
+    level = new Int32Array(g.n+1);
     trees = new DynamicTrees(g.n);
-    upEdge = new Array(g.n+1).fill(0);
+    upEdge = new Int32Array(g.n+1);
 
     huge = 1;
     for (let e = g.first(); e != 0; e = g.next(e))
-        huge += g.cap(e, g.tail(e));
+        huge += g.cap(e);
     for (let u = 1; u <= g.n; u++)
         trees.addcost(u, huge);
 
     while (newphase()) {
         while (findpath()) {
-            augment(trace);
+            augment();
         }
     }
-    return g.totalFlow();
 }
-
-/** Find an augmenting path from specified vertex to sink in residual graph.
- *  @return true if there is an augmenting path from source to the sink
- */
 
 function findpath() {
     while (nextEdge[g.source] != 0) {
@@ -883,9 +872,9 @@ function findpath() {
  *  while setting cost(u) to the residual capacity of e.
  */
 function extend(u, e) {
-    let [,c] = trees.findcost(u);
+    let [,c] = trees.findcost(u);  // this is just the cost of u
     trees.addcost(u, g.res(e,u) - c);
-    trees.link(u, g.mate(u,e));
+    trees.graft(u, g.mate(u,e));
     upEdge[u] = e;
 }
 
@@ -895,10 +884,10 @@ function extend(u, e) {
  */
 function prune(u) {
     let e = upEdge[u];
-    trees.cut(u); upEdge[u] = 0;
-    let [,residual] = trees.findcost(u);
-    g.setFlow(e, (u == g.tail(e) ? g.cap(e) - residual : residual));
-    trees.addcost(u, huge - residual);
+    trees.prune(u); upEdge[u] = 0;
+    let [,ucost] = trees.findcost(u);
+    g.flow(e, (u == g.tail(e) ? g.cap(e) - ucost : ucost));
+    trees.addcost(u, huge - ucost);
 }
 
 /** Add flow to the source-sink path defined by the path in the
@@ -907,27 +896,25 @@ function prune(u) {
  */
 function augment() {
     // effectively saturate source/sink path by adjusting costs
-    let [u,flow] = trees.findcost(g.source);
-    trees.addcost(g.source, -flow);
+    let [u,rcap] = trees.findcost(g.source);
+    trees.addcost(g.source, -rcap);
 
     // now, remove tree edges with zero residual capacity
     // and saturate corresponding flow graph edges
-    let f; [u,f] = trees.findcost(g.source);
-    while (f == 0) {
-        let e = upEdge[u]; prune(u); nextEdge[u] = g.nextAt(u, e);
-        [u,f] = trees.findcost(g.source);
+    let c; [u,c] = trees.findcost(g.source);
+    while (c == 0) {
+        let e = upEdge[u]; 
+        if (e) { prune(u); nextEdge[u] = g.nextAt(u, e); }
+        [u,c] = trees.findcost(g.source);
     }
-    return [flow, ts];
+    return [rcap, ts];
 }
 
-/** Prepare for next phase of Dinic's algorithm.
- *  @return true if there is still residual capacity from source to sink,
- *  else false
- */
 function newphase() {
     for (let u = 1; u <= g.n; u++) {
         level[u] = g.n; nextEdge[u] = g.firstAt(u);
         if (upEdge[u] != 0) prune(u);  // cleanup from last phase
+        steps++;
     }
     let q = new List(g.n);
     q.enq(g.source); level[g.source] = 0;
@@ -940,6 +927,7 @@ function newphase() {
                 if (v == g.sink) return true;
                 q.enq(v);
             }
+            steps++;
         }
     }
     return false;
@@ -953,18 +941,18 @@ the tree and sets the cost to reflect the residual capacity.
 If it fails to extend the tree containing the source vertex
 at some point, the loop terminates and the second of the two
 inner loops is executed. This loop prunes the dead end encountered
-in the first loop, using. This involves removing all the tree
+in the first loop. This involves removing all the tree
 edges entering the dead end vertex and updating the cost of the
-flow graph. The <code>prune</code> method handles the details of this.
+flow graph. The <code>prune</code> method handles these details.
 <p>
 During one phase, <code>prune</code> is called at most $m$ times.
 To see this, note that whenever it is called from <code>findpath</code>
 or <code>augment</code>, one of the <code>nextEdge</code> pointers is
 advanced. The number of calls to <code>extend</code> is also at most
-$m$ since no edge is added the dynamic trees data structure more than once.
-This means that there are $O(m)$ operations performed onthe dynamic trees
+$m$ since no edge is added to the dynamic trees data structure more than once.
+This means that there are $O(m)$ operations performed on the dynamic trees
 data structure during a phase and that the running time contributed by
-these operations is $O(m\log n)$, and the overall runnning time
+these operations is $O(m\log n)$, and so the overall runnning time
 is $O(mn\log n)$.
 
 <h2>Performance Comparisons</h2>
@@ -972,7 +960,7 @@ The code below compares the performance of the shortest augmenting
 path algorithm with both versions of Dinic's algorithm on worst-case
 examples.
 <pre style="padding-left:5%">
-let k1=20; let k2=20; let g = maxflowHardcase(k1, k2); 
+let k1=10; let k2=10; let g = maxflowHardcase(k1, k2); 
 
 hardTest(maxflowFFsp, 'FFsp', g, k1, k2);
 hardTest(maxflowD,    'D   ', g, k1, k2);
@@ -980,24 +968,36 @@ hardTest(maxflowDST,  'DST ', g, k1, k2);
 </pre>
 Running this for two parameter settings produces the results below.
 <pre style="padding-left:5%">
-FFsp k1=10 k2=10 192ms paths=2000 steps/path=575 
-D    k1=10 k2=10 26ms paths=2000 steps/path=54 
-DST  k1=10 k2=10 12ms paths=2000 steps/path=47 
+FFsp k1=8 k2=25   1638ms paths=10000 steps/path=1686 
+D    k1=8 k2=25     67ms paths=10000 steps/path=128 
+DST  k1=8 k2=25     89ms paths=10000 steps/path=27 
 
-FFsp k1=20 k2=20 3634ms paths=16000 steps/path=1546 
-D    k1=20 k2=20 345ms paths=16000 steps/path=92 
-DST  k1=20 k2=20 65ms paths=16000 steps/path=37 
+FFsp k1=16 k2=50 42430ms paths=80000 steps/path=5869 
+D    k1=16 k2=50   883ms paths=80000 steps/path=223 
+DST  k1=16 k2=50   645ms paths=80000 steps/path=25 
 </pre>
-Dinic's algorithm is dramatically faster because it uses
-far fewer steps per path.
-As the graphs get larger, the version using dynamic trees
-performs much better than the standard version because it
-does not have to follow the long vertex chains repeatedly.
+In the second group, the value of $n$ is roughly doubled,
+while the value of $m$ is roughly quadrupled.
+So, the time for the shortest augmenting paths algorithm
+is expected to go up by a factor of 32, the time for Dinic's
+algorithm by a factor of 16 and the dynamic trees variant
+by a factor of 8. The reported times are consistent with this.
+<p>
+Also note that the number of paths increases by a factor of 8
+going from the first group to the second, while the number of
+steps per path goes up by factors of about 4 and 2 in the
+first two cases. For the dynamic trees variant, it actually drops
+a little bit, since the the larger graph has more paths per phase
+and hence less overhead from the start of a phase.
+<p>
+So both versions of Dinic's algorithm are dramatically faster
+than the shortest augmenting paths algorithm.
+The higher overhead of the dynamic trees variant means that
+it is slower for the smaller graphs.
 <p>
 To compare the algorithms on random graphs, enter the following
 code in the web app.
-<pre style="padding-left:5%">
-let n=402; let d=25;
+<pre style="padding-left:5%">let n=202; let d=25;
 let g = randomFlograph(n, d); 
 g.randomCapacities(randomInteger, 1, 99);
 
@@ -1007,17 +1007,17 @@ randomTest(maxflowDST,  'DST ', g, d);
 </pre>
 Here are the results from running this with three parameter settings.
 <pre style="padding-left:5%">
-FFsp n=202 d=25 cutSize=128 317ms paths=310 steps/path=8535 
-D    n=202 d=25 cutSize=128 15ms paths=310 steps/path=195 
-DST  n=202 d=25 cutSize=128 23ms paths=310 steps/path=417 
+FFsp n=202 d=25 cutSize=125  224ms paths=333 steps/path=8368 
+D    n=202 d=25 cutSize=125   10ms paths=333 steps/path=289 
+DST  n=202 d=25 cutSize=125   19ms paths=333 steps/path=419 
 
-FFsp n=402 d=25 cutSize=138 991ms paths=434 steps/path=18604 
-D    n=402 d=25 cutSize=138 28ms paths=434 steps/path=246 
-DST  n=402 d=25 cutSize=138 40ms paths=434 steps/path=528 
+FFsp n=402 d=25 cutSize=138  582ms paths=392 steps/path=18152 
+D    n=402 d=25 cutSize=138   17ms paths=392 steps/path=470 
+DST  n=402 d=25 cutSize=138   35ms paths=392 steps/path=687 
 
-FFsp n=402 d=50 cutSize=500 5553ms paths=1241 steps/path=35617 
-D    n=402 d=50 cutSize=500 46ms paths=1241 steps/path=148 
-DST  n=402 d=50 cutSize=500 66ms paths=1241 steps/path=303 
+FFsp n=402 d=50 cutSize=500 3491ms paths=1189 steps/path=35067 
+D    n=402 d=50 cutSize=500   34ms paths=1189 steps/path=300 
+DST  n=402 d=50 cutSize=500   61ms paths=1189 steps/path=431 
 </pre>
 Once again, both versions of Dinic's algorithm are dramatically faster,
 due to the more efficient path searches, but the version using dynamic
@@ -1031,7 +1031,7 @@ in large numbers of augmenting paths. It's unlikely that this will happen
 much in practice, making the practical benefit of dynamic trees
 somewhat questionable.
 On the other hand, it is never dramatically slower than the simpler
-version, and it is occasionally dramatically faster.
+version, and is occasionally dramatically faster.
 
 <h2>The Preflow-Push Method</h2>
 The <i>preflow-push</i> (also know as push-relabel) method for
@@ -1105,7 +1105,7 @@ vertex, while the distance label is shown below it.
 The admissible edges are highlighted in bold.
 <p>
 <div  style="text-align:center;">
-<img width="350" src="figs/preflowpushExample1.png"><br>
+<img width="45%" src="figs/preflowpushExample1.png"><br>
 </div>
 <p>
 The figure below shows the state of the flow graph after $b$ is selected
@@ -1114,20 +1114,20 @@ what has changed.
 Note that at this point, the edge $(b,e)$ is admissible at $b$.
 <p>
 <div  style="text-align:center;">
-<img width="350" src="figs/preflowpushExample2.png"><br>
+<img width="45%" src="figs/preflowpushExample2.png"><br>
 </div>
 <p>
 The next figure shows the state after $c$ is selected three times.
 <p>
 <div  style="text-align:center;">
-<img width="350" src="figs/preflowpushExample3.png"><br>
+<img width="45%" src="figs/preflowpushExample3.png"><br>
 </div>
 <p>
 The next step shows the state after $b$ is selected once followed by $f$.
 Note that both vertices are now balanced.
 <p>
 <div  style="text-align:center;">
-<img width="350" src="figs/preflowpushExample4.png"><br>
+<img width="45%" src="figs/preflowpushExample4.png"><br>
 </div>
 <p>
 Continuing in this fashion, eventually leads to a situation where
@@ -1219,28 +1219,28 @@ back out of portions of the graph with no remaining unsaturated paths
 to the sink. A simple example of this is shown below.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/prepushDeadend1.png"><br>
+<img width="55%" src="figs/prepushDeadend1.png"><br>
 </div>
 <p>
 Note that $e$ is unbalanced, so if $e$ is selected next, it will be
 relabeled, allowing flow to be pushed back to $d$ on the next step.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/prepushDeadend2.png"><br>
+<img width="55%" src="figs/prepushDeadend2.png"><br>
 </div>
 <p>
 At this point, $d$ is unbalanced and if it is selected next, it will
 be relabeled allowing flow to be pushed forward to $e$ again.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/prepushDeadend3.png"><br>
+<img width="55%" src="figs/prepushDeadend3.png"><br>
 </div>
 <p>
 Since $e$ is now unbalanced, it can be relabeled and flow
 pushed back to $d$ and $c$ in the next two steps.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/prepushDeadend4.png"><br>
+<img width="55%" src="figs/prepushDeadend4.png"><br>
 </div>
 <p>
 At this point $c$ is relabeled, allowing flow to move forward again
@@ -1333,14 +1333,14 @@ as needed.
 The core module is shown below.
 <p> <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-let g;            // g is reference to flow graph
-let excess;       // excess[u] is excess flow entering u;
-let nextedge;     // nextedge[u] is next edge to process at u
-let d;            // d[u] is distance label at u
-let getUnbal;     // reference to function that gets next unbalanced vertex
-let putUnbal;     // reference to function that adds a vertex to unbalanced set
+let g;           // g is reference to flow graph
+let excess;      // excess[u] is excess flow entering u;
+let nextedge;    // nextedge[u] is next edge to process at u
+let d;           // d[u] is distance label at u
+let getUnbal;    // reference to function that gets next unbalanced vertex
+let putUnbal;    // reference to function that adds a vertex to unbalanced set
 
-let relabelSteps; // number of steps spent on relabeling
+let relabelSteps;    // number of steps spent on relabeling
 
 export default function maxflowPP(fg, getUbal, putUbal, relabThresh=fg.m) {
     g = fg;
@@ -1351,7 +1351,7 @@ export default function maxflowPP(fg, getUbal, putUbal, relabThresh=fg.m) {
 
     relabelSteps = 0;
 
-    excess.fill(0); let s = g.source;
+    let s = g.source;
     for (let e = g.firstOut(s); e != 0; e = g.nextAt(s,e)) {
         let f = g.res(e,s); if (f == 0) continue;
         g.addFlow(e, s, f);
@@ -1382,15 +1382,8 @@ export default function maxflowPP(fg, getUbal, putUbal, relabThresh=fg.m) {
             u = getUnbal();
         }
     }
-    return g.totalFlow();
 }
 
-/** Find smallest label on an adjacent vertex through an edge with
- *  positive residual capacity.
- *  @param u is a vertex
- *  @return the smallest label on a neighbor of u for which the
- *  connecting edge has positive residual capacity
- */
 export function minlabel(u) {
     let small = 2*g.n;
     for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
@@ -1401,10 +1394,6 @@ export function minlabel(u) {
     return small;
 }
 
-/** Attempt to balance vertex, by pushing flow through admissible edges.
- *  @param u is a vertex
- *  @return true if u was successfully balanced
- */
 export function balance(u) {
     if (excess[u] <= 0) return true;
     for (let e = nextedge[u]; e != 0; e = nextedge[u]) {
@@ -1420,10 +1409,6 @@ export function balance(u) {
     return false;
 }
 
-
-/** Compute exact distance labels for all vertices, reset nextedge
-    and add vertices with excess flow to unbalanced set.
-*/
 export function relabelAll() {
     let q = new List(g.n); d.fill(2*g.n,1);
 
@@ -1432,6 +1417,7 @@ export function relabelAll() {
     while (!q.empty()) {
         let u = q.deq();
         for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
+            relabelSteps++;
             let v = g.mate(u,e);
             if (g.res(e,v) > 0 && d[v] > d[u] + 1) {
                 q.enq(v); d[v] = d[u] + 1;
@@ -1443,13 +1429,15 @@ export function relabelAll() {
         }
     }
 
-    assert(d[g.source] >= g.n, 'relabelAll: source-to-sink path present');
+    if (d[g.source] < g.n)
+        fassert(true, 'relabelAll: source-to-sink path present');
 
     // compute distance labels for remaining vertices
     q.enq(g.source); d[g.source] = g.n;
     while (!q.empty()) {
         let u = q.deq();
         for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
+            relabelSteps++;
             let v = g.mate(u,e);
             if (g.res(e,v) > 0 && d[v] > d[u] + 1) {
                 q.enq(v); d[v] = d[u] + 1;
@@ -1462,7 +1450,7 @@ export function relabelAll() {
     }
 }
 </textarea> <p>
-The <code>balance()</code> attempts to balance flow at a vertex
+The <code>balance()</code> function attempts to balance flow at a vertex
 by pushing flow out on its admissible edges.
 It returns when it has balanced the vertex or examined
 all of its admissible edges.
@@ -1493,8 +1481,8 @@ let g = new Flograph();
 g.fromString('{a->[b:5 d:6] b[c:3 d:7 g:3] c[d:1 e:5] d[e:2 f:1 g:3] ' +
              'e[f:1 g:3 h:4] f[e:1 g:2 h:3] g[e:3 f:2 h:1] ' +
              'h[f:3 i:4 j:5] i[g:5 j:6] ->j[]}');
-let [f,ts] = maxflowPPf(g,1);
-log(ts, '\n' + g.toString(0,1));
+let [ts] = maxflowPPf(g,1);
+log(ts);
 </pre>
 Running this produces the output shown below.
 The output shows each selected unbalanced vertex,
@@ -1506,6 +1494,39 @@ and a double asterisk indicates that a batch relabeling
 was done. The final flow is shown at the end.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
+unbalanced vertex, distance label, excess, push edges
+d 3 6 (d,e,2/2) (d,f,1/1) (d,g,3/3)
+b 3 5 (b,g,3/3) *
+e 2 2 (e,h,4/2)
+f 2 1 (f,h,3/1)
+g 2 6 (g,h,1/1) *
+b 4 2 (b,c,3/2)
+h 1 4 (h,j,5/4)
+g 3 5 (g,e,3/3) (g,f,2/2)
+c 3 2 (c,e,5/2)
+e 2 5 (e,h,4/4) *
+f 2 2 (f,h,3/3)
+h 1 4 (h,j,5/5) *
+e 3 3 (e,f,1/1)
+h 2 3 (h,i,4/3)
+f 2 1
+i 1 3 (i,j,6/3) **
+e 12 2 (d,e,2)
+f 12 1 (d,f,1)
+d 11 3 (a,d,6/3)
+
+{
+a->[b:5/5 d:6/3]
+b[c:3/2 d:7 g:3/3]
+c[d:1 e:5/2]
+d[e:2 f:1 g:3/3]
+e[f:1/1 g:3 h:4/4]
+f[e:1 g:2 h:3/3]
+g[e:3/3 f:2/2 h:1/1]
+h[f:3 i:4/3 j:5/5]
+i[g:5 j:6/3]
+->j
+}
 unbalanced vertex, distance label, excess, push edges
 d 3 6 (d,e,2/2) (d,f,1/1) (d,g,3/3)
 b 3 5 (b,g,3/3) *
@@ -1629,15 +1650,15 @@ for random graphs.
 function testrun(algo, label, g, d, relabThresh=g.m) {
     g.clearFlow();
     let t0 = Date.now();
-    let [,,stats] = algo(g,false,relabThresh);
+    let [,stats] = algo(g,false,relabThresh);
     let t1 = Date.now();
     let fstats = g.flowStats(); 
 
     let s =`${label} n=${g.n} d=${d} ${t1-t0}ms `;
-    s += `relabCount=${stats.relabelCount} ` +
-         `relabSteps=${~~(stats.relabelSteps)} ` +
-         `balCount=${stats.balanceCount} ` +
-         `balSteps=${~~(stats.balanceSteps)} `;
+    s += `rcount=${stats.relabelCount} ` +
+         `rsteps=${~~(stats.relabelSteps)} ` +
+         `bcount=${stats.balanceCount} ` +
+         `bsteps=${~~(stats.balanceSteps)} `;
     console.log(s);
 }
 
@@ -1654,18 +1675,18 @@ g = randomFlograph(n, d); g.randomCapacities(randomInteger, 1, 99);
 testrun(maxflowPPf, 'f', g, d, 100*g.m);
 </textarea> <p>
 
-The first line below shows the results the pure batch relabeling approach,
+The first line below shows results for the pure batch relabeling approach,
 the last line shows the pure incrmental relabeling approach and the
 middle line shows the mixed approach using the default value of
 <code>relabThresh</code>.
 Note that each batch relabeling operation contributes $2m$ relabeling steps.
 <pre style="padding-left:5%">
-f n=202 d=25  11ms relabCount=   7 relabSteps= 70350 balCount=  702 balSteps= 27110  
-f n=202 d=25   7ms relabCount= 187 relabSteps= 41401 balCount=  801 balSteps= 29069  
-f n=202 d=25 102ms relabCount=8261 relabSteps=523532 balCount=12018 balSteps=515617
+f n=202 d=25 18ms rcount=   8 rsteps= 80400 bcount=  738 bsteps= 28062  
+f n=202 d=25  7ms rcount= 184 rsteps= 41106 bcount=  822 bsteps= 30900  
+f n=202 d=25 87ms rcount=8229 rsteps=523923 bcount=12374 bsteps=517773 
 </pre>
-The the number of relabel steps and balance steps is much higher for
-the incremental relabeling approach, due to the large number of largely
+The number of relabel steps and balance steps is much higher for
+the pure incremental relabeling approach, due to the large number of largely
 unproductive incremental relabeling steps that occur towards the end
 of execution, as flow is pushed back towards the source.
 Because each batch relabeling operation is relatively expensive,
@@ -1678,14 +1699,14 @@ batch relabeling steps.
 The results below compare the FIFO and highest-label-first approaches
 for three different random graphs.
 <pre style="padding-left:5%">
-f  n=202 d=25  7ms relabCount=177 relabSteps= 40924 balCount= 758 balSteps= 29604  
-hl n=202 d=25 15ms relabCount=277 relabSteps= 57030 balCount=1297 balSteps= 35531  
+f  n=202 d=25  7ms rcount=189 rsteps=41501  bcount=807  bsteps=29278  
+hl n=202 d=25  8ms rcount=268 rsteps=56569  bcount=1370 bsteps=36238  
 
-f  n=402 d=25 15ms relabCount=379 relabSteps= 83037 balCount=1425 balSteps= 54660  
-hl n=402 d=25 21ms relabCount=533 relabSteps=112885 balCount=1982 balSteps= 66555  
+f  n=402 d=25 13ms rcount=373 rsteps=82454  bcount=1454 bsteps=55379  
+hl n=402 d=25 13ms rcount=384 rsteps=83477  bcount=1687 bsteps=51268  
 
-f  n=402 d=50 34ms relabCount=364 relabSteps=164409 balCount=1643 balSteps=119074  
-hl n=402 d=50 42ms relabCount=543 relabSteps=226903 balCount=3680 balSteps=140976  
+f  n=402 d=50 28ms rcount=355 rsteps=163427 bcount=1540 bsteps=115889  
+hl n=402 d=50 36ms rcount=541 rsteps=226707 bcount=3031 bsteps=143406
 </pre>
 The FIFO method out-performs the highest label first method and this
 pattern generally holds up for larger and more sparse random graphs as well.
@@ -1693,15 +1714,14 @@ However, the highest label method can perform better for the worst-case
 graphs for Dinic's algorithm.
 In this case, it does fewer balance operations and fewer steps per operation.
 <pre style="padding-left:5%">
-f   20 20 10ms relabCount=2245 relabSteps=25573 balCount=9094 balSteps=18594  
-hl  20 20  9ms relabCount=2237 relabSteps=25568 balCount=7276 balSteps=16165  
+f  k1=16 k2=50 16ms rcount=1688 rsteps=69658 bcount=7481 bsteps=52255  
+hl k1=16 k2=50 12ms rcount=1796 rsteps=62182 bcount=6156 bsteps=38504  
 </pre>
-In this case, it does fewer balance operations and fewer steps per operation.
 Both perform much better than either version of Dinic's algorithm,
 as can be seen from the earlier results reproduced below.
 <pre style="padding-left:5%">
-D    k1=20 k2=20 345ms paths=16000 steps/path=92
-DST  k1=20 k2=20  65ms paths=16000 steps/path=37
+d    k1=16 k2=50 883ms paths=80000 steps/path=223 
+dst  k1=16 k2=50 645ms paths=80000 steps/path=25 
 </pre>
 For random graphs, the advantage over Dinic's algorithm is smaller,
 but still significant.
@@ -1736,7 +1756,7 @@ This change prevents the max flow algorithm from reducing the flow on
 an edge below its floor value.
 <p>
 The <code>Flograph</code> data structure can be extended to support flow floors
-using the method <code>addFloors()</code> or by setting a flow value using
+using the method <code>addFloors()</code> or by setting a floor value using
 <code>setFloor()</code>. In a graph that has not been extended to support floors,
 the method <code>floor(e)</code> returns 0 for all edges.
 The <i>Javascript</i> function <code>flowfloor()</code> shown below,
@@ -1744,45 +1764,54 @@ attempts to find a feasible flow for a flow graph with specified floor values.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default function flowfloor(g) {
+    let paths = 0;
     // First determine total capacity, number
     // of edges with non-zero floors and the sum of min flows
     let floorCount = 0; let totalCap = 0; let totalFloor = 0;
     for (let e = g.first(); e != 0; e = g.next(e)) {
-        totalCap += g.cap(g.tail(e),e);
+        totalCap += g.cap(e);
         totalFloor += g.floor(e);
         if (g.floor(e) > 0) floorCount++;
     }
     // Next copy edges to new flow graph being careful to maintain same
     // edge numbers. Adjust capacities of edges with non-zero min flows.
     // Also, add new source/sink edges.
-    let g1 = new Flograph(g.n+2, g.m+2*floorCount+1);
+    let g1 = new Flograph(g.n+2, g.edgeRange+2*floorCount+1);
+    steps += g1.n + g1.edgeRange;
     g1.setSource(g.n+1); g1.setSink(g.n+2);
     for (let e = g.first(); e != 0; e = g.next(e)) {
         g1.join(g.tail(e), g.head(e), e);
-        g1.setCapacity(e,g.cap(e) - g.floor(e));
+        g1.cap(e,g.cap(e) - g.floor(e));
     }
     // Now, add new source/sink edges.
     for (let e = g.first(); e != 0; e = g.next(e)) {
         if (g.floor(e) == 0) continue;
-        g1.setCapacity(g1.join(g1.source, g1.head(e)), g.floor(e));
-        g1.setCapacity(g1.join(g1.tail(e), g1.sink), g.floor(e));
+        g1.cap(g1.join(g1.source, g1.head(e)), g.floor(e));
+        g1.cap(g1.join(g1.tail(e), g1.sink), g.floor(e));
     }
     // Finally, add high capacity edge from original sink to original source
-    let e = g1.join(g.sink, g.source); g1.setCapacity(e, totalCap);
+    let e = g1.join(g.sink, g.source); g1.cap(e, totalCap);
 
     // Now, find max flow in g1 and check that floor values are all satisfied
-    let [f, ts, stats] = maxflowD(g1);
+    let [ts,stats] = maxflowD(g1);
+    paths += stats.paths; steps += stats.steps;
 
-    // Now transfer computed flows back into g
-    for (let e = g.first(); e != 0; e = g.next(e))
-        g.setFlow(e, g1.f(e) + g.floor(e));
-    return g.totalFlow();
+    // Now transfer computed flow back into g
+    for (let e = g.first(); e != 0; e = g.next(e)) {
+        g.flow(e, g1.f(e) + g.floor(e)); steps++;
+    }
+    return [g1.totalFlow() == totalFloor, ts,
+            {'flow': g.flowStats().totalFlow,
+             'paths': stats.paths, 'steps': steps}];
 }
 </textarea> <p>
 Note that any max flow algorithm can be used to find the maximum flow in
 <code>g1</code>. Dinic's algorithm was chosen here, as it makes
 the trace output easier to follow.
 The following code can be used to demonstrate the program.
+Flow floors are shown by replacing edge capacities with flow ranges.
+So, in the example below, the edge $(b,d)$ has a flow range of between 2 and 7,
+corresponding to a floor of 2.
 <pre style="padding-left:5%">
 let g = new Flograph();
 g.fromString('{a->[b:3 d:2] b[c:3 d:2-7 g:3] c[d:1 e:5] d[e:2 f:1 g:3] ' +
@@ -1790,20 +1819,34 @@ g.fromString('{a->[b:3 d:2] b[c:3 d:2-7 g:3] c[d:1 e:5] d[e:2 f:1 g:3] ' +
              'h[f:3 i:4 j:2] i[g:2-5 j:6] ->j[]}');
 let [f, ts] = flowfloor(g, true);
 log((f < 0 ? 'no ' : '') + 'feasible flow');
-log(ts + '\n' +  g.toString(0,1));
+log(ts + '\n' +  g.toString(1));
 </pre>
 This produces the output shown below.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-feasible flow 
-
+feasible flow
 augmenting paths with residual capacities
 k:2 g:2 l
 k:2 d:2 e:1 l
 k:1 h:4 i:2 l
 k:2 f:3 h:3 i:1 l
-k:1 f:2 h:2 j:74 a:3 b:2 l
-k:1 d:1 e:3 h:1 j:73 a:2 b:1 l
+k:1 f:2 h:2 j:75 a:3 b:2 l
+k:1 d:1 e:3 h:1 j:74 a:2 b:1 l
+
+{
+a[b:3/2 d:2]
+b[c:3 d:5 g:3 l:2/2]
+c[d:1 e:5]
+d[e:2/2 f:1 g:3]
+e[f:1 g:3 h:3/1 l:1/1]
+f[e:1 g:2 h:3/2]
+g[e:3 f:5 h:1 l:2/2]
+h[f:3 i:4/2 j:2/2]
+i[g:3 j:6 l:2/2]
+j[a:75/2]
+k->[d:2/2 h:1/1 f:2/2 g:2/2]
+->l
+}
 
 {
 a->[b:3/2 d:2]
@@ -1815,9 +1858,12 @@ f[e:1 g:2 h:3/2]
 g[e:3 f:2-7/2 h:1]
 h[f:3 i:4/2 j:2/2]
 i[g:2-5/2 j:6]
-->j[]
+->j
 }
 </textarea> <p>
+The augmenting paths in the augmented flow graph are shown first,
+followed by the resulting flow. The flow in the original graph is
+shown last.
 
 <h2>References</h2>
 <dl>

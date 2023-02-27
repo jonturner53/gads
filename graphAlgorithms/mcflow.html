@@ -39,7 +39,7 @@ so $\cost_e(v,u) = -cost_e(u,v)$.
 An example of a flow graph with edge costs is shown below.
 <p>
 <div  style="text-align:center;">
-<img width="300" src="figs/mcflow1.png"><br>
+<img width="40%" src="figs/mcflow1.png"><br>
 </div>
 <p>
 Observe that the while the flow shown is a maximum flow,
@@ -55,9 +55,14 @@ flow with the same flow value, by repeatedly finding negative cost cycles
 with positive residual capacity, then pushing enough flow around the
 cycle to saturate one or more edges.
 When no negative cycles remain, the flow is a minimum cost flow.
-The theorem below provides the required justification for this method.
+(It's worth noting that a negative cost cycle is not usually a problem for
+the min cost flow problem as it is for the shortest path problem;
+however, if the graph contains a negative cycle with <i>unbounded capacity</i>,
+then there is no minimum cost flow.)
+The theorem below provides the required justification for the
+cycle reduction method.
 <p>
-<i>Theorem 1</i> A flow has minimum cost if an only if there is no
+<i>Theorem 1</i>. A flow has minimum cost if an only if there is no
 negative cost cycle that is unsaturated.
 <p>
 <i>Proof</i>.
@@ -98,49 +103,47 @@ A <i>Javascript</i> implementation of the cycle reduction method appears
 below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
-let g;          // shared reference to flow graph
-let pedge;      // pedge[] is parent edge of u
-let cycleIds;   // array used to label cycles with an integer identifier
+let g;        // shared reference to flow graph
+let C;        // C[u] is cost of path to u from source in findCycle
+let link;     // link[] is parent edge of u
+let q;        // queue used in findCycle
+let cycleIds; // array used to label cycles with an integer identifier
 
 export default function mcflowK(fg) {
     g = fg;
-    pedge = new Int32Array(g.n+1);
+
+    C = new Float32Array(g.n+1);
+    link = new Int32Array(g.n+1);
+    q = new List(g.n);
     cycleIds = new Int8Array(g.n+1);
 
-    let u = findCycles();
+    let u = findCycle();
     while (u != 0) {
-        augment(u); u = findCycles();
+        let s = augment(u);
+        u = findCycle();
     }
 }
 
-/** Find a negative cost cycle in the residual graph.
- *  @return some vertex on the cycle, or 0 if no negative
- *  cycle is present in the residual graph; the edges in the
- *  cycle are found by traversing the pedge pointers, starting
- *  at pedge[returnedVertex].
- */
-function findCycles() {
-    let c = new Float32Array(g.n+1);
-    let q = new List(g.n);
-
-    for (let u = 1; u <= g.n; u++) { 
-        pedge[u] = 0; c[u] = 0; q.enq(u);
-    }
+function findCycle() {
+    C.fill(0); link.fill(0); q.clear();
+    for (let u = 1; u <= g.n; u++) q.enq(u);
 
     let last = q.last(); // each pass completes when last removed from q
     while (!q.empty()) {
         let u = q.deq();
         for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
+            findCycleSteps++;
             if (g.res(e,u) == 0) continue;
             let v = g.mate(u,e);
-            if (c[v] > c[u] + g.cost(e,u)) {
-                pedge[v] = e;
-                c[v] = c[u] +  g.cost(e,u);
+            if (C[v] > C[u] + g.costFrom(e,u)) {
+                link[v] = e;
+                C[v] = C[u] +  g.costFrom(e,u);
                 if (!q.contains(v)) q.enq(v);
             }
         }
 
         if (u == last) {
+            findCyclePasses++;
             let v = cycleCheck();
             if (v != 0) return v;
             last = q.last();
@@ -149,7 +152,7 @@ function findCycles() {
     return 0;
 }
 
-/** Check for a cycle in the pedge pointers.
+/** Check for a cycle in the link pointers.
  *  @return a vertex on a cycle or 0, if none found
  */
 function cycleCheck() {
@@ -161,7 +164,7 @@ function cycleCheck() {
         let v = u; let e;
         while (cycleIds[v] == 0) {
             cycleIds[v] = id;
-            e = pedge[v];
+            e = link[v];
             if (e == 0) break;
             v = g.mate(v,e);
         }
@@ -174,28 +177,25 @@ function cycleCheck() {
     return 0;
 }
 
-/** Add flow to a negative-cost cycle.
- *  Adds as much flow as possible to the cycle, reducing the cost
- *  without changing the flow value.
- *  @param z is a vertex on a cycle defined by the pedge array
- */
+/** Add flow to a negative-cost cycle.  */
 function augment(z) {
     // determine residual capacity of cycle
-    let u = z; let e = pedge[u]; let f = Infinity;
+    let u = z; let e = link[u]; let f = Infinity;
     do {
         let v = g.mate(u,e);
         f = Math.min(f,g.res(e,v));
-        u = v; e = pedge[u];
+        u = v; e = link[u];
     } while (u != z);
 
     // add flow to saturate cycle
     let ts = '';
-    u = z; e = pedge[u];
+    u = z; e = link[u];
     do {
         let v = g.mate(u,e);
         g.addFlow(e,v,f);
-        u = v; e = pedge[u];
+        u = v; e = link[u];
     } while (u != z);
+    return ts;
 }
 </textarea> <p>
 Notice that the <code>findCycles</code> method checks for cycles
@@ -206,48 +206,58 @@ are typically found long before pass $n$.
 The code below can be used to run <code>mcflowK</code> in the web app.
 <p>
 <pre style="padding-left:5%">
-let g = randomFlograph(16,3);
+let g = randomFlograph(12,3);
 g.randomCapacities(randomInteger, 1, 19);
 g.randomCosts(randomInteger, -4, 9);
 let [ts] = mcflowK(g,1);
-log (ts)
+log(ts)
 </pre>
 <p>
 This produces the output below.
 <p> <textarea rows="14" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
+{
+a->[b:5@1 d:21@6 e:14@7]
+b[c:12@4 d:15 e:9@5 h:10@-1]
+c[b:7@-3 e:16 f:12@8]
+d[c:15@6 e:13@8]
+e[c:11@3 d:4@8 f:4@-4]
+f[c:8@-1 d:10@-1 e:19@7]
+g[d:5@9 f:1@4 i:15@-1]
+h[i:7@-4 l:21@7]
+i[c:2@1 h:5]
+j[e:13@5 f:1@1 l:4@1]
+k[c:9@1 f:13@-3 g:17@6 i:17@-3 l:18@7]
+->l
+}
+
 initial cost: 0
-cycleCapacity [cycle] totalCost
-5 [h:-3 g:-4 h] -35
-7 [h:2 e:-3 g:-4 h] -70
-2 [c:5 f:-3 g:-4 h:-3 c] -80
-12 [f:-3 g:2 f] -92
-1 [b:0 e:-3 g:-4 h:6 d:-3 k:6 l:-3 b] -93
-1 [b:3 l:-6 k:0 j:2 e:0 b] -94
+cycles with cycle capacity, totalCost
+[h:7 i:5 h] 5 -20
+[c:16 e:4 f:8 c] 4 -40
+[b:10 h:2 i:2 c:7 b] 2 -54
 
 {
-a->[b:9,24 g:-4,25 h:6,13]
-b[e:0,2 g:-2,15 h:-1,5]
-c[b:9,6 f:5,2/2]
-d[c:5,15 f:0,1 g:2,9 k:-3,3/1]
-e[c:4,1 g:-3,13/8 h:-1,1]
-f[d:5,8 g:-3,14/14 h:3,3]
-g[f:2,15/12 h:-4,15/15]
-h[c:-3,2/2 d:6,11/1 e:2,7/7 g:-3,5/5]
-i[]
-j[c:-2,16 e:2,5/1 m:0,15 n:4,4 p:5,2]
-k[j:0,9/1 l:6,9 o:4,8]
-l[b:-3,3 c:7,1 f:8,19 h:6,9 m:4,14]
-m[g:4,5 i:3,7 k:4,5 n:-4,17]
-n[p:0,4]
-o[d:4,7 i:1,6 p:5,18]
-->p[]
+a->[b:5@1 d:21@6 e:14@7]
+b[c:12@4 d:15 e:9@5 h:10@-1/2]
+c[b:7@-3/2 e:16/4 f:12@8]
+d[c:15@6 e:13@8]
+e[c:11@3 d:4@8 f:4@-4/4]
+f[c:8@-1/4 d:10@-1 e:19@7]
+g[d:5@9 f:1@4 i:15@-1]
+h[i:7@-4/7 l:21@7]
+i[c:2@1/2 h:5/5]
+j[e:13@5 f:1@1 l:4@1]
+k[c:9@1 f:13@-3 g:17@6 i:17@-3 l:18@7]
+->l
 }
 </textarea> <p>
-The trace output shows the residual capacity of each cycle
-found, the vertices in the cycle with the costs of their connecting
-edges, and the resulting flow cost. In this example, 
-the flow values are all zero. If a max value flow is computed first,
+The trace output shows each cycle found, followed by its residual
+capacity and the total flow cost after flow is added to the cycle.
+In the flow graph, non-zero costs are shown preceded by an @-symbol;
+non-zero flows are preceded by a forward slash.
+In this example, the initial flow values are all zero.
+If a max value flow is computed first,
 the final flow is a min cost, max flow.
 The following code fragment can be used to observe the performance
 experimentally, when computing a min cost, max flow.
@@ -261,22 +271,22 @@ let t = Date.now(); maxflowD(g); let t1 = Date.now() - t;
 let c0 = g.totalCost();
 t = Date.now(); let [,stats] = mcflowK(g); let t2 = Date.now() - t;
 let bound = ~~((c0-g.totalCost())/1000);
-let cycles = stats.cycleCount;
-let passes = stats.findCyclePasses;
-let steps = ~~(stats.findCycleSteps/1000);
-log(`n=${g.n} m=${g.m} bound=${bound}K cycles=${cycles} passes=${passes} ` +
-    `steps=${steps}K ${t1}ms ${t2}ms`);
+let cycles = stats.cycles;
+let passes = stats.passes;
+let steps = ~~(stats.steps/1000);
+log(`n=${g.n} m=${g.m} ${t1}ms bound=${bound}K cycles=${cycles} passes=${passes} ` +
+    `steps=${steps}K ${t2}ms`);
 </pre><p>
 In the sample output appears below, the first three lines show the effect
 of doubling the number of edges, while holding the number of vertices constant.
 The last three show the effect of doubling the number of vertices while
-holding of edges constant (approximately).
+holding the number of edges constant (approximately).
 <p><pre style="padding-left:5%">
-n=40 m=156 bound=873K cycles=51 passes=312 steps=54K 0ms 17ms 
-n=40 m=312 bound=1934K cycles=114 passes=319 steps=139K 1ms 32ms 
-n=40 m=624 bound=6189K cycles=413 passes=915 steps=946K 1ms 172ms 
-n=80 m=632 bound=4419K cycles=318 passes=1225 steps=1092K 2ms 219ms 
-n=160 m=636 bound=1629K cycles=158 passes=1269 steps=855K 2ms 189ms 
+n= 40 m=156 1ms bound= 443K cycles= 40 passes= 243 steps=  56K   8ms 
+n= 40 m=312 1ms bound=1968K cycles=127 passes= 470 steps= 213K  24ms 
+n= 40 m=624 1ms bound=5637K cycles=342 passes= 815 steps= 841K  77ms 
+n= 80 m=632 2ms bound=4160K cycles=355 passes=1615 steps=1482K 138ms 
+n=160 m=636 2ms bound=2530K cycles=245 passes=1718 steps=1455K 149ms 
 </pre><p>
 Observe that the initial max flow computation takes a negligible
 fraction of the computation time. Also, note that roughly half the edges
@@ -284,9 +294,9 @@ in the random graphs have negative costs, so negative cycles are plentiful.
 Still, the number of cycles found is consistently smaller than the number
 of edges and far smaller than the bound on the number of cycles.
 Also, the number of passes in <code>findCycle</code> is generally
-no more than about twice the number of edges.
-The total number of steps in <code>findCycle</code> and the running time
-appears to increase roughly quadratically with the number of edges and is
+no more than about three time the number of edges.
+The total number of steps and the running time
+appear to increase roughly quadratically with the number of edges and is
 fairly insensitive to the number of vertices.
 While these are very limited results, they suggest that performance in practice
 can be much better than the worst-case analysis suggests.
@@ -442,32 +452,28 @@ log(`n=${g.n} m=${g.m} bound=${bound}K cycles=${cycles} ` +
 </pre><p>
 Sample results appear below.
 <p><pre style="padding-left:5%">
-n=40 m=156 bound=650K cycles=34 steps=493K 1ms 82ms 
-n=40 m=312 bound=1912K cycles=87 steps=2337K 1ms 366ms 
-n=40 m=624 bound=5547K cycles=237 steps=12263K 1ms 1736ms 
-n=80 m=632 bound=3875K cycles=193 steps=20861K 2ms 3039ms 
-n=160 m=636 bound=2036K cycles=111 steps=25663K 5ms 3847ms 
+n= 40 m=156 2ms bound= 335K cycles= 33 steps=  479K   59ms 
+n= 40 m=312 1ms bound=2132K cycles=108 steps= 2896K  270ms 
+n= 40 m=624 2ms bound=5498K cycles=231 steps=11955K 1058ms 
+n= 80 m=632 3ms bound=4278K cycles=202 steps=21830K 1908ms 
+n=160 m=636 1ms bound=1150K cycles= 99 steps=22914K 1973ms 
 </pre><p>
 Comparing these to the results from the last section,
 the new algorithm does require fewer negative cycles
-but the difference is not nearly enough to offset the
-extra time spent finding the cycles.
-
-<p><pre style="padding-left:5%">
-</pre><p>
+but for random graphs, the difference is not nearly enough
+to offset the extra time spent finding the cycles.
 
 <h2>Min Cost Augmenting Path</h2>
 
 If the current flow in a flow graph has minimum cost, then adding flow
 to an augmenting path $P$ of minimum cost produces another minimum cost flow.
-This was first discovered by Jewell [Jewell1958].
 To understand why, suppose that the new flow is not minimum cost.
-In that case, it has a negative cycle. Since the original flow did
-not produce a negative cycle, the new flow must have caused some
+In that case, it has a negative cycle that is unsaturated. Since the original flow did
+not have a negative cycle, the path augmentation must have caused some
 previously saturated edges to become unsaturated,
-and these must be the reverse of edges on $P$. Let's start with a
+and these must be reversals of edges on $P$. Let's start with a
 simple case where a single edge $e=(u,v)$ appears on $P$
-and its reverse $(v,u)$ appears on $C$. Let $H$ be the graph
+and its reversal $(v,u)$ appears on $C$. Let $H$ be the graph
 consisting of $P$ together with $C$. Since $C$ is a negative cost
 cycle, the cost of $H$ is less than the cost of $P$.
 If $(u,v)$ and $(v,u)$ are both removed from $H$, the resulting
@@ -490,7 +496,7 @@ they are non-negative, so the remaining path is an augmenting
 path with lower cost than $P$,
 again yielding a contradiction. This argument yields the following theorem
 <p>
-<i>Theorem 2</i> Given a flow graph with a minimum cost flow,
+<i>Theorem 2</i>. Given a flow graph with a minimum cost flow,
 adding flow to a minimum cost augmenting path yields another
 minumum cost flow.
 <p>
@@ -499,13 +505,248 @@ which can be applied to any flow graph in which there are no negative cost
 cycles. With integer edge capacities, each augmenting path step increases
 the flow by at least 1, so the number of steps is bounded by the maximum flow value.
 If the Bellman-Moore algorithm is used to find the least-cost augmenting path,
-the running time is $O(mnF)$ where $F$ is the maximum flow value.
+the running time is $O(mnP)$ where $P$ is the number of paths that
+must be found to reach a maximum flow; it is bounded by the maximum flow value,
+but is typically much smaller.
 <p>
-Negative edges can be eliminated from the initial flow graph using
+In a graph that does have negative cost cycles, the negative cycles must
+be eliminated before minimum cost augmentation can be applied.
+One way to do this is using one of the cycle reduction algorithms discussed earlier.
+An alternative approach involves modifying the algorithm to work with
+<i>preflows</i> instead of flows. Recall that a preflow is similar to a flow in that
+it respects the capacity constraints, but differs by allowing the flow balance
+condition to be violated. That is, the flow entering a (non-source/sink) vertex
+need not be balanced by the the flow leaving.
+The <i>excess flow</i> at a vertex is defined to be the difference between
+the flow entering and the flow leaving, and may be either positive or negative.
+<p>
+Preflows can be used to eliminate negative cycles by simply saturating
+every edge with negative cost, at the start of the algorithm. This gives us
+a preflow in which some vertices have positive excess and some have negative.
+Those in the first group are called <i>sources</i> while those in the second
+group are called <i>sinks</i>.
+From this initial state, a minimum cost flow can be found by repeatedly pushing
+flow along a shortest path from any source to any sink, stopping when
+the excesses are all zero. At this point, all unsaturated negative cycles
+have been eliminated.
+<p>
+Once the negative cycles have been eliminated, a maximum flow can be found
+by computing least-cost augmenting paths from the original source vertex to
+the original sink. Alternatively, one can combine the two steps, by treating
+the original source and sink just like the sources/sinks that are created when the
+negative cost edges are saturated. One does this, by assigning an excess
+to the original source equal to its max flow value. The original sink is assigned a
+negative excess of the same magnitude.
+The running time is $O(mnP)$, assuming Bellman-Ford is used for the shortest
+path computations and $P$ is the number of paths. $P$ is bounded by the sum of
+the positive excesses at the start of the algorithm, which is bounded
+by the maximum flow value plus the sum of the capacities of the negative cost edges.
+<p>
+This algorithm was first described in [Jewell1958].
+A <i>Javascript</i> implementation appears below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let g;        // shared reference to flow graph
+let link;     // link[u] is parent edge of u
+let excess;   // excess[u] is excess flow entering u
+let sources;  // list of sources (nodes with positive excess)
+let sinks;    // list of sinks (nodes with negative excess)
+
+export default function mcflowJ(fg) {
+    g = fg;
+
+    link = new Int32Array(g.n+1);
+    excess = new Int32Array(g.n+1);
+    sources = new List(g.n); sources.addPrev(); // doubly linked
+    sinks = new List(g.n); sinks.addPrev();
+
+    // Determine a max flow so that we can initialize excess
+    // values at s and t
+    maxflowD(g);
+    excess[g.source] = g.totalFlow();
+    excess[g.sink] = -g.totalFlow();
+    let totalExcess = excess[g.source];
+    g.clearFlow();
+
+    // saturate negative cost edges
+    for (let e = g.first(); e != 0; e = g.next(e)) {
+        if (g.cost(e) < 0) {
+            g.flow(e, g.cap(e));
+            excess[g.tail(e)] -= g.cap(e);
+            excess[g.head(e)] += g.cap(e);
+            totalExcess += g.cap(e);
+        }
+    }
+    for (let u = 1; u <= g.n; u++) {
+        if (excess[u] > 0) {
+            sources.enq(u);
+        } else if (excess[u] < 0) {
+            sinks.enq(u);
+        }
+    }
+
+    let t = findpath();
+    while (t) {
+        augment(t);
+        t = findpath();
+    }
+}
+
+function findpath() {
+    let c = new Float32Array(g.n+1);
+    let q = new List(g.n);
+    link.fill(0); c.fill(Infinity);
+
+    // search from all sources in parallel
+    for (let s = sources.first(); s != 0; s = sources.next(s)) {
+        c[s] = 0; q.enq(s);
+    }
+    let t = 0; let cmax = -Infinity;
+    while (!q.empty()) {
+        let u = q.deq();
+        if (sinks.contains(u)) t = u;
+        for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+            if (g.res(e,u) == 0) continue;
+            let v = g.mate(u,e);
+            if (c[v] > c[u] + g.costFrom(e,u)) {
+                c[v] = c[u] + g.costFrom(e,u); link[v] = e;
+                if (!q.contains(v)) q.enq(v);
+            }
+        }
+    }
+    return t;
+}
+
+function augment(t) {
+    let u = t; let delta = Infinity;
+    for (let e = link[u]; e != 0; e = link[u]) {
+        u = g.mate(u,e);
+        delta = Math.min(delta, g.res(e,u));
+    }
+    delta = Math.min(delta, excess[u]);
+    delta = Math.min(delta, -excess[t]);
+
+    u = t; let ts = ''; let cost = 0;
+    for (let e = link[u]; e; e = link[u]) {
+        u = g.mate(u,e); g.addFlow(e,u,delta);
+    }
+    excess[u] -= delta; excess[t] += delta;
+    if (excess[u] == 0) sources.delete(u);
+    if (excess[t] == 0) sinks.delete(t);
+}
+</textarea> <p>
+Observe that in this implementation, the <code>findpath</code> function
+searchs from all sources at the same time (you can think of it as computing
+a shortest path tree from a pseudo-source with a zero cost edge to every
+vertex).
+The following code can be used to demonstrate the algorithm.
+<p><pre style="padding-left:5%">
+let g = randomFlograph(12,3);
+g.randomCapacities(randomInteger, 1, 19);
+g.randomCosts(randomInteger, -3, 9);
+let [ts] = mcflowJ(g,1);
+log(ts)
+</pre><p>
+Sample output appears below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+{
+a->[b:6@5 d:12@-2/12 e:18@1]
+b[c:19 e:11@-3/11]
+c[b:5@9 d:6@3 f:3@-3/3]
+d[b:1@5 c:8@-2/8 e:17@9 f:6@2]
+e[b:5@4 c:15@9 g:13@-3/13]
+f[b:4@9 c:11@-2/11 d:7@-2/7]
+g[d:1@1 k:9@4 l:14@-2/14]
+h[l:18@2]
+i[c:1@4 d:5@1 f:18@-2/18 g:4@8]
+j[d:4@6 l:4@3]
+k[b:1@8 c:11@8 d:4@7 f:16@6 h:16@1]
+->l
+}
+
+sources, sinks and paths with added flow and resulting flow cost
+[a:1 c:16 d:11 f:3 l:1] [b:-11 e:-2 g:-1 i:-18]
+  [a:18 e:11 b] 1 -217
+[c:16 d:11 f:3 l:1] [b:-10 e:-2 g:-1 i:-18]
+  [l:14 g] 1 -215
+[c:16 d:11 f:3] [b:-10 e:-2 i:-18]
+  [f:18 i] 3 -209
+[c:16 d:11] [b:-10 e:-2 i:-15]
+  [c:11 f:15 i] 11 -165
+[c:5 d:11] [b:-10 e:-2 i:-4]
+  [d:7 f:4 i] 4 -149
+[c:5 d:7] [b:-10 e:-2]
+  [d:1 b:1 e] 1 -147
+[c:5 d:6] [b:-10 e:-1]
+  [d:12 a:17 e:11 b] 6 -111
+[c:5] [b:-4 e:-1]
+  [c:8 d:6 a:11 e:5 b] 4 -79
+[c:1] [e:-1]
+  [c:4 d:2 a:7 e] 1 -74
+
+{
+a->[b:6@5 d:12@-2/1 e:18@1/12]
+b[c:19 e:11@-3/1]
+c[b:5@9 d:6@3 f:3@-3/3]
+d[b:1@5/1 c:8@-2/3 e:17@9 f:6@2]
+e[b:5@4 c:15@9 g:13@-3/13]
+f[b:4@9 c:11@-2 d:7@-2/3]
+g[d:1@1 k:9@4 l:14@-2/13]
+h[l:18@2]
+i[c:1@4 d:5@1 f:18@-2 g:4@8]
+j[d:4@6 l:4@3]
+k[b:1@8 c:11@8 d:4@7 f:16@6 h:16@1]
+->l
+}
+</textarea> <p>
+The trace output starts with the graph showing the initial preflow.
+For each path search, it shows the sources and sinks at the start
+of the search (including their excess values), plus the
+selected augmenting path with its residual capacities, the flow
+added to the path and the flow cost immediately following the augmentation.
+Note that the amount of flow added is limited by the excess
+at the source and sink, in addition the path capacity.
+<p>
+The following code can be used to evaluate the performance of the algorithm.
+<p><pre style="padding-left:5%">
+let n=160; let d=4;
+let g = randomFlograph(n,d);
+g.randomCapacities(randomInteger, 1, 999);
+g.randomCosts(randomInteger, -99, 99);
+
+let bound = 0;
+for (let e = g.first(); e; e = g.next(e))
+    if (g.cost(e) < 0) bound += g.cap(e);
+
+let t = Date.now(); let [,stats] = mcflowJ(g); t = Date.now() - t;
+bound = ~~((bound + g.totalFlow())/1000);
+let paths = stats.paths;
+let steps = ~~(stats.steps/1000);
+log(`n=${g.n} m=${g.m} flow=${g.totalFlow()} bound=${bound}K paths=${paths} ` +
+    `steps=${steps}K ${t}ms`);
+</pre><p>
+Note that the bound in this case is the sum of the maximum flow value
+and the total capacity of the negative edges, and is largely determined
+by the negative capacity.
+<p><pre style="padding-left:5%">
+n= 40 m=156 flow=  286 bound= 37K paths=106 steps= 21K  7ms 
+n= 40 m=312 flow= 4818 bound=115K paths=216 steps= 88K 20ms 
+n= 40 m=624 flow=19086 bound=244K paths=367 steps=318K 54ms 
+n= 80 m=632 flow= 5384 bound=196K paths=477 steps=468K 79ms 
+n=160 m=636 flow=  183 bound=163K paths=531 steps=486K 89ms 
+</pre><p>
+The number of paths is far smaller than
+the bound; the number of steps and run time appear to
+grow roughly in proportion to the product of $m$ and the number of paths.
+<p>
+Since Jewell's algorithm starts by saturating all the negative cost edges,
+the initial preflow has no unsaturated negative cost edges.
+This property can be maintained throughout the algorithm using
 the edge cost transformation of Edmonds and Karp,
 previously used for applying Dijkstra's algorithm
 to the all pairs shortest path problem.
-However, in this case, the edge cost transformation must be adjusted
+In this case, the edge cost transformation must be adjusted
 after each augmenting path step. To facilitate this adjustment, it's
 helpful to look at the edge cost transformation in a more general way.
 For each vertes $u$ in a flow graph, let $\lab(u)$ be a numeric label.
@@ -529,8 +770,7 @@ $\cost_\lab(u,v)=0$.
 <p>
 In the context of the min cost flow problem, a vertex labeling is said
 to be <i>valid</i> with respect to a flow $f$ if
-$\cost(u,v) + \lab(u) - \lab(v) \geq 0$ for
-all edges $e=(u,v)$ with $res_e(u,v)>0$.
+$\cost_\lab(u,v)\geq 0$ for all edges $e=(u,v)$ with $res_e(u,v)>0$.
 Given a valid labeling, a minimum cost augmenting path can be computed
 using Dijkstra's algorithm. Let $c(u)$ be the cost of the path from $s$ to $u$.
 Before flow is added to the augmenting path
@@ -549,211 +789,165 @@ cost(u,v) + (\lab(u) + c(u)) - (\lab(v) + c(v)) \geq 0
 $$
 Thus, one can maintain the validity of the labeling, by adding $c(u)$ to the
 current label for all vertices $u$.
-Notice that if a vertex $u$ is not reachable from the source when the
-flow is zero,
-it remains unreachable throughout the calculation of the min cost flow.
-On the other hand, if a vertex is reachable initially, it remains reachable
-so long as there is an augmenting path.
-Consequently, $\lab(u)$ remains well-defined for all vertices.
+Now this works if all vertices are reachable from a source vertex,
+but what if some are not? For these unreachable vertices, it suffices to
+add to their labels a value that is at least as large as the largest finite path cost.
 <p>
-Using the edge cost transform, the min cost augmenting path algorithm can
-implemented by first running the Bellman-Moore algorithm to
-obtain a valid set of
-labels, then using Dijkstra's algorithm (or any algorithm that
-requires non-negative edge lengths) to compute augmenting paths, updating
-the labels at each step as just described. This yields a running time of
-$O(mn+S(m,n)F)$, where $S(m,n)$ is the time required for the shortest path
-computation and is determined by the choice of algorithm and data structure.
+In Jewell's algorithm, the initial labels can be set to zero, since the
+initial preflow has no unsaturated negative edges.
+From that point on, it can compute shortest paths
+using Dijkstra's algorithm (or any algorithm that
+requires non-negative edge lengths), updating
+the labels after each step as described above.
+This yields a running time of
+$O(S(m,n)P)$, where $S(m,n)$ is the time required for the shortest path
+computation and is determined by the choice of algorithm and data structure;
+$P$ is the number of paths.
+As before $P$ is bounded by the sum of the maximum flow value and the
+total capacity of the negative cost edges.
 <p>
-Note that unlike the cycle reduction method, the min cost augmenting path
-method does not work on flow graphs with negative cost cycles. However,
-a scaling algorithm based on it can handle negative cost cycles and can reduce
-the number of augmenting path steps to $O(m \log C)$.
-This is discussed in the next section.
-<p>
-A <i>Javascript</i> implementation of the min cost augmenting path method
+A <i>Javascript</i> implementation of this version of Jewell's algorithm
 (referred to here as the JEK algorithm, for Jewell, Edmonds and Karp)
 appears below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
-let g;          // shared reference to flow graph
-let lambda;     // lambda[u] is vertex label used to make costs non-negative
+let g;        // shared reference to flow graph
+let link;     // link[u] is parent edge of u
+let lambda;   // lambda[u] is vertex label used to make costs non-negative
+let excess;   // excess[u] is excess flow entering u
+let sources;  // list of sources (nodes with positive excess)
+let sinks;    // list of sinks (nodes with negative excess)
 
-let c;          // c[u] is shortest path to u as computed by findpath
-let pedge;      // pedge[u] is parent edge of u in spt computed by findpath
-let border;     // heap used by findpath
-let q;          // list used in initLabels
+let border;   // heap used by findpath
+let c;        // array of path costs used by findpath
 
+/** Find minimum cost maximum flow in a weighted flow graph using Orlin's
+ *  capacity scaling algorithm.
+ *  Requires that the original graph has no negative cost cycles.
+ */
 export default function mcflowJEK(fg) {
     g = fg;
+
+    link = new Int32Array(g.n+1);
     lambda = new Float32Array(g.n+1);
+    excess = new Int32Array(g.n+1);
+    sources = new List(g.n); sources.addPrev(); // doubly linked
+    sinks = new List(g.n); sinks.addPrev();
+    border = new ArrayHeap(g.n,2);
     c = new Float32Array(g.n+1);
-    pedge = new Int32Array(g.n+1);
-    border = new ArrayHeap(g.n, 4);
-    q = new List(g.n);
 
-    initLabels();
-    while (findpath()) {
-        let [resCap, cost] = pathProperties();
-        augment(resCap);
-    }
-}
+    // Determine a max flow so that we can initialize excess
+    // values at s and t
+    maxflowD(g);
+    excess[g.source] = g.totalFlow();
+    excess[g.sink] = -g.totalFlow();
+    g.clearFlow();
 
-
-/** Compute values for labels that give non-negative transformed costs.
- *  The labels are the least cost path distances from an imaginary
- *  vertex with a length 0 edge to every vertex in the graph.
- *  Uses the breadth-first scanning algorithm to compute shortest paths
- *  over edges with positive residual capacity.
- */
-function initLabels() {
-    pedge.fill(0); lambda.fill(0); q.clear();
-    for (let u = 1; u <= g.n; u++) q.enq(u);
-    let pass = 0; let last = q.last();
-    while (!q.empty()) {
-        let u = q.deq();
-        for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
-            if (g.res(e,u) == 0) continue;
-            let v = g.mate(u,e);
-            if (lambda[v] > lambda[u] + g.cost(e,u)) {
-                lambda[v] = lambda[u] + g.cost(e,u); pedge[v] = e;
-                if (!q.contains(v)) q.enq(v);
-            }
+    // saturate negative cost edges
+    for (let e = g.first(); e != 0; e = g.next(e)) {
+        if (g.cost(e) < 0) {
+            g.flow(e, g.cap(e));
+            excess[g.tail(e)] -= g.cap(e);
+            excess[g.head(e)] += g.cap(e);
         }
-        if (u == last && !q.empty()) { pass++; last = q.last(); }
+    }
+    sources.clear(); sinks.clear();
+    for (let u = 1; u <= g.n; u++) {
+        if (excess[u] > 0) {
+            sources.enq(u);
+        } else if (excess[u] < 0) {
+            sinks.enq(u);
+        }
+    }
+
+    let t = findpath();
+    while (t) {
+        augment(t); t = findpath();
     }
 }
 
-/** Find a least cost augmenting path.
- *  @param return true if a path was found, else false.
+/** Find a least cost augmenting path from some source and update the labels.
+ *  @return the "sink" vertex for the computed path; on return, the link
+ *  vector defines the path from the sink back to some source
  */
 function findpath() {
-    c.fill(Infinity); pedge.fill(0); border.clear();
-    c[g.source] = 0; border.insert(g.source,0);
+    border.clear(); link.fill(0); c.fill(Infinity);
+
+    // search from all sources in parallel
+    for (let s = sources.first(); s != 0; s = sources.next(s)) {
+        c[s] = 0; border.insert(s,0); steps++;
+    }
+    let t = 0; let cmax = -Infinity;
     while (!border.empty()) {
         let u = border.deletemin();
+        cmax = Math.max(cmax,c[u]);
+        if (sinks.contains(u)) t = u;
+            // don't stop yet as need all c values to update lambda
         for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
             if (g.res(e,u) == 0) continue;
             let v = g.mate(u,e);
-            if (c[v] > c[u] + g.cost(e,u) + (lambda[u] - lambda[v])) {
-                pedge[v] = e;
-                c[v] = c[u] + g.cost(e,u) + (lambda[u]-lambda[v]);
+            if (c[v] > c[u] + g.costFrom(e,u) + (lambda[u]-lambda[v])) {
+                link[v] = e;
+                c[v] = c[u] + g.costFrom(e,u) + (lambda[u]-lambda[v]);
                 if (!border.contains(v)) border.insert(v,c[v]);
                 else border.changekey(v,c[v]);
             }
         }
     }
-    // update lambda for next round
-    for (let u = 1; u <= g.n; u++) lambda[u] += c[u];
-    return (pedge[g.sink] != 0);
+    if (t != 0) { // adjust labels
+        for (let u = 1; u <= g.n; u++) {
+            lambda[u] += Math.min(c[u],cmax);
+        }
+    }
+    return t;
 }
 
-/** Compute properties of augmenting path defined by pedge.
- *  @return pair [resCap, cost] where resCap is residual capacity of the path
- *  and cost is its total cost.
+/** Augment the flow along a path
+ *  @param t is the sink vertex for the path; the path is defined
+ *  by the link array
  */
-function pathProperties() {
-    let resCap = 0x7fffffff; let cost = 0;
-    let u = g.sink; let e = pedge[u];
-    while (u != g.source) {
-        let v = g.mate(u,e);
-        resCap = Math.min(resCap, g.res(e,v)); cost += g.cost(e,v);
-        u = v; e = pedge[u];
+function augment(t) {
+    let u = t; let delta = Infinity;
+    for (let e = link[u]; e != 0; e = link[u]) {
+        u = g.mate(u,e);
+        delta = Math.min(delta, g.res(e,u));
     }
-    return [resCap, cost]
-}
+    delta = Math.min(delta, excess[u]);
+    delta = Math.min(delta, -excess[t]);
 
-/** Add flow to the path defined by pedge.
- *  @param f is the amount of flow to add to the path
- */
-function augment(f) {
-    let u = g.sink; let e = pedge[u]; let ts = g.index2string(u);
-    while (u != g.source) {
-        let v = g.mate(u,e);
-        g.addFlow(e,v,f);
-        u = v; e = pedge[u];
+    u = t; let ts = ''; let cost = 0;
+    for (let e = link[u]; e != 0; e = link[u]) {
+        u = g.mate(u,e);
+        g.addFlow(e,u,delta);
     }
-    return ts;
+    excess[u] -= delta; excess[t] += delta;
+    if (excess[u] == 0) sources.delete(u);
+    if (excess[t] == 0) sinks.delete(t);
 }
 </textarea> <p>
-The following code fragment can be used to demonstrate
-the algorithm.
-<p><pre style="padding-left:5%">
-let g = randomFlograph(16,3);
-g.randomCapacities(randomInteger, 1, 19);
-g.randomCosts(randomInteger, -9, 9);
-mcflowK(g);
-let [ts] = mcflowJEK(g,1);
-log(ts)
-</pre><p>
-Here is an example of the output.
-<p> <textarea rows="14" cols="80" readonly
-        style="font-size: 95%;background-color:lightCyan">
-path, residual capacity, path cost, total cost
-[a c i h l] 11 8 88
-[a c i k l] 3 9 115
-[a e d j l] 2 12 139
-[a f d j l] 4 16 203
-[a f d j h l] 4 24 299
-[a c f d j h l] 4 25 399
-[a c d j h l] 2 27 453
-{
-a->[b:9,26 c:4,28/20 e:4,6/2 f:4,8/8]
-b[c:4,3 d:6,2 e:0,16 f:9,5]
-c[b:1,13 d:7,19/2 e:4,7 f:1,4/4 i:1,14/14]
-d[b:5,14 c:5,3 f:7,11 j:6,19/16]
-e[c:1,3 d:0,2/2 f:3,18]
-f[b:6,19 c:6,6 d:4,13/12 e:6,5]
-g[h:4,4]
-h[c:7,2 d:7,14 e:9,9 g:8,10 i:2,15 l:3,32/21]
-i[d:6,15 g:3,16 h:0,11/11 k:2,18/3 l:8,12]
-j[b:8,16 c:6,4 f:6,10 h:7,10/10 l:2,6/6]
-k[d:8,11 j:2,14 l:2,36/3]
-->l[]
-}
-</textarea> <p>
-The following code can be used to evaluate the performance
-on random graphs. Note, that random edge costs are assigned to the edges,
-making random cycles likely. The code shows how these can be eliminated
-using the cycle reduction algorithm; then the augmenting path algorithm
-is used to obtain a minimum cost flow with maximum value.
-<p><pre style="padding-left:5%">
-let n=160; let d=16;
-let g = randomFlograph(n,d);
-g.randomCapacities(randomInteger, 1, 999);
-g.randomCosts(randomInteger, -99, 99);
-
-let t = Date.now(); mcflowK(g); let t1 = Date.now() - t;
-t = Date.now(); let [,stats] = mcflowJEK(g); let t2 = Date.now() - t;
-let bound = g.totalFlow();
-let paths = stats.pathCount;
-let init = stats.initSteps;
-let steps = ~~(stats.findpathSteps/1000);
-log(`n=${g.n} m=${g.m} bound=${bound} paths=${paths} init=${init} ` +
-    `steps=${steps}K ${t1}ms ${t2}ms`);
-</pre><p>
+The code used to evaluate the performance of the
+the original version of Jewell's algorithm can
+be trivially modified for this version.
 Here is some sample data.
 <p><pre style="padding-left:5%">
-n=40 m=156 bound=315 paths=4 init=2095 steps=1K 19ms 1ms 
-n=40 m=312 bound=5478 paths=74 init=2330 steps=46K 36ms 10ms 
-n=40 m=624 bound=16930 paths=171 init=4662 steps=214K 133ms 39ms 
-n=80 m=632 bound=5691 paths=108 init=6787 steps=137K 282ms 28ms 
-n=160 m=636 bound=794 paths=20 init=7729 steps=25K 212ms 7ms
+n= 40 m=156 flow=  418 bound= 29K paths= 96 steps=  51K  6ms 
+n= 40 m=312 flow= 6311 bound=118K paths=232 steps= 228K 20ms 
+n= 40 m=624 flow=19963 bound=219K paths=366 steps= 606K 46ms 
+n= 80 m=632 flow= 4886 bound=193K paths=503 steps=1092K 66ms 
+n=160 m=636 flow= 1214 bound=162K paths=565 steps=1695K 86ms 
 </pre><p>
-Notice that the number of paths is far smaller than the bound on the
-number of paths. As expected, <code>findpath</code> accounts for most
-of the steps and the number of steps appears to be proportional
-to the number of paths and the number of edges.
-The time required to eliminate the negative cost cycles is considerably
-larger than the time needed to convert the zero value flow into a min cost flow
-of maximum value.
+For random graphs the performance is very similar to the original version.
 
 <h2>Orlin's Scaling Algorithm</h2>
 
-Orlin's scaling algorithm [AhMaOr93] for minimum cost flows maintains a scale
-factor $\Delta$,
+Because the worst-case time required for Jewell's algorithm's grows
+in proportion with the edge capacities, it is not considered a polynomial
+time algorithm.
+Orlin's scaling algorithm [AhMaOr93] can be viewed as a generalization of
+Jewell's algorithm, which does run in polynomial time.
+It uses a scale factor $\Delta$,
 and limits augmenting paths to those edges with a residual capacity
-$\geq \Delta$ (referred to as <i>eligible</i> edges.
+$\geq \Delta$ (referred to as <i>eligible</i> edges).
 Once all augmenting paths for a particular value of $\Delta$ are found,
 $\Delta$ is halved and the augmenting path searches are resumed using
 the newly eligible edges, in addition to those that remain eligible from
@@ -762,30 +956,22 @@ This allows it to avoid augmenting path steps that make only a small improvement
 in the flow.
 If the period between successive changes to $\Delta$ is called a <i>phase</i>,
 the number of augmenting path steps per phase
-is $O(m)$, and if $U$ is the maximum edge capacity, the number of phases
-is at most $\lceil \log_2 U \rceil$.
+is $O(m)$ (this is justified below), and if $U$ is the maximum edge capacity,
+the number of phases is at most $\lceil \log_2 U \rceil$.
 Conseqently, the total number of augmenting path steps is
 $O(m \log U)$ and the running time is $O(S(m,n) m \log U)$ where again $S(m,n)$
 is the time for the shortest path computation.
-The common choices are the Bellman-Ford algorithm or  Dijkstra's algorithm,
-if edge costs are defined relative to a suitable vertex labeling.
 <p>
-Within each phase, the vertex labels $\lab(u)$ can be maintained in essentially
-the same way that was discussed in the last section.
+Within each phase, the vertex labels $\lab(u)$ can be maintained
+as was discussed in the last section.
 However, at the end of a phase, the reduction in $\Delta$
 makes more edges eligible, potentially making
 $\cost_\lab$ negative for some eligible edges.
-This situation can be addressed by adding $\Delta$ units of flow to each
-edge for which $\cost_\lab$ is negative.
-This makes them ineligible,
-but violates the flow balance requirement at some vertices.
-This means that in addition to
-computing a maximum flow from $s$ to $t$, the algorithm must also eliminate
-these imbalances before terminating.
-This is done by adding flow to augmenting paths not just from $s$ to $t$,
-but also from vertices with positive excess to those with negative excess.
+This is addressed by adding $\Delta$ units of flow to each
+edge for which $\cost_\lab$ is negative, possibly creating
+new sources and sinks.
 <p>
-The algorithm can now stated as follows.
+The algorithm can be stated as follows.
 Initialize $\lab(u)=0$ for all $u$,
 $\excess(s) = F$ (where $F$ is the value of a maximum flow),
 $\excess(t)=-F$
@@ -809,27 +995,36 @@ and $c_{max}$ is the largest finite value of $c(u)$.
 <p style="padding-left:5%">
 When no augmenting paths remain, divide $\Delta$ by 2.
 <p>
-The label adjustment accounts for the possibility that some vertices
-may be unreachable from the current source $\sigma$. For such a vertex $u$,
-$c(u)=\infty$ and since adding $\infty$ to the labels can invalidate them,
-a different choice is required. Adding the largest finite value
-of $c(u)$ in these cases maintains the validity of the labels.
+Note that when a phase ends, either no vertex has positive excess $>\Delta$
+or no vertex has negative excess $<Delta$. Until this condition holds, there must
+be an augmenting path with residual capacity $>\Delta$.
+At the start of each phase, the total positive excess is $<2n\Delta$.
+Initially, this is true because the maximum flow value is $\leq nU$.
+At the start of a new phase with scaling factor $\Delta$,
+every vertex has a positive excess $<2\Delta$ or every vertex has
+a negative excess $>2\Delta$. In either case, the total positive excess is $<2n\Delta$.
 <p>
-A <i>Javascript</i> version of the scaling algorithm appears below.
+In the first step of a phase, newly eligible edges increase the total positive
+excess by at most $m\Delta$, so the total positive excess is $<(2n+m)\Delta$
+after the first step. Since each augmenting path reduces the positive excess of
+some source by $\Delta$, there are at most $2n+m$ augmenting path steps per phase.
+This justifies the earlier statement that the number of path searches per phase
+is $O(m)$.
+<p>
+A <i>Javascript</i> version of Orlin's algorithm appears below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 let g;        // shared reference to flow graph
 let Delta;    // scaling parameter
-let pedge;    // pedge[u] is parent edge of u
+let link;     // link[u] is parent edge of u
 let lambda;   // lambda[u] is vertex label used to make costs non-negative
 let excess;   // excess[u] is excess flow entering u
 let sources;  // list of sources (nodes with positive excess)
 let sinks;    // list of sinks (nodes with negative excess)
-
-export default function mcflowO(fg, trace=false) {
+export default function mcflowO(fg) {
     g = fg;
 
-    pedge = new Int32Array(g.n+1);
+    link = new Int32Array(g.n+1);
     lambda = new Float32Array(g.n+1);
     excess = new Int32Array(g.n+1);
     sources = new List(g.n); sources.addPrev(); // doubly linked
@@ -839,7 +1034,6 @@ export default function mcflowO(fg, trace=false) {
     let maxcap = 0;
     for (let e = g.first(); e != 0; e = g.next(e)) {
         maxcap = Math.max(maxcap, g.cap(e,));
-        g.setFlow(e, 0);
     }
     for (Delta = 1; 2*Delta <= maxcap; Delta <<= 1) {}
 
@@ -853,29 +1047,32 @@ export default function mcflowO(fg, trace=false) {
     while (Delta >= 1) {
         newPhase();
         let t = findpath();
-        while (t != 0) {
-            augment(t, trace);
-            t = findpath();
+        while (t) {
+            augment(t); t = findpath();
         }
         Delta /= 2;
+        if (trace) traceString += '\n';
     }
+    if (trace) traceString += g.toString(1);
+    return [traceString, {  'phases': phases, 'paths': paths,
+                               'steps': steps } ];
 }
 
-/** Do start of phase processing.  */
 function newPhase() {
     // If any edge violates labeling condition, add Delta units of
     // flow to it. This eliminates it from the residual graph for
     // the current scaling factor.
+    let s = ''; let flow = 0; let cost = 0;
     for (let e = g.first(); e != 0; e = g.next(e)) {
         let u = g.tail(e); let v = g.head(e);
         if (g.res(e,u) >= Delta) {
-            if (g.cost(e,u) + (lambda[u] - lambda[v]) < 0) {
+            if (g.costFrom(e,u) + (lambda[u] - lambda[v]) < 0) {
                 g.addFlow(e,u,Delta);
                 excess[u] -= Delta; excess[v] += Delta;
             }
         }
         if (g.res(e,v) >= Delta) {
-            if (g.cost(e,v) + (lambda[v] - lambda[u]) < 0) {
+            if (g.costFrom(e,v) + (lambda[v] - lambda[u]) < 0) {
                 g.addFlow(e,v,Delta);
                 excess[v] -= Delta; excess[u] += Delta;
             }
@@ -885,6 +1082,7 @@ function newPhase() {
     // identify candidate sources and sinks
     sources.clear(); sinks.clear();
     for (let u = 1; u <= g.n; u++) {
+        steps++;
         if (excess[u] >= Delta) {
             sources.enq(u);
         } else if (excess[u] <= -Delta) {
@@ -895,149 +1093,125 @@ function newPhase() {
 }
 
 /** Find a least cost augmenting path from some source and update the labels.
- *  @return the "sink" vertex for the computed path; on return, the pedge
+ *  @return the "sink" vertex for the computed path; on return, the link
  *  vector defines the path from the sink back to some source
  */
 function findpath() {
     let c = new Float32Array(g.n+1);
     let border = new ArrayHeap(g.n,2);
-    pedge.fill(0); c.fill(Infinity);
+    link.fill(0); c.fill(Infinity);
 
     // search from all sources in parallel
     for (let s = sources.first(); s != 0; s = sources.next(s)) {
-        c[s] = 0; border.insert(s,0);
+        c[s] = 0; border.insert(s,0); steps++;
     }
-    let cmax = -Infinity; let t = 0;
+    let t = 0;
+    let cmax = -Infinity;
     while (!border.empty()) {
-        let u = border.deletemin(); cmax = Math.max(cmax,c[u]);
+        let u = border.deletemin();
+        cmax = Math.max(cmax,c[u]);
         if (t == 0 && sinks.contains(u)) t = u;
             // don't stop yet as need all c values to update lambda
         for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
+            steps++;
             if (g.res(e,u) < Delta) continue;
             let v = g.mate(u,e);
-            if (c[v] > c[u] + g.cost(e,u) + (lambda[u]-lambda[v])) {
-                pedge[v] = e;
-                c[v] = c[u] + g.cost(e,u) + (lambda[u]-lambda[v]);
+            if (c[v] > c[u] + g.costFrom(e,u) + (lambda[u]-lambda[v])) {
+                link[v] = e;
+                c[v] = c[u] + g.costFrom(e,u) + (lambda[u]-lambda[v]);
                 if (!border.contains(v)) border.insert(v,c[v]);
                 else border.changekey(v,c[v]);
             }
         }
     }
     if (t != 0) { // adjust labels
-        for (let u = 1; u <= g.n; u++)
+        for (let u = 1; u <= g.n; u++) {
             lambda[u] += Math.min(c[u],cmax);
+        }
+        steps += g.n;
     }
     return t;
 }
 
 /** Augment the flow along a path
  *  @param t is the sink vertex for the path; the path is defined
- *  by the pedge array
+ *  by the link array
  */
 function augment(t) {
-    let s = t;
-    for (let e = pedge[s]; e != 0; e = pedge[s]) {
-        let u = g.mate(s,e); g.addFlow(e,u,Delta); s = u;
+    let u = t; let ts = '';
+    if (trace) ts += g.x2s(t);
+    for (let e = link[u]; e != 0; e = link[u]) {
+        steps++;
+        u = g.mate(u,e);
+        if (trace) {
+            ts = `${g.x2s(u)}:${g.res(e,u)} ${ts}`;
+        }
+        g.addFlow(e,u,Delta);
     }
-    excess[s] -= Delta; excess[t] += Delta;
-    if (excess[s] < Delta) sources.delete(s);
+    if (trace) {
+        traceString += sources.toString(u => g.x2s(u) + ':' + excess[u]) + ' ';
+        traceString += sinks.toString(u => g.x2s(u) + ':' + excess[u]) + '\n  ';
+        traceString += `[${ts}] ${Delta} ${g.totalCost()}\n`;
+    }
+    excess[u] -= Delta; excess[t] += Delta;
+    if (excess[u] < Delta) sources.delete(u);
     if (excess[t] > -Delta) sinks.delete(t);
-    return ts;
 }
 </textarea> <p>
-The following code can be used to demonstrate the operation of
-the scaling algorithm.
-<p><pre style="padding-left:5%">
-let n=10; let d=3;
-let g = randomFlograph(n,d);
-g.randomCapacities(randomInteger, 1, 9);
-g.randomCosts(randomInteger, -9, 9);
-let [ts] = mcflowO(g,1);
-log(ts);
-</pre><p>
-Sample output appears below.
+Some sample output from a demonstration run appears below.
 <p> <textarea rows="14" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
-Delta=16 flow 0, cost 0
-adding to: (f,c,-4,16):f (h,g,-5,16):h
-sources [c g], sinks[f h]
-[c f] 64
-[g h] 80
+sources, sinks and paths with added flow and resulting flow cost
+[b:8 e:8 l:8] [a:-8 h:-8 j:-8]
+  [b:8 a] 8 -32
+[e:8 l:8] [h:-8 j:-8]
+  [e:8 h] 8 -16
+[l:8] [j:-8]
+  [l:8 j] 8 0
 
-Delta=8 flow 0, cost 0
-adding to:
-sources [a], sinks[j]
-[a e h g j] 88
+[c:8 d:4 f:4] [e:-12 i:-4]
+  [f:4 e] 4 8
+[c:8 d:4] [e:-8 i:-4]
+  [c:4 i] 4 8
+[c:4 d:4] [e:-8]
+  [d:4 e] 4 -8
+[c:4] [e:-4]
+  [c:4 e] 4 0
 
-Delta=4 flow 8, cost 88
-adding to: (c,b,7,6):c
-sources [a b], sinks[c j]
-[a c] 8
-[b c a e h g j] 8
+[d:2] [f:-2]
+  [d:3 f] 2 -6
 
-Delta=2 flow 12, cost 132
-adding to: (c,e,-1,3):c (g,c,-2,3):g
-sources [a e], sinks[g j]
-[e h g] -12
-[a c g h j] 30
-
-Delta=1 flow 14, cost 144
-adding to: (g,j,8,13/12):g (c,e,-1,3/2):c
-sources [e j], sinks[c g]
-[j h g] -11
-[e a c] -7
+[d:1] [f:-1]
+  [d:1 f] 1 -9
 
 {
-a->[c:2,13/3 d:6,18 e:9,26/11]
-b[c:9,5 d:-3,1 e:4,9]
-c[b:7,6 d:4,6 e:-1,3/3]
-d[b:6,1 e:8,1]
-e[b:5,17 c:8,11 d:4,19 h:-1,14/14]
-f[c:-4,16 d:8,11 e:7,2 h:5,15 j:3,25]
-g[b:6,3 c:-2,3 j:8,13/13]
-h[c:-6,5 g:-5,16/13 j:6,12/1]
-i[h:1,5]
-->j[]
+a->[b:9@-2 c:10@7 d:1@7]
+b[f:8]
+c[b:4@-3 e:4@2 f:1@2]
+d[b:9@9 e:9@9 f:3@-2/3]
+e[b:7@9 c:6@-2 d:6@4 f:7@-1 i:9@7]
+f[b:1@5 c:2@6 d:3@-1/3]
+g[b:4@-2 e:8@1 j:5@9 l:9@3]
+h[c:2@5 d:3@-1 e:9@-2 f:5@6 g:9@7]
+i[b:1@1 c:6]
+j[c:1@4 i:8 l:12@-2]
+k[l:5@9]
+->l
 }
 </textarea> <p>
-The total flow and cost are shown at the start of each phase,
-but the value shown is simply the flow leaving the source, which is
-not the true flow value until all vertices are balanced.
-The edges that have flow added to them at the start of each phase
-are listed, along with the sources and sinks. The augmenting paths
-are listed along with the cost of the flow added to those paths.
-<p>
-The following code can be used to evaluate the performance
-of the scaling algorithm on random graphs.
+The trace output is similar to that shown for Jewell's algorithm.
+The only real difference is the blank lines separating the phases.
+Some sample performance data appears below.
 <p><pre style="padding-left:5%">
-let n=40; let d=4;
-let g = randomFlograph(n,d);
-g.randomCapacities(randomInteger, 1, 999);
-g.randomCosts(randomInteger, -99, 99);
-
-let t = Date.now(); let [,stats] = mcflowO(g); let t1 = Date.now() - t;
-let phases = stats.phaseCount;
-let paths = stats.pathCount;
-let steps = ~~(stats.findpathSteps/1000);
-log(`n=${g.n} m=${g.m} phases=${phases} paths=${paths} ` + 
-    `steps=${steps}K ${t1}ms`);
+n= 40 m=156 phases=12 paths=131 steps= 45K  8ms
+n= 40 m=312 phases=13 paths=255 steps=172K 24ms 
+n= 40 m=624 phases=14 paths=527 steps=650K 62ms 
+n= 80 m=632 phases=13 paths=486 steps=647K 66ms 
+n=160 m=636 phases=12 paths=432 steps=561K 62ms 
 </pre><p>
-Sample output appears below.
-<p><pre style="padding-left:5%">
-n=40 m=156 phases=12 paths=135 steps=38K 12ms 
-n=40 m=312 phases=13 paths=261 steps=160K 39ms 
-n=40 m=624 phases=14 paths=544 steps=654K 115ms 
-n=80 m=632 phases=13 paths=466 steps=575K 111ms 
-n=160 m=636 phases=11 paths=405 steps=467K 102ms
-</pre><p>
-Note that the number of paths grows in proportion to the number
-of edges and since the time per path search is also $O(m)$, the
-number of steps in <code>findpath</code> and the runnning time
-grows quadratically with the number of edges. Also, note that the
-run times are significantly slower than for the least-cost augmenting
-path algorithm, since it greatly out-performs its worst-case for
-these graphs. However, since the scaling algorithm handles negative
-cycles directly, it can perform better when negative cycles are present.
+For these random graphs, the number of path searches is actually larger
+than for Jewell's algorithm, but it can be expected to perform better in
+the worst-case.
 
 <h2>References</h2>
 <dl>

@@ -20,8 +20,16 @@
 </head>
 <body bgcolor=ffffff>
 \(
-\newcommand{\match}{\textit{match}}
-\newcommand{\link}{\textit{link}}
+\newcommand{\match}{\texttt{match}}
+\newcommand{\link}{\texttt{link}}
+\newcommand{\first}{\texttt{first}}
+\newcommand{\next}{\texttt{next}}
+\newcommand{\at}{\texttt{at}}
+\newcommand{\contains}{\texttt{contains}}
+\newcommand{\add}{\texttt{add}}
+\newcommand{\drop}{\texttt{drop}}
+\newcommand{\size}{\texttt{size}}
+\newcommand{\weight}{\texttt{weight}}
 \)
 
 <h1>Matchings in Graphs<sup>&copy;</sup> (in progress)</h1>
@@ -32,18 +40,88 @@ The objective of the matching problem is to find a matching of
 maximum size, or maximum weight, in the case of edge-weighted graphs.
 <p>
 <div  style="text-align:center;">
-<img width="400" src="figs/matching.png"><br>
+<img width="50%" src="figs/matching.png"><br>
 </div>
 <p>
 In bipartite graphs, finding matchings can be done more simply than
 in general graphs, so there are specialized algorithms for this case.
+
+<h2>Matching Data Structure</h2>
+While not strictly necessary, it is convenient to have a special data
+structure to represent a matching. The one used here is defined relative
+to a specific graph, and provides the following methods.
+<ul>
+<li> $\first()$ returns the first edge in the matching.
+<li> $\next(e)$ returns the next edge in the matching following edge $e$.
+<li> $\at(u)$ returns the matching edge incident to vertex $u$.
+<li> $\contains(e)$ returns true if the matching contains edge $e$.
+<li> $\add(e)$ adds edge $e$ to the matching.
+<li> $\drop(e)$ removes edge $e$ from the matching.
+<li> $\size()$ returns the number of edges in the matching.
+<li> $\weight()$ returns the sum of the weights of the edges in the matching.
+</ul>
+There is a subtlety associated with the $\add$ method.
+If an edge is added to the matching that conflicts with some other edge
+already in the matching, the $\add$ method does not remove that other edge.
+It is the client code's responsibility to do this.
+It turns out that this behavior is more
+convenient for algorithms that extend a matching using augmenting paths.
+The core of the matching data structure is shown below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default class Matching extends Top {
+    g;             // reference to graph
+    #elist;         // list of edges in matching
+    #map;         // array mapping vertex to matching edge
+    
+    constructor(g) {
+        super(g.n);
+        this.g = g;
+        this.#elist = new List(this.g.edgeCapacity);
+        this.#elist.addPrev();
+        this.#map = new Int32Array(this.g.n+1);
+    }
+
+    first() { return this.#elist.first(); }
+
+    next(e) { return this.#elist.next(e); }
+
+    at(u) { return this.#map[u]; }
+
+    contains(e) { return this.#elist.contains(e); }
+
+    add(e) {
+        if (this.#elist.contains(e)) return;
+        this.#elist.enq(e);
+        this.#map[this.g.left(e)] = e;
+        this.#map[this.g.right(e)] = e;
+    }
+
+    drop(e) {
+        if (!this.#elist.contains(e)) return;
+        this.#elist.delete(e);
+        let u = this.g.left(e); let v = this.g.right(e);
+        if (e == this.#map[u]) this.#map[u] = 0;
+        if (e == this.#map[v]) this.#map[v] = 0;
+    }
+
+    size() { return this.#elist.length; }
+    
+    weight() {
+        let w = 0;
+        for (let e = this.first(); e != 0; e = this.next(e))
+            w += this.g.weight(e);
+        return w;
+    }
+}
+</textarea><p>
 
 <h2>Matchings in Bipartite Graphs</h2>
 The maximum size matching problem can be reduced to a maximum flow
 problem using the transformation sketched below.
 <p>
 <div  style="text-align:center;">
-<img width="500" src="figs/match2flow.png"><br>
+<img width="60%" src="figs/match2flow.png"><br>
 </div>
 <p>
 Given a bipartite graph with edges joining vertices in complementary
@@ -111,7 +189,7 @@ shown below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 let g;            // shared copy of graph
-let match;        // match[u] is edge incident to u in matching or 0
+let match;        // Matching object
 let link = null;  // link[u] is parent edge of u in augmenting path
 let free;         // free contains unmatched vertices in first subset
 let level;        // level[u] is distance to u from a free vertex
@@ -119,8 +197,8 @@ let nextedge;     // nextedge[u] is next edge at u to be processed
 let q;            // q is List used by newPhase
 
 export default function bimatchHK(bg) {
-    g = bg;
-    match = new Int32Array(g.n+1); // match is returned
+    g = bg; 
+    match = new Matching(g); // match is returned
     if (link == null || link.length != g.n+1) {
         link = new Int32Array(g.n+1);
         level = new Int32Array(g.n+1);
@@ -137,17 +215,16 @@ export default function bimatchHK(bg) {
 
     // add edges to match, yielding maximal (not maximum) matching
     for (let u = 1; u <= g.n; u++) {
-        if (match[u]) continue;
+        if (match.at(u)) continue;
         for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
-            steps++;
             let v = g.mate(u,e);
-            if (!match[v]) { match[u] = match[v] = e; break; }
+            if (!match.at(v)) { match.add(e); break; }
         }
     }
 
     // add unmatched vertices from first subset to free
     for (let u = subsets.first1(); u != 0; u = subsets.next1(u)) {
-        if (match[u] == 0 && g.firstAt(u) != 0) free.enq(u);
+        if (!match.at(u) && g.firstAt(u) != 0) free.enq(u);
     }
     while (newPhase()) {
         let r = free.first();
@@ -161,12 +238,10 @@ export default function bimatchHK(bg) {
             }
         }
     }
-    return match;
+
+    return [match];
 }
 
-/** Prepare for new phase. 
- *  @return true if there is an augmenting path.
- */
 function newPhase() {
     for (let u = 1; u <= g.n; u++) {
         level[u] = g.n; nextedge[u] = g.firstAt(u);
@@ -181,12 +256,12 @@ function newPhase() {
     while (!q.empty()) {
         let u = q.deq(); // u in first subset
         for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
-            if (e == match[u]) continue;
+            if (e == match.at(u)) continue;
             let v = g.mate(u,e); // v in second subset
             if (level[v] != g.n) continue;
             // first time we've seen v
             level[v] = level[u] + 1; 
-            let ee = match[v];
+            let ee = match.at(v);
             if (ee == 0) stopLevel = level[v]; // alt-path here too
             if (stopLevel == level[v]) continue;
             let w = g.mate(v,ee);
@@ -197,18 +272,11 @@ function newPhase() {
     return (stopLevel != g.n);
 }
 
-/** Find an augmenting path from specified vertex.
- *  @param u is a vertex in the first subset
- *  @return an unmatched vertex in the second subset, or 0 if there is no
- *  admissible path to such a vertex in the current phase;
- *  on successful return, the link array defines
- *  the augmenting path from the returned vertex back to u
- */
 function findpath(u) {
     for (let e = nextedge[u]; e != 0; e = g.nextAt(u,e)) {
         let v = g.mate(u,e);
         if (level[v] != level[u] + 1) continue;
-        let ee = match[v];
+        let ee = match.at(v);
         if (ee == 0) { nextedge[u] = e; link[v] = e; return v; }
         let w = g.mate(v,ee);
         if (level[w] != level[v] + 1) continue;
@@ -220,18 +288,16 @@ function findpath(u) {
     nextedge[u] = 0; return 0;
 }
 
-/** Flip the edges along an augmenting path
- *  @param u is an endpoint of an augmenting path; the edges in
- *  the path can be found using the link pointers
- */
 function augment(u) {
+    let ts = '';
     while (true) {
         let e = link[u];
         if (e == 0) break;
         let v = g.mate(u,e);
-        match[u] = match[v] = e;
+        match.add(e);
         let ee = link[v];
         if (ee == 0) break;
+        match.drop(ee);
         u = g.mate(v,ee);
     }
 }
@@ -253,7 +319,7 @@ The following code can be used to demonstrate the operation of the
 algorithm.
 <p> <pre style="padding-left:5%">
 let g = randomBigraph(5,3);
-log(g.toString(0,1));
+log(g.toString(1));
 let [match,ts] = bimatchHK(g,1);
 log(ts);
 </pre> <p>
@@ -287,10 +353,9 @@ on random graphs.
 <p> <pre style="padding-left:5%">
 let g = randomBigraph(1000,1);
 let t0 = Date.now();
-let [,,stats] = bimatchHK(g);
+let [match,,stats] = bimatchHK(g);
 let t1 = Date.now();
-let mm = 0; for (let e of match) mm += (e>0);
-log(`${g.n} ${g.m} ${t1-t0}ms ${JSON.stringify(stats)} ${mm/2}`);
+log(`${g.n} ${g.m} ${t1-t0}ms ${JSON.stringify(stats)} ${match.size()}`);
 </pre> <p>
 The first group of results shown below shows how the
 performance changes as the average vertex degree increases
@@ -363,26 +428,9 @@ a constant or an integer function on the vertices.
 
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
-/** Compute a maximum matching in a bipartite graph by reducing it to a
- *  max flow problem and applying Dinic's algorithm.
- *  @param g is an undirected bipartite graph
- *  @param trace causes a trace string to be returned when true
- *  @param subsets is an optional ListPair that defines the bipartite
- *  vertex subsets
- *  @param dmin is an array mapping vertices to degree lower bounds
- *  in a generalized matching; if omitted 0 is used
- *  @param dmax is an array mapping vertices to degree upper bounds
- *  in a generalized matching; if omitted 1 is used for all vertices
- *  @return a triple [match, ts, stats] where match is a Graph containing
- *  just the matching edges, ts is a possibly empty trace string
- *  and stats is a statistics object, both from Dinic's algorithm;
- *  @exceptions throws an exception if graph is not bipartite
- */
-export default function bimatchF(g, trace=false, subsets=null,
-                                 dmin=null, dmax=null) {
+export default function bimatchF(g, subsets=null, dmin=null, dmax=null) {
     // divide vertices into two independent sets
-    let steps = 0;
-    if (!subsets) { subsets = findSplit(g); steps += g.m; }
+    if (!subsets) subsets = findSplit(g);
     assert(subsets != null, "bimatchF: graph not bipartite");
 
     // create flow graph, taking care to maintain edge numbers
@@ -392,46 +440,36 @@ export default function bimatchF(g, trace=false, subsets=null,
     for (let e = g.first(); e != 0; e = g.next(e)) {
         steps++;
         let u = (subsets.in1(g.left(e)) ? g.left(e) : g.right(e));
-        fg.join(u,g.mate(u,e),e); fg.setCapacity(e,1);
+        fg.join(u,g.mate(u,e),e); fg.cap(e,1);
     }
     for (let u = subsets.first1(); u != 0; u = subsets.next1(u)) {
-        steps++;
-        let e = fg.join(fg.source,u); fg.setCapacity(e, (dmax ? dmax[u] : 1));
+        let e = fg.join(fg.source,u); fg.cap(e, (dmax ? dmax[u] : 1));
         if (dmin) fg.setFloor(e,dmin[u]);
     }
     for (let u = subsets.first2(); u != 0; u = subsets.next2(u)) {
-        steps++;
         let e = fg.join(u,fg.sink);
-        fg.setCapacity(e, (dmax!=null ? dmax[u] : 1));
+        fg.cap(e, (dmax!=null ? dmax[u] : 1));
         if (dmin) fg.setFloor(e,dmin[u]);
     }
 
     // compute flow(s)
     if (dmin) {
         let [,ts,stats] = flowfloor(fg, trace);
-        steps += stats.steps;
     }
     let [ts,stats] = maxflowD(fg, trace);
-    steps += stats.steps;
 
     // construct matching from flow
-    let match = (dmax ? new Graph(g.n,g.edgeRange) : new Int32Array(g.n+1));
-    if (trace) ts += '['; let first = true;
+    let match = (dmax ? new Graph(g.n,g.edgeRange) : new Matching(g));
     for (let e = g.first(); e != 0; e = g.next(e)) {
-        steps++;
         if (fg.f(e) != 0) {
-            if (first) first = false;
-            else if (trace) ts += ' ';
-                if (trace) ts += g.edge2string(e);
             if (dmax) { // generalized matching
                 match.join(g.left(e),g.right(e),e);
             } else {
-                match[g.left(e)] = match[g.right(e)] = e
+                match.add(e);
             }
         }
     }
-    if (trace) ts += ']\n';
-    return [match, ts, { 'steps': steps}];
+    return [match];
 }
 </textarea> <p>
 The flow-based algorithm for weighted graphs is similar and
@@ -463,12 +501,12 @@ export default function wbimatchH(bg) {
         leaves = new ArrayHeap(g.n,4);
         cost = new Float32Array(g.n+1);
     } else {
-        free.clear(); S.clear();
+        match.fill(0); free.clear(); leaves.clear();
     }
+    steps += g.n;
 
     // divide vertices into two independent sets
-    subsets = findSplit(g);
-    assert(subsets != null, "wbimatchH: graph not bipartite");
+    let subsets = findSplit(g);
 
     // add unmatched vertices from first subset to free
     for (let u = subsets.first1(); u != 0; u = subsets.next1(u)) {
@@ -481,16 +519,11 @@ export default function wbimatchH(bg) {
     // augment the matching until no augmenting path remains
     let u = findpath();
     while (u != 0) {
-        augment(u); u = findpath(); paths++;
+        augment(u); u = findpath();
     }
-    return match;
+    return [match];
 }
 
-/** Compute values for labels that give non-negative transformed costs.
- *  The labels are the least cost path distances from an imaginary
- *  vertex with a length 0 edge to every vertex in subsets's set1.
- *  Edges are treated as directed from set1 to set2.
- */
 function initLabels(subsets) {
     lab.fill(0);
     for (let u = subsets.first1(); u != 0; u = subsets.next1(u)) {
@@ -502,17 +535,10 @@ function initLabels(subsets) {
     }
 }
 
-/** Find a least cost augmenting path.
- *  Unmatched edges are "directed" from subsets's set1 to its set2.
- *  Matched edges are "directed" from set2 to set1.
- *  The cost of a path is the weight of its matched edges minus the
- *  weight of its unmatched edges.
- *  @returns the sink vertex of the path found, or 0 if no such path
- */
 function findpath() {
     link.fill(0); cost.fill(Infinity); leaves.clear();
     for (let u = free.first(); u != 0; u = free.next(u)) {
-        cost[u] = 0; leaves.insert(u,0);
+        cost[u] = 0; leaves.insert(u,0); 
     }
 
     let bestSink = 0; let bestPathCost = Infinity;
@@ -557,7 +583,8 @@ function findpath() {
         pathCost -= g.weight(e);
         u = g.mate(u,e); e = link[u];
     }
-    return (pathCost > 0 ? bestSink : 0);
+    if (pathCost <= 0) return 0;
+    return bestSink;
 }
 
 /** Flip the edges along an augmenting path

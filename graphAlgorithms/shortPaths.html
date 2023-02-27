@@ -29,7 +29,7 @@ lengths of its edges. So for example, the
 length of the path $c$, $a$, $b$, $g$ in the example below is 14.
 <p>
 <div  style="text-align:center;">
-<img width="200" src="figs/spath.png"><br>
+<img width="25%" src="figs/spath.png"><br>
 </div>
 <p>
 A <i>shortest path</i> joining a pair of vertices $u$ and $v$ is defined
@@ -93,7 +93,7 @@ be replaced with the simple shortest path $s$, $a$, $t$ by removing the
 non-negative cycle $a$, $b$, $c$.
 <p>
 <div  style="text-align:center;">
-<img width="150" src="figs/simplePath.png"><br>
+<img width="20%" src="figs/simplePath.png"><br>
 </div>
 <p>
 These observations yield the following basic theorem.
@@ -116,7 +116,7 @@ So for example, the heavy weight
 edges in the example below form a shortest path tree rooted at $a$.
 <p>
 <div  style="text-align:center;">
-<img width="200" src="figs/sptree.png"><br>
+<img width="25%" src="figs/sptree.png"><br>
 </div>
 <p>
 Note that if $G$ has a shortest path tree with root $s$, then it contains
@@ -143,7 +143,7 @@ if $\textit{distance}(v)>\textit{distance}(u)+\textit{length}(u,v)$,
 then the tree path from $s$ to $u$ is not a shortest path.
 <p>
 <div  style="text-align:center;">
-<img width="175" src="figs/sptProp.png"><br>
+<img width="20%" src="figs/sptProp.png"><br>
 </div>
 <p>
 Hence, if $T$ is a shortest path tree,
@@ -171,7 +171,7 @@ Now, let $q$ be the path consisting of the first $k$ edges of $p$
 and let $y$ be the last vertex in $q$.
 <p>
 <div  style="text-align:center;">
-<img width="250" src="figs/sptProof.png"><br>
+<img width="30%" src="figs/sptProof.png"><br>
 </div>
 <p>
 Then,
@@ -202,14 +202,14 @@ The next section describes a general method for computing
 shortest paths based on this approach.
 
 <h2>General Methods for Shortest Paths</h2>
-The <i>labeling method</i> builds a directed spanning tree incrementally
+The <i>labeling method</i> builds a directed subtree incrementally
 and transforms it to a shortest path tree by identifying edges that
 violate the shortest path tree property and modifying the tree to eliminate
 those violations.
 It uses two mappings, a <i>parent</i> mapping that maps a vertex $u$ to $p(u)$,
-its tentative parent in a partial shortest path tree, and a
+its tentative parent in the current subtree, and a
 <i>distance</i> mapping that maps vertex $u$ to $\textit{dist}(u)$,
-the distance from the source vertex to $u$ in the current partial tree.
+the distance from the source vertex to $u$ in the current subtree.
 Initially, $p(u)=\textbf{null}$ for all $v$ and $\textit{dist}(u)=\infty$
 for all $u$ except the source $s$, for which $\textit{dist}(s)=0$.
 It then repeatedly applies the following labeling step.
@@ -231,7 +231,7 @@ The example can be easily extended to yield
 graphs on $2k+1$ vertices that require $3(2^k-1)$ steps.
 <p>
 <div  style="text-align:center;">
-<img width="250" src="figs/badCaseLabel.png"><br>
+<img width="30%" src="figs/badCaseLabel.png"><br>
 </div>
 <p>
 Most algorithms for computing shortest paths apply the
@@ -271,34 +271,33 @@ function that implements a topological sort.
           style="font-size: 95%;background-color:lightCyan">
 export default function sptDag(g, s) {
     let topo = toposort(g); // sorted list of vertices
-    if (topo.length != g.n) 
-        return ['Error: graph is not acyclic', null, null];
+    if (!topo) assert(0, 'graph is not acyclic');
 
-    let pedge = new Array(g.n+1).fill(0);
+    let link = new Int32Array(g.n+1);
     let dist = new Array(g.n+1).fill(Infinity);
-    let reached = new Array(g.n+1).fill(false);
+    let reached = new Int8Array(g.n+1).fill(false);
         // reached[u]==true means u is no longer unlabeled
 
-    pedge[s] = 0; dist[s] = 0; reached[s] = true;
+    link[s] = 0; dist[s] = 0; reached[s] = true;
     for (let i = 0; i < g.n; i++) {
         let u = topo[i];
         if (!reached[u]) continue;
         for (let e = g.firstOut(u); e != 0; e = g.nextOut(u, e)) {
             let v = g.mate(u, e); reached[v] = true;
             if (dist[v] > dist[u] + g.length(e)) {
-                pedge[v] = e; dist[v] = dist[u] + g.length(e);
+                link[v] = e; dist[v] = dist[u] + g.length(e);
             }
         }
     }
 
-    return ['', pedge, dist];
+    return [link, dist];
 }
 
 function toposort(g) {
     let vlist = []; // list of vertices in topological order
     let q = new List(g.n);
         // list of vertices whose in-edges have all been touched
-    let icount = new Array(g.n+1).fill(0);
+    let icount = new Int32Array(g.n+1);
         // icount[u] = inDegree(u) - (# of times in-edge of u has been touched)
 
     // Initialize icount[u] and put nodes with icount[u]=0 on q
@@ -326,9 +325,9 @@ entering the following text.
 let g = new Digraph();
 g.fromString('{a[g:2] b[c:1] c[i:-2 e:1] d[a:-2 c:3 h:1] e[] ' +
              'f[a:4 d:-7 g:1] g[e:-4] h[b:-3] i[g:-1] j[e:4 h:-1 f:3]}');
-let [err, pedge, dist, traceString] = sptDag(g, 10, true);
+let [link, dist, traceString] = sptDag(g, 10, true);
 log(traceString);
-log(g.elist2string(pedge,null,true));
+log(g.elist2string(link,null,true));
 log(g.nlist2string(dist));
 </pre>
 This produces the result shown below.
@@ -382,26 +381,24 @@ A <i>Javascript</i> version is shown below.
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default function sptD(g, s) {
-    let pedge = new Array(g.n+1).fill(0); let ts = '';
+    let link = new Int32Array(g.n+1);
     let dist = new Array(g.n+1).fill(Infinity);
-    let h = new ArrayHeap(g.n, 2+Math.floor(g.m/g.n));
+    let border = new ArrayHeap(g.n, 2+Math.floor(g.m/g.n));
 
-    dist[s] = 0; h.insert(s, 0);
-    while (!h.empty()) {
-        let u = h.deletemin();
+    dist[s] = 0; border.insert(s, 0);
+    while (!border.empty()) {
+        let u = border.deletemin();
         for (let e = g.firstOut(u); e != 0; e = g.nextOut(u, e)) {
-            if (g.length(e) < 0)
-                return [ `Error: negative edge ${g.edge2string(e)}.`,
-                        pedge, dist];
+            if (g.length(e) < 0) assert(0, 'negative edge ' + g.e2s(e));
             let v = g.head(e);
             if (dist[v] > dist[u] + g.length(e)) {
-                dist[v] = dist[u] + g.length(e); pedge[v] = e;
-                if (h.contains(v)) h.changekey(v, dist[v]);
-                else h.insert(v, dist[v]);
+                dist[v] = dist[u] + g.length(e); link[v] = e;
+                if (border.contains(v)) border.changekey(v, dist[v]);
+                else border.insert(v, dist[v]);
             }
         }
     }
-    return ['', pedge, dist];
+    return [link, dist];
 }
 </textarea>
 <p>
@@ -409,7 +406,7 @@ The performance of Dijkstra's algorithm directly mirrors Prim's algorithm.
 The example below demonstrates the worst-case performance.
 <p>
 <div  style="text-align:center;">
-<img width="400" src="figs/hardcaseDijkstra.png"><br>
+<img width="50%" src="figs/hardcaseDijkstra.png"><br>
 </div>
 <p>
 In this graph,
@@ -422,8 +419,8 @@ each <i>changekey</i> moves a vertex from the bottom of the heap to the top.
 Finally, let's consider an algorithm that can handle the general case.
 This algorithm scans the vertices in breadth-first order.
 More precisely, it maintains a queue of labeled vertices and
-at each step, the first vertex in the queue is scanned, and any
-newly labeled vertices are added to the end of the queue.
+at each step, the first vertex in the queue is removed from the queue and
+scanned; any newly labeled vertices are added to the end of the queue.
 To evaluate the performance of this approach, it's helpful to divide
 the execution into
 a series of <i>passes</i>, where a pass ends, when all vertices on the
@@ -450,7 +447,7 @@ A <i>Javascript</i> version appears below.
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default function sptBM(g, s) {
-    let pedge = new Array(g.n+1).fill(0); let err = '';
+    let link = new Int32Array(g.n+1);
     let dist = new Array(g.n+1).fill(Infinity);
 
     let q = new List(g.n);
@@ -463,19 +460,18 @@ export default function sptBM(g, s) {
     }
     let pass = 0; let last = q.last(); let steps = 0;
     while (!q.empty()) {
-        let u = q.pop();
+        let u = q.deq();
         for (let e = g.firstOut(u); e != 0; e = g.nextOut(u,e)) {
             let v = g.head(e); steps++;
             if (dist[u] + g.length(e) < dist[v]) {
-                dist[v] = dist[u] + g.length(e); pedge[v] = e;
+                dist[v] = dist[u] + g.length(e); link[v] = e;
                 if (!q.contains(v)) q.enq(v);
             }
         }
         if (u == last && !q.empty()) { pass++; last = q.last(); }
-        if (pass == g.n) 
-            return ['Error: negative cycle', pedge, dist];
+        if (pass >= g.n) assert(0, 'negative cycle');
     }
-    return ['', pedge, dist];
+    return [link, dist];
 }
 </textarea>
 <p>
@@ -522,14 +518,14 @@ This transformation was defined by Edmonds and Karp.
 An example is shown below.
 <p>
 <div  style="text-align:center;">
-<img width="400" src="figs/spathTransform.png"><br>
+<img width="50%" src="figs/spathTransform.png"><br>
 </div>
 <p>
 <p>
 The shortest path tree can be computed using the Bellman-Moore algorithm.
 Since this runs in $O(mn)$ time, the overall running time is dominated
 by the $n$ repetitions of Dijkstra's algorithm.
-An <i>Javascript</i> implementation of the algorithm
+A <i>Javascript</i> implementation of the algorithm
 (referred to here as the Edmonds-Karp algorithm) is shown below.
 Note that results are returned as an array of shortest path trees
 and a corresponding array of distances.
@@ -537,30 +533,31 @@ and a corresponding array of distances.
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default function allpairsEK(g) {
-    let dist = new Array(g.n+1); let pedge = new Array(g.n+1);
+    let dist = []; dist.push(null);
+    let link = []; link.push(null);
     
     // compute distances in augmented graph
-    let [err,pe,d] = sptBM(g, 0);
-    if (err.length > 0) return [err, null, null];
+    let [,d] = sptBM(g, 0);
 
     // transform edge lengths
     for (let e = g.first(); e != 0; e = g.next(e)) {
-        g.setLength(e, g.length(e) + (d[g.tail(e)] - d[g.head(e)]));
+        g.length(e, g.length(e) + (d[g.tail(e)] - d[g.head(e)]));
     }
 
     // compute shortest paths & put inverse-transformed distances in dist.
-    stats.stepsD = 0; let statsD;
+    stats.stepsD = 0;
     for (let u = 1; u <= g.n; u++) {
-        [,pedge[u],dist[u]] = sptD(g, u);
+        let [pu,du] = sptD(g, u);
+        link.push(pu); dist.push(du);
         for (let v = 1; v <= g.n; v++) dist[u][v] -= (d[u]-d[v]);
     }
 
     // Restore original edge lengths.
     for (let e = g.first(); e != 0; e = g.next(e)) {
-        g.setLength(e, g.length(e) - (d[g.tail(e)] - d[g.head(e)]));
+        g.length(e, g.length(e) - (d[g.tail(e)] - d[g.head(e)]));
     }
 
-    return ['', pedge, dist];
+    return [link, dist];
 }
 </textarea>
 <p>
@@ -570,7 +567,7 @@ following text.
 let g = new Digraph();
 g.fromString('{a[b:3 d:-2 f:4] b[c:7 e:4 f:1] c[d:1 f:2] ' +
              'd[b:1 e:3] e[a:5 b:1] f[c:3 d:1 e:-2]}' );
-let [err, pedge, dist, traceString] = allpairsEK(g, 10, true);
+let [link, dist, traceString] = allpairsEK(g, 10, true);
 log(traceString);
 </pre>
 This produces the result shown below.
@@ -614,7 +611,7 @@ f
 </pre>
 <p>
 Floyd's algorithm is an alternate algorithm for the all-pairs
-problem that takes $O(n^3)$.
+problem that takes $O(n^3)$ time.
 For dense graphs, it can be substantially faster than Edmonds-Karp,
 since it has extremely low overhead.
 Suppose $G=(V,E)$ where $V=\{v_1,\ldots,v_n\}$.
@@ -644,58 +641,65 @@ A <i>Javascript</i> implementation is shown below.
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default function allpairsF(g) {
-	let dist = new Array(g.n+1); let pedge = new Array(g.n+1);
+    let dist = []; dist.push(null);
+    let link = []; link.push(null);
     
-    // initialize dist and pedge
+    // initialize dist and p
     for (let u = 1; u <= g.n; u++) {
-		dist[u] = new Array(g.n+1).fill(Infinity); dist[u][u] = 0;
-		pedge[u] = new Array(g.n+1).fill(0);
+        dist.push(new Array(g.n+1).fill(Infinity)); dist[u][u] = 0;
+        link.push(new Int32Array(g.n+1));
     }   
 
     for (let e = g.first(); e != 0; e = g.next(e)) {
-		let u = g.tail(e); let v = g.head(e);
-        dist[u][v] = g.length(e); pedge[u][v] = e;
+        let u = g.tail(e); let v = g.head(e);
+        dist[u][v] = g.length(e); link[u][v] = e;
     }   
 
     // compute distances
+    let updates = 0;
     for (let s = 1; s <= g.n; s++) {
-        if (dist[s][s] < 0)
-			return ['Error: negative cycle in graph', pedge, dist];
+        if ((dist[s][s] < 0) assert(0, 'negative cycle');
         for (let v = 1; v <= g.n; v++) {
             for (let w = 1; w <= g.n; w++) {
                 if (dist[v][w] > dist[v][s] + dist[s][w]) {
                     dist[v][w] = dist[v][s] + dist[s][w]; 
-                    pedge[v][w] = pedge[s][w];  
+                    link[v][w] = link[s][w];  
+                    updates++;
                 }   
             }   
         }   
-	}
-	return ['', pedge, dist];
+    }
+    return [link, dist];
 }
-
 </textarea>
 <p>
 To compare the performance of Edmonds-Karp and Floyd's algorithm,
 enter the following text into the web app.
 <pre style="padding-left:5%">
-let g = randomDigraph(100,10000);
+let g = randomDigraph(100,99);
 g.randomLengths(randomInteger, -5, 999);
-let t0 = Date.now();
-let [err, pedge, dist, ,stats] = allpairsEK(g);
-let t1 = Date.now();
-if (err) log(err)
-else (t1-t0 + ' ms', JSON.stringify(stats));
+try {
+    let t0 = Date.now();
+    let [link, dist, ,stats] = allpairsEK(g);
+    let t1 = Date.now();
+    log(t1-t0 + ' ms', JSON.stringify(stats));
+} catch(e) {
+    log(e)
+}
 
-t0 = Date.now();
-[err, pedge, dist, ,stats] = allpairsF(g);
-t1 = Date.now();
-if (err) log(err)
-else log(t1-t0 + ' ms', JSON.stringify(stats));
+try {
+    let t0 = Date.now();
+    let [link, dist, ,stats] = allpairsF(g);
+    let t1 = Date.now();
+    log(t1-t0 + ' ms', JSON.stringify(stats));
+} catch(e) {
+    log(e);
+}
 </pre>
 This produces the output shown below.
 <pre style="padding-left:5%">
-168 ms {"stepsBM":12672,"stepsD":450525} 
-20 ms {"steps":1000000,"updates":67560} 
+52 ms {"stepsBM":13959,"stepsD":515850} 
+19 ms {"steps":1000000,"updates":69276} 
 </pre>
 Note that this example uses a complete graph,
 so it's not surprising that Floyd's algorithm
@@ -709,22 +713,15 @@ the computation.
 The statistics shown for the Floyd's algorithm are the
 total steps in the inner loop and the number of steps that
 produce a change in the distance values.
-If the number of edges in the random graph is reduced to 1000,
+If the edge density is reduced to 10 edges per vertex,
 the results are
 <pre style="padding-left:5%">
-27 ms {"stepsBM":1009,"stepsD":161203} 
-19 ms {"steps":1000000,"updates":49195} 
+11 ms {"stepsBM":1061,"stepsD":207626}
+21 ms {"steps":1000000,"updates":46204}
 </pre>
-Edmonds-Karp is now much faster, but remains
-slower than Floyd's algorithm, which is largely unaffected by
+Edmonds-Karp is now faster than Floyd's algorithm,
+which is largely unaffected by
 the reduction in the edge count.
-On the other hand, doubling the vertex count
-(while holding the number of edges at 1000)
-shifts the advantage to Edmonds-Karp.
-<pre style="padding-left:5%">
-64 ms {"stepsBM":1001,"stepsD":477102} 
-136 ms {"steps":8000000,"updates":182397} 
-</pre>
 
 <h2>References</h2>
 <dl>

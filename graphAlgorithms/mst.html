@@ -340,12 +340,10 @@ log(`n=${n} density=${g.m/g.n}`);
 let t0, t1, steps, stats;
 
 t0 = Date.now(); [,,stats] = mstP(g); t1 = Date.now();
-steps = stats.loopCount+stats.siftup+stats.siftdown;
-log(`prim time=${t1-t0}ms steps/m=${(steps/g.m).toFixed(2)}`);
+log(`prim time=${t1-t0}ms steps/m=${(stats.steps/g.m).toFixed(2)}`);
 
 t0 = Date.now(); [,,stats] = mstP(g,0,2); t1 = Date.now();
-steps = stats.loopCount+stats.siftup+stats.siftdown;
-log(`prim_2 time=${t1-t0}ms steps/m=${(steps/g.m).toFixed(2)}`);
+log(`prim_2 time=${t1-t0}ms steps/m=${(stats.steps/g.m).toFixed(2)}`);
 </pre>
 When $m=n(n-1)/2$, the function <code>hardcaseP(n,m)</code> produces
 a graph like the worst-case example shown earlier,
@@ -381,7 +379,7 @@ double that for the case when $d$ matches the edge density.
 The impact on running time is somewhat smaller, as the siftup steps take less
 time than the siftdown steps.
 The impact of $d$ is greatest when the graphs are maximally dense.
-Reducing the density in the last case shows a much smaller effect.
+Reducing the density for the last test case shows a much smaller effect.
 <pre style="padding-left:5%;">
 n=1024 density=128 
 prim time=24ms steps/m=4.72 
@@ -445,22 +443,22 @@ implementation (abridged for clarity).
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default function mstK(g) {
-	// first make a sorted list of the edges in g
-	let edges = [];
-	for (let e = g.first(); e != 0; e = g.next(e)) edges.push(e);
-	edges.sort((e1, e2) => g.weight(e1) - g.weight(e2));
+    // first make a sorted list of the edges in g
+    let edges = [];
+    for (let e = g.first(); e != 0; e = g.next(e)) edges.push(e);
+    edges.sort((e1, e2) => g.weight(e1) - g.weight(e2));
 
-	// now examine edges in order, merging separate subtrees
-	let treeEdges = []; let subtrees = new Sets(g.n);
-	for (let i = 0; i < edges.length; i++) {
-		let e = edges[i];
-		let u = g.left(e); let v = g.right(e);
-		let cu = subtrees.find(u); let cv = subtrees.find(v);
-		if (cu != cv) {
-			treeEdges.push(e); subtrees.link(cu, cv);
-		}
-	}
-	return treeEdges;
+    // now examine edges in order, merging separate subtrees
+    let treeEdges = []; let subtrees = new Sets(g.n);
+    for (let i = 0; i < edges.length; i++) {
+        let e = edges[i];
+        let u = g.left(e); let v = g.right(e);
+        let cu = subtrees.find(u); let cv = subtrees.find(v);
+        if (cu != cv) {
+            treeEdges.push(e); subtrees.link(cu, cv);
+        }
+    }
+    return treeEdges;
 }
 </textarea>
 <p>
@@ -505,17 +503,17 @@ A <i>Javascript</i> implementation of the algorithm appears below.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default function mstCT(g) {
-    let trees = new Sets(g.n); // one subset for each mst subtree
+    let trees = new MergeSets(g.n); // one subset for each mst subtree
 
     // initialize collection of edge endpoint heaps
     // each heap contains edge endpoints touching one mst subtree
-    let epHeap = new LeftistHeaps(2*g.edgeCapacity+1, 2*g.edgeCapacity+1, true,
-        ee => ee > 1 && trees.find(g.left(Math.trunc(ee/2))) ==
-                          trees.find(g.right(Math.trunc(ee/2))));
+    let epHeap = new LazyHeaps(2*(2*g.edgeRange+1), 
+        ee => ee == 1 || trees.find(g.left(~~(ee/2))) ==
+                         trees.find(g.right(~~(ee/2))));
     for (let e = g.first(); e != 0; e = g.next(e)) {
-        epHeap.setkey(2*e, g.weight(e)); epHeap.setkey(2*e+1, g.weight(e));
+        epHeap.key(2*e, g.weight(e)); epHeap.key(2*e+1, g.weight(e));
     }
-    epHeap.setkey(1, 0); // unused heap item
+    epHeap.key(1, 0); // unused heap item
 
     let h = new Int32Array(g.n+1);  // h[u] is heap for tree whose id is u
     let q = new List(g.n);   // queue of trees
@@ -538,9 +536,8 @@ export default function mstCT(g) {
         let tu = trees.find(u); let tv = trees.find(v);
 
         q.delete(tu); q.delete(tv);
-        h[trees.link(tu, tv)] = epHeap.lazyMeld(h[tu], h[tv]);
+        h[trees.merge(tu, tv)] = epHeap.lazyMeld(h[tu], h[tv]);
         q.enq(trees.find(u));
-
     }
     return treeEdges;
 }
@@ -586,13 +583,13 @@ j[i:5]
 }
 
 selected edge, queue, tree vertex sets
-{a,d,2} [b c e f g h i j a] {{a d}}
-{a,b,3} [c e f g h i j a] {{a b d}}
-{c,d,1} [e f g h i j a] {{a b c d}}
-{e,f,1} [g h i j a e] {{a b c d} {e f}}
-{g,h,1} [i j a e g] {{a b c d} {e f} {g h}}
-{i,j,5} [a e g i] {{a b c d} {e f} {g h} {i j}}
-{f,g,2} [i e] {{a b c d} {e f g h} {i j}}
+{a,d,2} [b c e f g h i j a] {[a d]}
+{a,b,3} [c e f g h i j a] {[a b d]}
+{c,d,1} [e f g h i j a] {[a b c d]}
+{e,f,1} [g h i j a e] {[a b c d] [e f]}
+{g,h,1} [i j a e g] {[a b c d] [e f] [g h]}
+{i,j,5} [a e g i] {[a b c d] [e f] [g h] [i j]}
+{f,g,2} [i e] {[a b c d] [e f g h] [i j]}
 </textarea>
 <p>
 The trace string returned by <code>mstCT</code>
@@ -604,18 +601,20 @@ If the penultimate line is changed to
 <pre>
     let [,ts] = mstCT(g, 2);
 </pre>
-it also shows the heap of edges incident to the newly formed tree.
+it also shows the heap of edges incident to each newly formed tree.
+Note that dummy and retired heap items are not shown, so some of the
+new heaps are effectively empty.
 <p>
 <textarea rows="9" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-selected edge, queue, tree vertex sets, heap of incident edges
-{a,d,2} [b c e f g h i j a] {{a d}} ({a,b}:3 {c,d}:1)
-{a,b,3} [c e f g h i j a] {{a b d}} ({c,d}:1 {b,c}:7)
-{c,d,1} [e f g h i j a] {{a b c d}} ()
-{e,f,1} [g h i j a e] {{a b c d} {e f}} ({f,g}:2 {f,h}:3 {e,g}:3)
-{g,h,1} [i j a e g] {{a b c d} {e f} {g h}} ({e,g}:3 {f,g}:2 {f,h}:3)
-{i,j,5} [a e g i] {{a b c d} {e f} {g h} {i j}} ()
-{f,g,2} [i e] {{a b c d} {e f g h} {i j}} ()
+selected edge, queue, tree vertex sets, heap for new tree
+{a,d,2} [b c e f g h i j a] {[a d]} [ab:3 cd:1]
+{a,b,3} [c e f g h i j a] {[a b d]} [cd:1 bc:7]
+{c,d,1} [e f g h i j a] {[a b c d]} 
+{e,f,1} [g h i j a e] {[a b c d] [e f]} [fg:2 fh:3 eg:3]
+{g,h,1} [i j a e g] {[a b c d] [e f] [g h]} [eg:3 fg:2 fh:3]
+{i,j,5} [a e g i] {[a b c d] [e f] [g h] [i j]} 
+{f,g,2} [i e] {[a b c d] [e f g h] [i j]} 
 </textarea>
 <p>
 The running time of the algorithm is dominated by the
