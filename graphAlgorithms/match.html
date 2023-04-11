@@ -346,7 +346,7 @@ is held at 3. While the number of phases grows more slowly than $n^{1/2}$,
 in other respects the performance is
 consistent with the worst-case analysis.
 <p>
-The code below can be used to compare the Hopcroft-Karp algorithm
+The following script can be used to compare the Hopcroft-Karp algorithm
 to the algorithm that computes the matching by explicitly reducing
 it to a max flow problem.
 <p> <pre style="padding-left:5%">
@@ -572,7 +572,7 @@ negative cycles at the start, so there is no need to eliminate negative cycles.
 Also, because the graph is acyclic, the initial computation of the labels
 can be simplified.
 <p>
-The code below can be used to demonstrate the Hungarian algorithm.
+The following script can be used to demonstrate the Hungarian algorithm.
 <p> <pre style="padding-left:5%">
 let g = randomBigraph(5,3); g.randomWeights(randomInteger, 0, 9);
 let [match,ts] = wbimatchH(g,1);
@@ -605,7 +605,7 @@ d {d,g,5} {f,g,9} {f,k,8} {b,k,8} {b,h,7} {e,h,5} {e,i,3} i 1
 
 matching: [{d,g,5} {f,k,8} {c,l,6} {b,h,7} {e,i,3} {a,j,5}]
 </pre> <p>
-The code below can be used to evaluate the performance of the
+The following script can be used to evaluate the performance of the
 Hungarian algorithm and compare it to the similar algorithm
 using minimum cost flows.
 <p> <pre style="padding-left:5%">

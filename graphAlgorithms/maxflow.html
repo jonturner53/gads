@@ -217,7 +217,7 @@ Notice that the inner <code>for</code> loop of the <code>findpath</code>
 function iterates over all edges incident to vertex <code>u</code>,
 both incoming and outgoing.
 <p>
-The following code can be used to run the program in the web app.
+The following script can be used to run the program in the web app.
 <pre style="padding-left:5%">
 let g = new Flograph();
 g.fromString('{a->[b:3 d:2] b[c:3 d:7 g:3] c[d:1 e:5] d[e:2 f:1 g:3] ' +
@@ -413,7 +413,7 @@ $O(m^2(\log_{2+m/n} n)(\log C))$.
 For dense graphs, this is $O(m^2(\log C))$ and
 if $C$ is polynomial in $n$, $O(m^2 \log n)$.
 <p>
-The following code can be used to run the program in the web app.
+The following script can be used to run the program in the web app.
 <pre style="padding-left:5%">
 let g = new Flograph();
 g.fromString('{a->[b:3 d:2] b[c:3 d:7 g:3] c[d:1 e:5] d[e:2 f:1 g:3] ' +
@@ -601,7 +601,7 @@ the scale threshold. The use of the heap in the max capacity
 algorithm allows it to avoid examining most of these edges.
 <p>
 To compare the performance of the various augmenting path
-algorithms on random graphs, enter the following code in the web app.
+algorithms on random graphs, enter the following script in the web app.
 <pre style="padding-left:5%">
 function randomTest(algo, label, g, d) {
     g.clearFlow();
@@ -956,7 +956,7 @@ these operations is $O(m\log n)$, and so the overall runnning time
 is $O(mn\log n)$.
 
 <h2>Performance Comparisons</h2>
-The code below compares the performance of the shortest augmenting
+The following script compares the performance of the shortest augmenting
 path algorithm with both versions of Dinic's algorithm on worst-case
 examples.
 <pre style="padding-left:5%">
@@ -1475,7 +1475,7 @@ Note that the default value for <code>relabThresh</code> is <code>g.m</code>.
 This choice ensures that the total amount of computation done for
 incremental relabeling roughly matches that for batch relabeling method.
 <p>
-The following code fragment can be used to demonstrate the FIFO method.
+The following script can be used to demonstrate the FIFO method.
 <pre style="padding-left:5%">
 let g = new Flograph();
 g.fromString('{a->[b:5 d:6] b[c:3 d:7 g:3] c[d:1 e:5] d[e:2 f:1 g:3] ' +
@@ -1642,7 +1642,7 @@ i[g:5 j:6/3]
 </textarea>
 
 <h3>Performance Comparisons</h3>
-The following code fragment can be used to compare different
+The following script can be used to compare different
 choices of the <code>relabThresh</code> parameter
 for random graphs.
 <p> <textarea rows="14" cols="80" readonly

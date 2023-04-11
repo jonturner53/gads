@@ -189,7 +189,7 @@ in the parent pointers at the end of every pass. Since the
 <code>cycleCheck</code> method is $O(n)$, this does not increase the
 worst-case performance beyond $O(mn)$ per cycle found, and short cycles
 are typically found long before pass $n$.
-The code below can be used to run <code>mcflowK</code> in the web app.
+The following script can be used to run <code>mcflowK</code> in the web app.
 <p>
 <pre style="padding-left:5%">
 let g = randomFlograph(12,3);
@@ -245,7 +245,7 @@ non-zero flows are preceded by a forward slash.
 In this example, the initial flow values are all zero.
 If a max value flow is computed first,
 the final flow is a min cost, max flow.
-The following code fragment can be used to observe the performance
+The following script can be used to observe the performance
 experimentally on random graphs.
 <p><pre style="padding-left:5%">
 let n=40; let d=4;
@@ -428,7 +428,7 @@ While this version does use fewer cycles than the basic version of Klein's
 method, the improvement is fairly modest on random graphs, and the time required
 to find each cycle is much larger, making it slower than the basic version,
 at least for this class of graphs.
-The following code can be used to demonstrate this.
+The following script can be used to demonstrate this.
 
 <p><pre style="padding-left:5%">
 let n=40; let d=4;
@@ -571,7 +571,7 @@ The resulting flow is a least cost flow among all flows (regardless of their val
 This turns out to be useful in some algorithms for bipartite matching,
 as will be discussed in the next section.
 If the flag is false, the returned flow is a maximum flow with minimum cost.
-The following code can be used to demonstrate the algorithm.
+The following script can be used to demonstrate the algorithm.
 <p><pre style="padding-left:5%">
 let g = randomFlograph(12,3);
 g.randomCapacities(randomInteger, 1, 19);
@@ -677,7 +677,7 @@ first four augmenting path steps. The remaining steps increase the flow value,
 while increasing the cost. Also note that the second run halts after the
 first four steps.
 <p>
-The following code can be used to evaluate the performance of the algorithm.
+The following script can be used to evaluate the performance of the algorithm.
 <p><pre style="padding-left:5%">
 let n=40; let d=4;
 let g = randomFlograph(n,d);
