@@ -1,0 +1,298 @@
+<html>
+<head>
+<title>Linear Programming and Graph Algorithms</title>
+<link type="text/css" rel="stylesheet" href="../main.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+</head>
+
+<body bgcolor=ffffff>
+
+<h1>Linear Programming and Graph Algorithms<sup>&copy;</sup></h1>
+
+<i>Linear programming</i> (LP) is a general optimization procedure that
+seeks to minimize (or maximize) a linear objective function, subject
+to linear constraints. For real-valued optimization variables,
+linear programs can be solved in polynomial time.
+Many graph problems can be expressed as linear programs,
+hence can be solved by applying a general solution procedure
+for linear programming.
+Others can be expressed as <i>integer linear programs</i>;
+while ILPs cannot be solved efficiently in general,
+specific problems can often be solved efficiently using algorithms
+based on linear programming.
+The material in this chapter is used in the last half of the next
+chapter.
+
+<h2>Basic LP Primer</h2>
+A linear program consists of a linear <i>objective function</i>
+on $n$ non-negative real-valued variables $x_j$.
+$$\sum_j c_j x_j$$
+and a set of $m$ linear constraints
+$$\sum_j a_{ij} x_j \leq b_i \qquad \textrm{for } 1\leq i \leq m$$
+The constants $c_j$ are referred to as <i>objective coefficients</i>,
+the constants $a_{ij}$ as <i>constraint coefficients</i> and
+the constants $b_j$ as <i>bounds</i>.
+A <i>feasible solution</i> is a set of values for the optimization
+variables $x_j$ that satisfies all the constraints.
+The goal is to find a feasible solution that maximizes
+the value of the objective function.
+<p>
+As an example, the shortest path problem for positive edge lengths
+can be stated as a linear program, in which the optimization variables are the
+shortest path distances from the source vertex to all the other vertices
+and the constraints take the form $d_v - d_u \leq l_{uv}$
+for all edges $(u,v)$, where $l_{uv}$ is the length of $(u,v)$.
+The objective function is the sum of the distances.
+Consider the graph shown below.
+<p>
+<div  style="text-align:center;">
+<img width="18%" src="figs/lpSpt1.png">
+</div>
+<p>
+In this case, the linear program for the shortest path problem is
+\begin{eqnarray*}
+\textrm{maximize}\; d_a + d_b + d_c&& \\
+\textrm{subject to} \qquad\;\;
+d_a \leq 2&& \\
+d_b \leq 6&& \\
+d_b - d_a \leq 3&& \\
+d_c - d_a \leq 5&& \\
+d_c -d_b \leq 4&&
+\end{eqnarray*}
+To better understand the correspondence to the shortest path problem,
+imagine a ball-and-string model of the graph, in which the vertices
+are connected by strings of the appropriate length. 
+Pulling the source vertex $s$ and another vertex $u$ as far apart
+as the strings allow, separates $s$ and $u$ by their shortest path
+distance. This is also, the largest distance
+permitted by the constraints. Maximizing the sum of the distances,
+maximizes the individual distances as well.
+Notice that the inequalities used in the constraints are the
+same ones that appear in the shortest path tree theorem.
+<p>
+Given any specific assignment of values to the variables,
+some of the constraint inequalities will be equalities.
+Such constraints are called <i>tight</i> (for the given assignment)
+while the others are called <i>loose</i>.
+For the shortest path example, an optimal solution has $d_a=2$, $d_b=5$
+and $d_c=7$, making the first, third and fourth constraints tight.
+In general, the tight constraints for an optimal solution are the ones
+that prevent any further increase in the objective function.
+For the shortest path LP, the tight constraints in an optimal
+solution correspond to edges on shortest paths.
+It turns out that this familiar property of shortest paths is
+also a consequence of a more general property of linear programs.
+<p>
+The form of linear program introduced above
+(maximizing an objective function subject to constraints that
+place upper bounds on linear combinations of the optimization variables)
+is called <i>standard form</i>.
+When an LP is expressed in this form, it can be written more
+concisely in the form of vectors and matrices.
+$$\textrm{maximize}\;C\!\cdot\! X \quad\textrm{subject to}\;AX\leq B$$
+where $C$ is a vector of objective coefficients ($C$ is its transpose),
+$X$ is a vector of variables, $A$ is an array of constraint coefficients
+and $B$ a vector of bounds. For the example shortest path LP,
+$C^T=[1\;1\;1]$, $X^T=[d_a\;d_b\;d_c]$, $B^T=[2\;6\;3\;5\;4]$ and
+$$
+A=
+\left[
+\begin{array}{r&r&r}1&0&0\\0&1&0\\-1&1&0\\-1&0&1\\0&-1&1 \end{array}
+\right]
+$$
+Expressing a linear program in this way is a considerable notational
+convenience.
+Often a linear program is most naturally expressed using a mixture
+of upper bound constraints and lower bound constraints. One can still
+write such LPs in standard form by multiplying both sides of each
+lower bound constraint by $-1$. Equality constraints can also be
+handled by expressing them as a pair of inequalities.
+
+<h2>Duality</h2>
+
+There is an alternative linear program that can be used to describe
+the shortest path problem.
+In this LP, the variables $z_e$ can be viewed as defining a collection of paths.
+Specifically, for any collection of paths from the source to
+the other vertices, $z_e$ is simply the number of times edge $e$ appears
+on one of the paths and the objective is to find values of the $z_e$
+that minimize $\sum_e l_e z_e$.
+To ensure that the values of the $z_e$ do define a collection of paths,
+they are constrained so that the sum of the $z$ values on edges entering
+a vertex $u$ is exactly one larger than the sum of the $z$ values on
+the edges leaving $u$.
+The difference of one accounts for the path that ends at $u$.
+<p>
+For the example shortest path problem, this LP can be written
+\begin{eqnarray*}
+&&\textrm{minimize}\quad
+2 z_{sa} + 6 z_{sb} + 3 z_{ab} + 5 z_{ac} + 4 z_{bc} \\
+&&\begin{array}{r}
+\textrm{subject to} \qquad\quad
+z_{sa} - z_{ab} - z_{ac} \geq 1 \\
+z_{sb} + z_{ab} - z_{bc} \geq 1 \\
+z_{ac} + z_{bc} \geq 1 
+\end{array}
+\end{eqnarray*}
+Or in matrix form,
+$$
+\textrm{minimize}\;
+\left[ \begin{array}{r&r&r&r&r}2&6&3&5&4\end{array} \right]
+\left[
+\begin{array}{r&r&r&r&r}z_{sa}\\z_{sb}\\z_{ab}\\z_{ac}\\z_{bc}\end{array}
+\right]
+\quad\textrm{subject to}\;
+\left[
+\begin{array}{r&r&r}1&0&-1&-1&0\\0&1&1&0&-1\\0&0&0&1&1\end{array}
+\right]
+\left[
+\begin{array}{r&r&r&r&r}z_{sa}\\z_{sb}\\z_{ab}\\z_{ac}\\z_{bc}\end{array}
+\right]
+\geq
+\left[ \begin{array}{r&r&r&r&r}1\\1\\1\end{array} \right]
+$$
+This is an example of the <i>dual</i> form of the original LP.
+Observe that in the dual, the objective function coefficients are the
+same as the bounds in the <i>primal</i> version, while the bounds in the
+dual are the objective function coefficients in the primal.
+Also, the constraint matrices of the two problems are transposes of
+one another, and maximization in the primal becomes minimization in
+the dual, while the constraints go from upper bounds to lower bounds.
+<p>
+In general, if the <i>primal</i> version of the problem is
+$$\textrm{maximize}\;C\!\cdot\! X \quad\textrm{subject to}\;AX\leq B$$
+the dual is
+$$\textrm{minimize}\;B\!\cdot\! Z \quad\textrm{subject to}\;A^T Z\geq C$$
+<p>
+The optimal objective function value is the same for the primal and the dual,
+enabling two distinct strategies for solving a linear program.
+
+<h2>Integer Variables in Linear Programs</h2>
+Now, there is an issue with the dual LP described in the last section.
+As described, the variables $z_e$ must be integers.
+This is necessary in order for a solution to make sense
+in the shortest path context,
+but linear programs are explicitly defined for real-valued variables,
+not integers.
+Hence, the dual is not really an LP;
+rather, it is an <i>Integer Linear Program</i> or ILP.
+In general, ILPs are more difficult to solve than LPs, often much
+more difficult.
+Now, if the variables are allowed to take on non-integer
+values, the resulting problem is called the </i>LP-relaxation</i> of the ILP.
+It turns out that for the shortest path ILP, the optimum value of
+the objective function for the relaxed version is the same as for
+the integer version.
+This turns out to be a useful property that can often be used to
+construct efficient algorithms with the aid of the LP-relaxation.
+<p>
+In general, an ILP has the same optimum value as its LP-relaxation if
+its constraint matrix is <i>totally unimodular</i> (TU).
+A matrix is totally unimodular if every square sub-matrix has
+a determinant of 0, $+1$ or $-1$.
+Note that this means that a matrix is TU if and only if its transpose is.
+It can be difficult to determine whether a matrix is TU from this
+definition, but there is a common class of TU matrices that are relatively
+easy to recognize. In particular, a matrix $A$ is TU if
+every entry is 0, $+1$ or $-1$,
+every column has at most two non-zero entries and
+the rows can be partitioned into two sets $B$ and $C$
+in such a way that
+<ul>
+<li> if two rows of $A$ have a column with non-zero entries of the same sign,
+	then one row is in $B$ and the other in $C$ and
+<li> if two rows of $A$ have a column with non-zero entries with opposite signs,
+	then either both rows are in $B$ or both are in $C$.
+</ul>
+<p>
+For the shortest path problem, the constraint matrix for the primal
+has a single $+1$ entry and a single $-1$ entry in every column,
+hence the TU condition can be satisfied by placing all rows in the same set.
+The constraint matrix for the dual is also TU, since it is the
+transpose of the primal's matrix.
+
+<h2>Complementary Slackness</h2>
+
+In general, for any given assignment of values to the variables of an LP,
+the difference between the two sides of a constraint is referred
+to as its <i>slack</i>. If the constraint is satisfied, the slack
+is non-negative.
+If the constraint is violated, its slack is negative.
+In a feasible solution, all constaints have non-negative slack.
+It is often possible to increase the objective function's value by
+reducing the slack in one of its constraints.
+<p>
+The <i>slack variables</i> of a linear program in standard form
+are defined as $[s_i]=B-AX$, while the slack variables of its dual are defined
+as $[t_j]=A^TZ-C$.
+The <i>complementary slackness</i> property states that
+if $X$ and $Z$ are optimal assignments to the primal and dual problems,
+then $s_i z_i=0$ for all $i$ and $t_j x_j=0$ for all $j$.
+So, for any optimal pair of assignments, for each non-zero primal variable,
+the corresponding dual constraint must be tight,
+and for each non-zero dual variable,
+the corresponding primal constraint must be tight.
+These two conditions are referred to as the
+<i>complementary slackness conditions</i>.
+<p>
+The complementary slackness property can be taken one step further.
+If a pair of feasible solutions to the primal and dual satisfy 
+the complementary slackness conditions for all variable/constraint pairs,
+then those solutions are optimal.
+This leads to a broad class of algorithms referred to
+as <i>primal-dual</i> algorithms which start by
+constructing feasible solutions for both the primal and dual, then
+repeatedly modify those solutions in order to reduce the number of
+violations of the complementary slackness condition.
+<p>
+This can be demonstrated using the shortest path LP and its dual.
+One can construct a feasible solution to the primal, by setting $d_u=0$
+for all vertices $u$.
+To construct a feasible solution to the dual, first construct a breadth-first
+search tree $T$ from the source, then for each edge $e$ in the tree, let
+$z_e$ be the number of vertices in the tree that can be reached through $e$.
+Note that this assignment of the $z_e$ values satisfies all the dual
+constraints <i>and</i> makes them tight, meaning that complementary
+slackness conditions involving the dual constraints are all satisfied at
+the start.
+To convert the initial pair of solutions to an optimal pair,
+repeat the following step.
+<p style="padding-left:5%">
+Select a vertex $v$ for which none of the incoming edges has tight primal
+constraint. Increase $d_v$ until at least one of these constraints is tight
+(and none are violated).
+Let $e=(u,v)$ be an edge for which the primal is now tight.
+Modify the tree $T$ by changing the parent of $v$ to $u$
+(implicitly updating the $z_e$ values). 
+<p>
+Each step maintains the validity of both the primal and dual constraints.
+Because the dual variables are always defined relative to $T$,
+the dual constraints are also tight.
+Each step also makes at least one primal constraint tight,
+but may make other primal constraints loose. However, because each
+step increases a primal variable and the primal constraints limit
+the maximum value of the primal variables, the algorithm must
+eventually terminate.
+When it terminates every vertex has at least one tight
+primal constraint on its incoming edges.
+Note that at this point, for every loose primal
+constraint at an edge $e$, $z_e=0$. Hence the complementary slackness
+conditions are satisfied.
+
+<hr> <h4>&copy; Jonathan Turner - 2023</h4>
+</body>
+</html>
