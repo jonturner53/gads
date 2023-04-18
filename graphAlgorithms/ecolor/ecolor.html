@@ -1,0 +1,90 @@
+<html>
+<head>
+<title>Edge Coloring</title>
+<link type="text/css" rel="stylesheet" href="../../main.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+</head>
+<body bgcolor=ffffff>
+\(
+\newcommand{\color}{\textit{color}}
+\newcommand{\avail}{\textit{avail}}
+\)
+
+<h1>Edge Coloring<sup>&copy;</sup></h1>
+
+An <i>edge coloring</i> in an undirected graph is a function $\color$
+that maps each edge to a <i>color</i>, where no vertex is incident
+to more than one edge of the same color.
+The objective is to color the edges using the smallest number of colors.
+An example is shown below where the edge colors are shown as
+positive integers.
+<p>
+<div  style="text-align:center;">
+<img width="20%" src="figs/ecolor1.png"><br>
+</div>
+<p>
+Note that the edges assigned any specific color form a matching and
+that since the maximum vertex degree in the example is 4, no coloring
+can use fewer than 4 edges.
+In fact, <i>Vizing's theorem</i> states that the number of colors needed
+to color any graph is either $\Delta$ or $\Delta+1$, where $\Delta$
+is the maximum vertex degree.
+Edge coloring is NP-complete for general graphs, but for
+bipartite graphs, the number of colors needed is exactly $\Delta$.
+
+<h3>Path Recoloring Method</h3>
+The proof of Vizing's theorem includes a method to color the edges of the
+graph, which when specialized to the bipartite case is simple and
+typically quite fast.
+For each vertex, $u$ it maintains a set of <i>available colors</i>,
+$\avail(u)$ consisting of all colors not yet assigned to any edge
+incident to $u$.
+It colors the graph by repeating the following step.
+<p style="padding-left:5%">
+let $e=\{u,v\}$ be an uncolored edge. If $\avail(u)$ and $\avail(v)$ have
+a color $c$ in common, let $\color(e)=c$ and proceed to the next edge. 
+Otherwise, let $c_u\in avail(u)$, $c_v\in avail(v)$ and identify the
+path $p$ starting at $v$ and consisting of edges with colors alternating
+between $c_v$ and $c_u$. Reverse the colors of the edges on $p$ and
+then let $\color(e)=c_u$. If the last vertex $w$ of $p$ is not $u$,
+then update $\avail(w)$ to reflect the new color of the last edge on $p$.
+<p>
+Note that because the graph is bipartite, the partial coloring is
+always valid and edges on path $p$ alternate colors,
+$p$ cannot contain a cycle.
+In the worst case, many edges require recoloring of a path and the
+paths are long. This leads to a running time of $O(mn)$.
+More typically, most edges can be colored without path recoloring,
+and when it is required, the paths are fairly short.
+<p>
+A <i>Javascript</i> implementation of Vizing's algorithm appears below.
+
+<h3>Gabow's Algorithm</h3>
+
+<h3>Matching Vertices of Maximum Degree</h3>
+
+<h2>References</h2>
+<dl>
+<dt> [Gabow76]
+<dd> &ldquo;Using Euler Partitions to Edge Color Multigraphs,&rdquo;
+	by Harold Gabow. In <i>Journal of Computer and Information Sciences</i>,
+	1976.
+</dl>
+<hr> <h4>&copy; Jonathan Turner - 2022</h4>
+<script src="../googleAnalytics.js"></script>
+</body>
+</html>

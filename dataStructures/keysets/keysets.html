@@ -1,0 +1,405 @@
+<html>
+<head>
+<title>Key Sets and Maps</title>
+<link type="text/css" rel="stylesheet" href="../../main.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+</head>
+<body bgcolor=ffffff>
+
+<h1>Key Sets and Maps<sup>&copy</sup></h1>
+
+A <i>key set</i> is a set of items, each having a key from some
+ordered universe of keys. It can be implemented efficiently using
+a binary tree in which the infix order of the vertices is consistent
+with the order of the keys.
+Such a tree is called a <i>binary search tree</i>,
+since one can quickly lookup an item with a specified key $k$ by
+comparing $k$ to the key associated with a tree node $u$,
+to determine which of $u$'s subtrees contains an item with key $k$.
+<p>
+A <i>map</i> is a collection of key-value pairs that allows one to
+efficiently retrieve a value corresponding to a specified key,
+and can be efficiently implemented using a key set.
+
+<h2><a label="keySets">Key Sets</a></h2>
+
+The <i>key sets</i> data structure represents a collection of key sets,
+and can be implemented using binary forest.
+A typical implementation supports the following methods.
+<ul>
+<li> <code>key(i,k)</code> sets the key of item <code>i</code> to
+    <code>k</code>, if <code>k</code> is present;
+    in any case, it returns the key of <code>i</code>.
+<li> <code>contains(i,s)</code> returns true if item <code>i</code> is
+    contained in set <code>s</code>.
+<li> <code>lookup(k,s)</code> returns an item <code>i</code> in set
+    <code>s</code> with key <code>k</code>, or 0 if there is no such item.
+<li> <code>insert(i,s)</code> inserts item <code>i</code> into set
+    <code>s</code> and returns the modified set.
+<li> <code>delete(i)</code> deletes an item <code>i</code> from the set
+    containing it; upon return, <code>i</code> is a singleton.
+</ul>
+Some implementations also support the following methods.
+<ul>
+<li> <code>join(s1,i,s2)</code> forms a larger set from a singleton
+    item <code>i</code> and sets <code>s1</code> and <code>s2</code>,
+    where <code>s1</code> is required to have keys $\leq$<code>key(i)</code>
+    and <code>s2</code> is required to have keys $\geq$<code>key(i)</code>.
+<li> <code>split(i)</code> divides a set into three parts,
+    <code>s1</code> containing items with keys $\leq$<code>key(i)</code> and
+    <code>s2</code> containing items with keys
+    $\geq$<code>key(i)</code> and <code>i</code>.
+</ul>
+Keys sets can be implemented by extending the
+<a href="trees.html#binaryForest"><i>binary forest</i></a> class
+introduced earlier, or either of its balanced variants.
+The provided <i>Javascript</i> implementation extends the
+<a href="./trees.html#balancedForest"><i>balanced forest</i></a>
+class and its core methods (excluding those inherited
+the <code>BalancedForest</code>) are shown below.
+<p>
+<textarea id="components" rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default class KeySets extends BalancedForest {
+    #key;        // #key[u] is the key of item u
+    #stringKey;  // true if the keys are strings
+    #compare;    // function used to compare two strings
+
+    constructor(n=10, stringKey=false) {
+        super(n);
+        this.#stringKey = stringKey;
+        this.#compare = (stringKey ? (a,b) => a.localeCompare(b) :
+                                     (a,b) => a-b);
+        this.#key = new Array(this.n+1).fill(this.#stringKey ? '' : 0);
+    }
+
+    find(u) { return super.root(u); }
+    
+    key(u, k=null) {
+        if (k != null) this.#key[u] = k;
+        return this.#key[u];
+    }
+    
+    contains(u, s) { return s == this.find(u); }
+    
+    lookup(k, s) {
+        return this.search(k, s, this.#key, (a,b) => this.#compare(a,b));
+    }
+    
+    insert(u, t, refresh=0) {
+        if (u > this.n) this.expand(u);
+        return super.insertByKey(u, t, this.#key,
+                                 (a,b) => this.#compare(a,b), refresh);
+    }
+}
+</textarea> <p>
+
+<a id=dualkeySets><h2>Dual Key Sets</h2></a>
+
+The <i>dual key sets</i> data structure is an extension of the <i>key sets</i>
+data structure that includes a secondary key for each item <code>i</code>,
+referred to as <code>key2(i)</code>.
+The data structure is still organized principally around its primary
+key values, but it also provides a method
+<code>findmin(limit)</code> that returns an item of minimum
+<code>key2</code> value from among the items with primary key
+values $\leq$<code>limit</code>.
+<p>
+Hence, it can be viewed as a heap, with respect to the second key,
+and it can be implemented in a way that is similar to that of the
+<a href="./heaps.html#orderedHeaps"><i>ordered heaps</i></a>
+data structure.
+In particular, it can use an auxiliary field <code>min2(u)</code> that gives
+the smallest <code>key2</code> value in the subtree of node <code>u</code>.
+An example appears below.
+<p>
+<div  style="text-align:center;">
+<img width="60%" src="figs/dualkey.png"><br>
+</div>
+<p>
+The <code>findmin</code> operation can be implemented by first identifying the
+<i>boundary</i> between the nodes with primary keys $\leq$<code>limit</code> and
+those with primary keys $>$<code>limit</code>.
+In the example above, a limit of 15 defines a boundary with nodes
+<code>c</code>, <code>d</code> and <code>e</code> to its right,
+and all other nodes to its left. Nodes <code>a</code> and <code>j</code>
+lie just to the left of this boundary and all other nodes to the left
+of the boundary fall with the left subtrees of these two.
+Nodes like <code>a</code> and <code>j</code> are called <i>boundary nodes</i>.
+More generally, a node <code>u</code> is a boundary node if
+<code>key1(u)</code>$\leq$<code>limit</code> and none of $u$'s
+ancestors is a boundary node.
+Consequently, one can identify boundary nodes by starting at the
+root and continuing to the right at each node <code>u</code> with
+<code>key1(u)</code>$\leq$<code>limit</code> and to the left at
+every other node.
+<p>
+For a boundary node <code>u</code>,
+the subtree consisting of <code>u</code> and its left subtree
+is a <i>boundary subtree</i>, and every node to the left of the boundary
+belongs to one of the boundary subtrees.
+Since
+<code>min(key2(u),min2(left(u)))</code> is the smallest <code>min2</code>
+value in its boundary subtree, one can easily determine the smallest
+<code>key2</code> value within a boundary subtree.
+By comparing these values for all boundary subtrees, one can identify
+a boundary subtree that contains a node with the smallest <code>key2</code>
+value.
+Once such a subtree is identified, it can be searched using just
+the <code>key2</code> and </code>min2</code> fields to guide the remaining
+search steps.
+<p>
+Note that rotation operations must be extended
+to update <code>min2</code> value.
+Also, <code>insert</code>, <code>delete</code> and <code>join</code> must be
+modified to update the <code>min2</code> values.
+This can be done by traversing a
+path from a node to the root, updating <code>min2</code> values along the way.
+<p>
+The provided <i>Javascript</i> implementation extends the
+<code>KeySets</code> class, so all operations are $O(\log n)$.
+The core methods are shown below.
+<p>
+<textarea id="components" rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default class DualKeySets extends KeySets {
+    #key2;         // #key2[u] is second key value
+    #min2;         // #min2[u] is the smallest key2 value in the subtree at u
+    
+    constructor(n=10) {
+        super(n);
+        this.#key2 = new Array(this.n+1);
+        this.#min2 = new Array(this.n+1);
+    }
+
+    key2(u, k=false) {
+        if (k !== false) {
+            // assumes u is a singleton
+            this.#key2[u] = k; this.#min2[u] = k;
+        }
+        return this.#key2[u];
+    }
+
+    min2(u, k=false) {
+        if (k !== false) this.#min2[u] = k;
+        return this.#min2[u];
+    }
+
+    findmin(t, limit=Infinity) {
+        // first, find eligible subtrees on boundary and identify best one
+        let u = t; let best = 0; let bestMin = 0;
+        while (u != 0) {
+            let l = this.left(u);
+            if (this.key(u) > limit) {
+                u = l; continue;
+            }
+            // so, u defines an eligible subtree
+            if (best == 0 || this.key2(u) < bestMin ||
+                (l && this.min2(l) < bestMin)) {
+                best = u;
+                bestMin = this.key2(u) <= this.min2(l) ?
+                                           this.key2(u) : this.min2(l);
+            }
+            u = this.right(u); // right subtree may contain eligible subtrees
+        }
+        if (best == 0) return 0;
+        if (this.key2(best) == bestMin) return best;
+        // target is in left subtree of best
+        u = this.left(best);
+        while (this.key2(u) != bestMin) {
+            let l = this.left(u); let r = this.right(u);
+                 if (l && this.min2(l) == bestMin) u = l;
+            else if (r && this.min2(r) == bestMin) u = r;
+        }
+        return u;
+    }
+        
+    rotate(x) {
+        let y = this.p(x);
+        if (y == 0) return;
+        super.rotate(x);
+        this.min2(x, this.min2(y));
+        this.update2(y);
+    }
+        
+    insert(u, t) {
+        return super.insert(u, t, u => this.refresh(u));
+    }
+
+    /** Update min2 values along path to root.
+     *  @param u is a node defining a path to the root;
+     *  min2 values are refreshed along this path
+     */
+    refresh(u) {
+        while (u != 0) {
+            this.refreshSteps++;
+            this.update2(u);
+            u = this.p(u);
+        }
+    }
+
+    update2(u) {
+        let l = this.left(u); let r = this.right(u);
+        let m2 = this.key2(u);
+        if (l)
+            m2 = (m2 <= this.min2(l) ?  m2 : this.min2(l));
+        if (r)
+            m2 = (m2 <= this.min2(r) ?  m2 : this.min2(r));
+        this.min2(u, m2);
+    }
+
+    delete(u) { super.delete(u, 0, pu => this.refresh(pu)); }
+
+    swap(u, v) {
+        super.swap(u, v);
+        let k2 = this.key2(u);
+        this.setkey2(u, this.key2(v)); this.setkey2(v, k2);
+    }
+
+    join(t1, u, t2) {
+        return super.join(t1, u, t2, u => this.refresh(u));
+    }
+}
+</textarea> <p>
+
+<a id=map><h2>Maps</h2></a>
+
+A <i>map</i> defines a collection of key-value pairs and defines the
+following methods.
+<ul>
+<li> <code>get(k)</code> returns the value part of the key-value pair
+    with key <code>k</code> or undefined.
+<li> <code>put(k,v)</code> adds the key-value pair <code>[k,v]</code>,
+    possibly replacing an existing pair with key <code>k</code>.
+</ul>
+The provided <i>Javascript</i> implementation also provides the following
+methods.
+<ul>
+<li> <code>getPair(k)</code> returns an integer index for the pair
+    with key <code>k</code>, or 0.
+<li> <code>key(p)</code> returns the key of pair <code>p</code>.
+<li> <code>value(p)</code> returns the value of pair <code>p</code>.
+<li> <code>deletePair(p)</code> removes pair <code>p</code>
+<li> <code>first()</code> returns first pair in the map.
+<li> <code>next(p)</code> returns the pair following <code>p</code>.
+<li> <code>size</code> is the number of pairs in the map.
+</ul>
+A map can be implemented using a key set to represent the collection
+of keys, with the values stored in a separate array.
+Consequently, the main operations are all $O(\log n)$.
+The provided implementation supports keys and values that are either numeric
+or strings and its core components appear below.
+<p>
+<textarea id="components" rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default class Map extends Top {
+    #keys;       // KeySet used to store keys
+    #top         // id of the specific set in #keys used to represent map
+    #value;      // #value[i] is value paired with key(i)
+    #size;       // number of key-value pairs
+    #free;       // list of unused pair ids
+
+    #stringKey;    // true if keys are strings
+    #stringValue;  // true if values are strings
+    
+    #compare;      // function for comparing two keys
+
+    /** Constructor for Map object.
+     *  @param n is the initial index range for key-value pairs
+     *  @param stringKey is true if the keys are strings
+     *  @param stringValue is true if the values are strings
+     */
+    constructor(n=10, stringKey=false, stringValue=false) {
+        super(n);
+
+        this.#stringKey = stringKey;
+        this.#stringValue = stringValue;
+        this.#compare = (stringKey ? (a,b) => localeCompare : (a,b) => a-b);
+
+        this.#keys = new KeySets(n, stringKey);
+        this.#top = 0; this.#size = 0;
+        this.#value = new Array(this.n+1).fill(stringKey ? '' : 0);
+        this.#free = new List(this.n+1);
+        for (let i = 1; i <= this.n; i++) this.#free.enq(i);
+    }
+
+    get(k) {
+        let p = this.getPair(k);
+        return p ? this.#value[p] : undefined;
+    }
+
+    put(k, v=undefined) {
+        let p = this.getPair(k);
+        if (p) {
+            if (v == undefined) {
+                this.deletePair(p); return 0;
+            }
+            this.value(p,v); return p;
+        }
+        if (v == undefined) return 0;
+        p = this.#free.deq();
+        if (!p) {
+            this.expand(Math.max(this.n+10, ~~(1.5*this.n)));
+            p = this.#free.deq();
+        }
+        this.#keys.key(p, k);
+        this.#top = this.#keys.insert(p, this.#top)
+        this.value(p,v);
+        this.#size++;
+        return p;
+    }
+
+    delete(k) { let p = this.get(k); if (p) this.deletePair(p); }
+
+    getPair(k) { return this.#keys.lookup(k, this.#top); }
+
+    deletePair(p) {
+        if (!p || this.size == 0) return;
+        this.#top = (this.size > 1 ? this.#keys.delete(p, this.#top) : 0);
+        this.#free.enq(p);
+        this.value(p,undefined);
+        this.#size--;
+    }
+
+    key(p) { return this.#keys.key(p); }
+
+    value(p,v) {
+        if (v) this.#value[p] = v;
+        return this.#value[p];
+    }
+    
+    get size() { return this.#size; }
+
+    empty() { return this.size == 0; }
+
+    first() { return this.#keys.first(this.#top); }
+
+    next(p) { return this.#keys.next(p); }
+}
+</textarea> <p>
+
+
+<h2>References</h2>
+<dl>
+<dt> [Tarjan87]
+<dd> <i>Network Algorithms and Data Structures</i> by Robert E. Tarjan.
+     Society for Industrial and Applied Mathematics, 1987.
+</dl>
+<hr> <h4>&copy; Jonathan Turner - 2022</h4>
+<script src="../googleAnalytics.js"></script>
+</body>
+</html>
