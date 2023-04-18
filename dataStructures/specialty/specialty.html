@@ -509,7 +509,7 @@ The <i>dynamic trees</i> data structure represents a collection of
 trees with each tree node $u$ having a cost denoted $\cost(u)$.
 It was invented by Sleator and Tarjan [Tarjan87] to enable faster
 implementations of algorithms for the
-<a href="../graphAlgorithms/maxflow.html#maxflowST">maximum flow problem</a>.
+<a href="../graphAlgorithms/maxflow/maxflow.html#maxflowST">maximum flow problem</a>.
 It provides the following methods.
 <ul>
 <li>    $\findroot(u)$ returns the root of the tree containing $u$.
@@ -730,7 +730,7 @@ Path sets can be implemented using a binary tree to represent each path,
 with the infix order of a tree's nodes matching the order of
 the path it represents.
 The provided implementation extends the
-<a href="../trees.html#splayForest"><i>splay forest</i></a>
+<a href="../trees/trees.html#splayForest"><i>splay forest</i></a>
 data structure, which uses the $\splay$ operation
 to maintain balance.
 This means that $\findpath(u)$ can be done
