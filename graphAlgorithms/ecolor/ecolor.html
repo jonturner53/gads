@@ -40,19 +40,19 @@ positive integers.
 Note that the edges assigned any specific color form a matching and
 that since the maximum vertex degree in the example is 4, no coloring
 can use fewer than 4 edges.
-In fact, <i>Vizing's theorem</i> states that the number of colors needed
-to color any graph is either $\Delta$ or $\Delta+1$, where $\Delta$
+In fact, <i>Vizing's theorem</i> [BM76] states that the number of colors
+needed to color any graph is either $\Delta$ or $\Delta+1$, where $\Delta$
 is the maximum vertex degree.
 Edge coloring is NP-complete for general graphs, but for
 bipartite graphs, the number of colors needed is exactly $\Delta$.
 
 <h3>Path Recoloring Method</h3>
-The proof of Vizing's theorem includes a method to color the edges of the
-graph, which when specialized to the bipartite case is simple and
-typically quite fast.
+For the special case of bipartite graphs, there is
+a method to color the edges that is simple and typically quite fast.
 For each vertex, $u$ it maintains a set of <i>available colors</i>,
 $\avail(u)$ consisting of all colors not yet assigned to any edge
 incident to $u$.
+These sets are initialized to $\{1,\dots,\Delta\}$.
 It colors the graph by repeating the following step.
 <p style="padding-left:5%">
 let $e=\{u,v\}$ be an uncolored edge. If $\avail(u)$ and $\avail(v)$ have
@@ -60,29 +60,272 @@ a color $c$ in common, let $\color(e)=c$ and proceed to the next edge.
 Otherwise, let $c_u\in avail(u)$, $c_v\in avail(v)$ and identify the
 path $p$ starting at $v$ and consisting of edges with colors alternating
 between $c_v$ and $c_u$. Reverse the colors of the edges on $p$ and
-then let $\color(e)=c_u$. If the last vertex $w$ of $p$ is not $u$,
-then update $\avail(w)$ to reflect the new color of the last edge on $p$.
+then let $\color(e)=c_u$. If $w$ is the last vertex of $p$,
+update $\avail(w)$ to reflect the new color of the last edge on $p$.
+<p>
+The recoloring operation is used to color edge $\{d,g\}$ in the
+example below.
+<p>
+<div  style="text-align:center;">
+<img width="70%" src="figs/recolor.png"><br>
+</div>
 <p>
 Note that because the graph is bipartite, the partial coloring is
 always valid and edges on path $p$ alternate colors,
-$p$ cannot contain a cycle.
+$p$ cannot contain a cycle and $w\neq u$.
+To facilitate the identification of path $p$,
+the algorithm maintains a mapping $emap_u(c)$ for each vertex $u$,
+which maps a color $c$ to the edge incident to $u$ that has color $c$
+(or undefined if there is no such edge).
+<p>
 In the worst case, many edges require recoloring of a path and the
 paths are long. This leads to a running time of $O(mn)$.
 More typically, most edges can be colored without path recoloring,
 and when it is required, the paths are fairly short.
 <p>
-A <i>Javascript</i> implementation of Vizing's algorithm appears below.
+A <i>Javascript</i> implementation of the path recoloring
+algorithm appears below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let g;         // shared reference to graph
+let avail;     // avail[u] is a List of available colors at u
+let emap;      // emap[u][c] is the edge that is colored c at u
+
+export default function ecolorR(cg, traceFlag=false) {
+	g = cg; let Delta = g.maxDegree();
+
+	avail = new Array(); avail.push(null);
+	emap = new Array(); emap.push(null);
+	for (let u = 1; u <= g.n; u++) {
+		avail.push(new List(Delta));
+		emap.push(new Int32Array(Delta+1));
+		for (let c = 1; c <= Delta; c++) {
+			avail[u].enq(c);
+		}
+	}
+
+	// color each edge in turn
+	for (let e = g.first(); e != 0; e = g.next(e)) {
+		let [u,v] = [g.left(e),g.right(e)];
+		let c = avail[u].common(avail[v]);
+			// returns first color in avail[u] that's also in avail[v];
+		if (c) {
+			g.color(e,c);	// color is an alias for weight
+			avail[u].delete(c); avail[v].delete(c);
+			emap[u][c] = emap[v][c] = e;
+			continue;
+		}
+		recolor(e);
+	}
+}
+
+/** Color an edge by reversing colors on an alternating color path.
+ *  @param e is an edge for which no color is available at both endpoints.
+ */
+function recolor(e) {
+	let [u,v] = [g.left(e),g.right(e)];
+	let cu = avail[u].first(); let cv = avail[v].first();
+	let f = e; let w = v; let c = cu;
+	while (emap[w][c] != 0) {
+		// f is next edge on path to be colored
+		// w is the "leading endpoint" of f
+		// c is the color to use for f
+		let ff = emap[w][c];	// next edge in the path
+		g.color(f,c); emap[g.left(f)][c] = emap[g.right(f)][c] = f;
+		if (trace) traceString += (w == v ? '' : ' ') + g.e2s(f);
+		f = ff; w = g.mate(w,ff); c = (c == cu ? cv : cu);
+	}
+	// color the last edge and update the avail sets at endpoints
+	g.color(f,c); emap[g.left(f)][c] = emap[g.right(f)][c] = f;
+	avail[u].delete(cu); avail[v].delete(cv);
+
+	// update available colors at last vertex on path
+	avail[w].delete(c);
+	c = (c == cu ? cv : cu);
+	emap[w][c] = 0; avail[w].push(c);
+}
+</textarea> <p>
+Notice that edges are colored using assignments like
+<code>g.color(e,c);</code>. The <code>color</code> method of
+the <code>Graph</code> class is just a synonymn for the <code>weight</code>
+method. This allows edge colors to be stored with the graph.
+<p>
+The following script can be used to demonstrate the program.
+<pre style="padding-left:5%">
+let g = randomRegularBigraph(10,3);
+let [ts] = ecolorV(g,1);
+log(ts);
+</pre>
+Some sample trace output appears below.
+<pre style="padding-left:5%">
+am:1 bm:2 fo:1 fr:2 dt:1 gs:1 fk:3 ip:1 gp:2 an:2 co:2 en:1 
+js:2 it:2 cm:3 bt:3 hs:3 dq:2 eq:3 bk:1 gn:3 hl:1 ir:3 
+[aq:3 eq:1 en:3 gn:1 gs:3 hs:1 hl:3]
+cl:1 jp:3 hk:2 
+[dr:3 ir:1 ip:3 jp:1]
+[eo:2 co:3 cm:2 bm:3 bt:2 it:3 ip:2 gp:3 gs:2 js:3]
+jl:2 
+
+{
+a[m:1 n:2 q:3] b[m:3 t:2 k:1] c[o:3 m:2 l:1] d[t:1 q:2 r:3] e[n:3 q:1 o:2]
+f[o:1 r:2 k:3] g[s:2 p:3 n:1] h[s:1 l:3 k:2] i[p:2 t:3 r:1] j[s:3 p:1 l:2]
+
+k[f:3 b:1 h:2] l[h:3 c:1 j:2] m[a:1 b:3 c:2] n[a:2 e:3 g:1] o[f:1 c:3 e:2]
+p[i:2 g:3 j:1] q[d:2 e:1 a:3] r[f:2 i:1 d:3] s[g:2 j:3 h:1] t[d:1 i:3 b:2]
+}
+</pre>
+In the trace output, recolored paths are shown in square brackets,
+while edges that were colored without recoloring a path are just listed
+individually.
+So in this case, three paths had to be recolored and 27 edges were
+colored individually.
+The final result is shown at the end, with the colors appearing with the
+edges.
+<p>
+The following script can be used to assess the performance of the algorithm.
+<pre style="padding-left:5%">
+let n = 8000; let d = 10;
+let g = randomRegularBigraph(n,d);
+let t = Date.now(); let [,stats] = ecolorV(g,); t = Date.now()-t;
+log(`${n} ${d} recolors=${stats.recolors} ` +
+    `average path length=${stats["avg path length"]} ` +
+    `steps=${stats.steps} ${(1000*t/g.m).toFixed(2)} us/edge`);
+</pre>
+Some sample output appears below.
+<pre style="padding-left:5%">
+1000 10 recolors=1241 average path length=34 steps= 62531 0.90 us/edge 
+1000 20 recolors=1826 average path length=44 steps=120786 0.80 us/edge 
+1000 40 recolors=2512 average path length=51 steps=208843 0.70 us/edge 
+1000 80 recolors=3307 average path length=52 steps=332906 0.70 us/edge 
+
+1000 10 recolors=1244  average path length=34 steps= 63024 0.70 us/edge 
+2000 10 recolors=2528  average path length=38 steps=137826 1.20 us/edge 
+4000 10 recolors=4994  average path length=44 steps=300380 0.88 us/edge 
+8000 10 recolors=10046 average path length=44 steps=607240 1.34 us/edge 
+</pre>
+Notice that the number of recoloring steps is much smaller than the
+number of edges. In the first line of output for example, there are 1241
+recoloring steps, while the number of edges is 10,000.
+Also notice that the average path length for that case is 34, while
+the longest possible path length is 999.
+<p>
+In the first group of results, the vertex degree scales up
+(along with the number of edges) while in the second group,
+the number of vertices is scaled up while keeping the degree constant.
+This also scales up the number edges.
+In both cases, the time spent per edge is roughly constant.
+So for random regular graphs, the running time appears to be roughly $O(m)$.
+<p>
+It turns out that irregular random graphs rarely require any recoloring
+operation (indeed, in 20 independent runs with $n=4000$ and $d=10$,
+no recoloring operations were observed). This is not too surprising 
+since most vertices have degree smaller than $\Delta$ meaning that they have
+&ldquo;extra&rdquo; colors to choose from.
+If the average degree is small (say 2), occasional recoloring operations are
+observed, but they are still quite rare.
+<p>
+Note, that the space used by the algorithm scales in proportion to $\Delta n$,
+so just initializing the data structures requires $O(\Delta n)$ time.
+If $m$ and $\Delta n$ are roughly comparable (as with regular graphs),
+the intialization time is $O(m)$, but if $\Delta n >> m$
+that is not the case.
 
 <h3>Gabow's Algorithm</h3>
+While the path recoloring method works well in many situations,
+it's worst-case performance leaves room for improvement.
+Gabow developed a divide-and-conquer style algorithm with a
+worst-case bound that is $O(mn^{1/2}\log \Delta)$.
+The algorithm is based on a recursive procedure that colors
+a subgraph $H$ of $G$ with maximum vertex degree $\Delta_H$.
+<p style="padding-left:5%">
+If $\Delta_H=1$ color the edges of $G$ that correspond to the edges
+in $H$ using the next unused color and return.
+<p style="padding-left:5%">
+If $\Delta_H$ is odd, let $M$ be a matching that matches all
+vertices of degree $\Delta_H$ in $H$; color the edges in $M$ using
+the next unused color.
+<p style="padding-left:5%">
+Divide $H$ into two subgraphs $H_1$ and $H_2$ both having maximum degree
+$\Delta_H/2$. Recursively color each of these subgraphs and return.
+<p>
+A basic example of the procedure is shown below.
+The left side of the figure shows a graph with max degree three
+and a matching that matches every degree 3 vertex.o
+At right, the remaining edges form a graph with max degree 2,
+(which happens to be a single path in this case).
+So that graph splits easily into sub-graphs with max degree 1.
+<p>
+<div  style="text-align:center;">
+<img width="60%" src="figs/gabow.png"><br>
+</div>
+<p>
+The recursive procedure requires solutions to two sub-problems:
+finding a matching that matches vertices of maximum degree and
+partitioning $H$ into subgraphs for which the maxmum degree is $\Delta_H /2$.
+As will be discussed below, the matching can be found in
+$O(m_H n_H^{1/2})$ time and the division into subgraphs in $O(m_H)$ time,
+where $m_H$ and $n_H$ are the number of edges and vertices in $H$.
+Because the max vertex degree is halved at each successive level of
+the recursion, the number of levels is $O(\log \Delta)$.
+Because the number of edges is halved, the time spent at each level
+of the recursion is $O(mn^{1/2})$ giving an overall bound of
+$O(m n^{1/2}\log \Delta)$.
 
-<h3>Matching Vertices of Maximum Degree</h3>
+<h4>Matching Vertices of Maximum Degree</h4>
+
+Gabow describes a procedure to find a matching in a bipartite graph $G$
+with maximum degree $\Delta$ that has a worst-case time bound
+of $O(m n^{1/2})$. The procedure is outlined below. 
+<p style="padding-left:5%">
+Let $V_1$ and $V_2$ be the vertex subsets that define a bipartition of $G$.
+Let $H_1$ be the subgraph induced by the vertices of maximum degree in $V_1$
+and their neighbors, and let $H_2$ be the subgraph induced by the vertices
+of maximum degree in $V_2$ and their neighbors.
+<p style="padding-left:5%">
+Let $M_1$ be a maximum matching of $H_1$ and $M_2$ be a maximum
+matching of $H_2$.
+Hall's theorem [BM76] implies that $M_i$ matches all vertices in $V_i$.
+<p style="padding-left:5%">
+Construct a matching $M$ of $G$ by first including every edge that is in both
+$M_1$ and $M_2$ and removing these edges from $M_1$ and $M_2$.
+The remaining edges in $M_1$ and $M_2$ define a collection of paths and
+even length cycles with edges alternating between the two matchings.
+For each of the cycles add every other edge to $M$.
+For each of the odd length paths add the alternate edges that include the
+first and last edge of the path.
+For each of the even length paths, select the set of alternate edges
+that includes a path endpoint corresponding to a vertex
+of degree $\Delta$ in $G$.
+<p>
+Notice that each edge in matching $M_i$ has an endpoint of
+maximum degree and since the terminal edges of the even length
+paths are in different matchings, one endpoint of these paths
+must have maximum degree.
+The procedure described in the last step is known as the
+Dulmage-Mendelsohn decomposition.
+An example of the overall process appears below.
+<p>
+<div  style="text-align:center;">
+<img width="95%" src="figs/mdmatch.png"><br>
+</div>
+<p>
+
+<h4>Finding Euler Partitions</h4>
+
+<h4>Putting it All Together</h4>
+
+<h4>Alon's Algorithm</h4>
 
 <h2>References</h2>
 <dl>
+<dt> [BM76]
+    <i>Graph Theory with Applications</i>,
+	by J. A. Bondy and U. S. R. Murty. North Holland, 1976.
 <dt> [Gabow76]
 <dd> &ldquo;Using Euler Partitions to Edge Color Multigraphs,&rdquo;
 	by Harold Gabow. In <i>Journal of Computer and Information Sciences</i>,
 	1976.
+<dt> [vizing64]
 </dl>
 <hr> <h4>&copy; Jonathan Turner - 2022</h4>
 <script src="../../googleAnalytics.js"></script>
