@@ -63,8 +63,8 @@ between $c_v$ and $c_u$. Reverse the colors of the edges on $p$ and
 then let $\color(e)=c_u$. If $w$ is the last vertex of $p$,
 update $\avail(w)$ to reflect the new color of the last edge on $p$.
 <p>
-The recoloring operation is used to color edge $\{d,g\}$ in the
-example below.
+In the example below, the recoloring operation is used recolor path
+$[d,b,a,c]$ to enable edge $\{d,g\}$ to be colored green.
 <p>
 <div  style="text-align:center;">
 <img width="70%" src="figs/recolor.png"><br>
@@ -79,7 +79,7 @@ which maps a color $c$ to the edge incident to $u$ that has color $c$
 (or undefined if there is no such edge).
 <p>
 In the worst case, many edges require recoloring of a path and the
-paths are long. This leads to a running time of $O(mn)$.
+paths are long. This leads to a worst-case time bound of $O(mn)$.
 More typically, most edges can be colored without path recoloring,
 and when it is required, the paths are fairly short.
 <p>
@@ -92,57 +92,57 @@ let avail;     // avail[u] is a List of available colors at u
 let emap;      // emap[u][c] is the edge that is colored c at u
 
 export default function ecolorR(cg, traceFlag=false) {
-	g = cg; let Delta = g.maxDegree();
+    g = cg; let Delta = g.maxDegree();
 
-	avail = new Array(); avail.push(null);
-	emap = new Array(); emap.push(null);
-	for (let u = 1; u <= g.n; u++) {
-		avail.push(new List(Delta));
-		emap.push(new Int32Array(Delta+1));
-		for (let c = 1; c <= Delta; c++) {
-			avail[u].enq(c);
-		}
-	}
+    avail = new Array(); avail.push(null);
+    emap = new Array(); emap.push(null);
+    for (let u = 1; u <= g.n; u++) {
+        avail.push(new List(Delta));
+        emap.push(new Int32Array(Delta+1));
+        for (let c = 1; c <= Delta; c++) {
+            avail[u].enq(c);
+        }
+    }
 
-	// color each edge in turn
-	for (let e = g.first(); e != 0; e = g.next(e)) {
-		let [u,v] = [g.left(e),g.right(e)];
-		let c = avail[u].common(avail[v]);
-			// returns first color in avail[u] that's also in avail[v];
-		if (c) {
-			g.color(e,c);	// color is an alias for weight
-			avail[u].delete(c); avail[v].delete(c);
-			emap[u][c] = emap[v][c] = e;
-			continue;
-		}
-		recolor(e);
-	}
+    // color each edge in turn
+    for (let e = g.first(); e != 0; e = g.next(e)) {
+        let [u,v] = [g.left(e),g.right(e)];
+        let c = avail[u].common(avail[v]);
+            // returns first color in avail[u] that's also in avail[v];
+        if (c) {
+            g.color(e,c);    // color is an alias for weight
+            avail[u].delete(c); avail[v].delete(c);
+            emap[u][c] = emap[v][c] = e;
+            continue;
+        }
+        recolor(e);
+    }
 }
 
 /** Color an edge by reversing colors on an alternating color path.
  *  @param e is an edge for which no color is available at both endpoints.
  */
 function recolor(e) {
-	let [u,v] = [g.left(e),g.right(e)];
-	let cu = avail[u].first(); let cv = avail[v].first();
-	let f = e; let w = v; let c = cu;
-	while (emap[w][c] != 0) {
-		// f is next edge on path to be colored
-		// w is the "leading endpoint" of f
-		// c is the color to use for f
-		let ff = emap[w][c];	// next edge in the path
-		g.color(f,c); emap[g.left(f)][c] = emap[g.right(f)][c] = f;
-		if (trace) traceString += (w == v ? '' : ' ') + g.e2s(f);
-		f = ff; w = g.mate(w,ff); c = (c == cu ? cv : cu);
-	}
-	// color the last edge and update the avail sets at endpoints
-	g.color(f,c); emap[g.left(f)][c] = emap[g.right(f)][c] = f;
-	avail[u].delete(cu); avail[v].delete(cv);
+    let [u,v] = [g.left(e),g.right(e)];
+    let cu = avail[u].first(); let cv = avail[v].first();
+    let f = e; let w = v; let c = cu;
+    while (emap[w][c] != 0) {
+        // f is next edge on path to be colored
+        // w is the "leading endpoint" of f
+        // c is the color to use for f
+        let ff = emap[w][c];    // next edge in the path
+        g.color(f,c); emap[g.left(f)][c] = emap[g.right(f)][c] = f;
+        if (trace) traceString += (w == v ? '' : ' ') + g.e2s(f);
+        f = ff; w = g.mate(w,ff); c = (c == cu ? cv : cu);
+    }
+    // color the last edge and update the avail sets at endpoints
+    g.color(f,c); emap[g.left(f)][c] = emap[g.right(f)][c] = f;
+    avail[u].delete(cu); avail[v].delete(cv);
 
-	// update available colors at last vertex on path
-	avail[w].delete(c);
-	c = (c == cu ? cv : cu);
-	emap[w][c] = 0; avail[w].push(c);
+    // update available colors at last vertex on path
+    avail[w].delete(c);
+    c = (c == cu ? cv : cu);
+    emap[w][c] = 0; avail[w].push(c);
 }
 </textarea> <p>
 Notice that edges are colored using assignments like
@@ -175,12 +175,11 @@ p[i:2 g:3 j:1] q[d:2 e:1 a:3] r[f:2 i:1 d:3] s[g:2 j:3 h:1] t[d:1 i:3 b:2]
 }
 </pre>
 In the trace output, recolored paths are shown in square brackets,
-while edges that were colored without recoloring a path are just listed
+while edges that did not require path recoloring are just listed
 individually.
 So in this case, three paths had to be recolored and 27 edges were
 colored individually.
-The final result is shown at the end, with the colors appearing with the
-edges.
+The fully colored graph is shown at the end.
 <p>
 The following script can be used to assess the performance of the algorithm.
 <pre style="padding-left:5%">
@@ -227,16 +226,17 @@ observed, but they are still quite rare.
 Note, that the space used by the algorithm scales in proportion to $\Delta n$,
 so just initializing the data structures requires $O(\Delta n)$ time.
 If $m$ and $\Delta n$ are roughly comparable (as with regular graphs),
-the intialization time is $O(m)$, but if $\Delta n >> m$
+the intialization time is $O(m)$, but if $\Delta n \gg m$
 that is not the case.
 
 <h3>Gabow's Algorithm</h3>
 While the path recoloring method works well in many situations,
-it's worst-case performance leaves room for improvement.
-Gabow developed a divide-and-conquer style algorithm with a
+its worst-case performance leaves room for improvement.
+Gabow developed a divide-and-conquer algorithm with a
 worst-case bound that is $O(mn^{1/2}\log \Delta)$.
 The algorithm is based on a recursive procedure that colors
 a subgraph $H$ of $G$ with maximum vertex degree $\Delta_H$.
+The steps in this procedure are described below.
 <p style="padding-left:5%">
 If $\Delta_H=1$ color the edges of $G$ that correspond to the edges
 in $H$ using the next unused color and return.
@@ -250,7 +250,7 @@ $\Delta_H/2$. Recursively color each of these subgraphs and return.
 <p>
 A basic example of the procedure is shown below.
 The left side of the figure shows a graph with max degree three
-and a matching that matches every degree 3 vertex.o
+and a matching that matches every degree 3 vertex.
 At right, the remaining edges form a graph with max degree 2,
 (which happens to be a single path in this case).
 So that graph splits easily into sub-graphs with max degree 1.
@@ -265,8 +265,8 @@ partitioning $H$ into subgraphs for which the maxmum degree is $\Delta_H /2$.
 As will be discussed below, the matching can be found in
 $O(m_H n_H^{1/2})$ time and the division into subgraphs in $O(m_H)$ time,
 where $m_H$ and $n_H$ are the number of edges and vertices in $H$.
-Because the max vertex degree is halved at each successive level of
-the recursion, the number of levels is $O(\log \Delta)$.
+Because the max degree is halved at each successive level of
+the recursion, the number of levels is $\lceil \lg \Delta \rceil$.
 Because the number of edges is halved, the time spent at each level
 of the recursion is $O(mn^{1/2})$ giving an overall bound of
 $O(m n^{1/2}\log \Delta)$.
@@ -277,7 +277,7 @@ Gabow describes a procedure to find a matching in a bipartite graph $G$
 with maximum degree $\Delta$ that has a worst-case time bound
 of $O(m n^{1/2})$. The procedure is outlined below. 
 <p style="padding-left:5%">
-Let $V_1$ and $V_2$ be the vertex subsets that define a bipartition of $G$.
+Let $V_1$ and $V_2$ be vertex subsets that define a bipartition of $G$.
 Let $H_1$ be the subgraph induced by the vertices of maximum degree in $V_1$
 and their neighbors, and let $H_2$ be the subgraph induced by the vertices
 of maximum degree in $V_2$ and their neighbors.
@@ -292,7 +292,7 @@ The remaining edges in $M_1$ and $M_2$ define a collection of paths and
 even length cycles with edges alternating between the two matchings.
 For each of the cycles add every other edge to $M$.
 For each of the odd length paths add the alternate edges that include the
-first and last edge of the path.
+first and last edges.
 For each of the even length paths, select the set of alternate edges
 that includes a path endpoint corresponding to a vertex
 of degree $\Delta$ in $G$.
@@ -309,22 +309,302 @@ An example of the overall process appears below.
 <img width="95%" src="figs/mdmatch.png"><br>
 </div>
 <p>
+A <i>Javascript</i> implementation of the max degree matching
+algorithm is shown below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function mdmatchG(g) {
+    // initialize supporting data structures
+    let degree = new Int32Array(g.n+1);
+    let subsets = findSplit(g);
+    let Delta = 0;
+    for (let u = 1; u <= g.n; u++) {
+        degree[u] = g.degree(u);
+        if (degree[u] > Delta) Delta = degree[u];
+    }
+
+    let xg = new Graph(g.n,g.m); // scratch graph
+
+    // compute subgraph xg that includes all edges incident to max degree
+    // vertices in first subset of bipartition; then get its matching
+    for (let e = g.first(); e; e = g.next(e)) {
+        let [u,v] = [g.left(e),g.right(e)];
+        if (degree[subsets.in1(u) ? u : v] != Delta) continue;
+        xg.join(u,v,e);
+    }
+        
+    let xmatch1 = bimatchHK(xg,0,subsets);
+
+    // repeat xg for xmatch2;
+    xg.clear();
+    for (let e = g.first(); e; e = g.next(e)) {
+        let [u,v] = [g.left(e),g.right(e)];
+        if (degree[subsets.in2(u) ? u : v] != Delta) continue;
+        xg.join(u,v,e); steps++;
+    }
+    let [xmatch2,,stats2] = bimatchHK(xg,0,subsets);
+
+    // Include edges from both matchings in match and discard
+    let match = new Matching(g); let nexte;
+    for (let e = xmatch1.first(); e; e = nexte) {
+        nexte = xmatch1.next(e);
+        if (xmatch2.contains(e)) {
+            match.add(e); xmatch1.drop(e); xmatch2.drop(e);
+        }
+    }
+
+    // remaining edges in xmatch1,2 define alternating paths or cycles
+    while (xmatch1.size() && xmatch2.size()) {
+        let e = xmatch1.first();
+        let u = selectStart(e, g, xmatch1, xmatch2, degree, Delta);
+        let v = u;
+        while (xmatch1.at(v)) {
+            let ee = xmatch1.at(v); match.add(ee); xmatch1.drop(ee);
+            v = g.mate(v,ee); ee = xmatch2.at(v);
+            if (!ee) break;
+            v = g.mate(v,ee); xmatch2.drop(ee);
+        }
+        v = u;
+        while (xmatch2.at(v)) {
+            let ee = xmatch2.at(v); match.add(ee); xmatch2.drop(ee);
+            v = g.mate(v,ee); ee = xmatch1.at(v);
+            if (!ee) break;
+            v = g.mate(v,ee); xmatch1.drop(ee);
+        }
+    }
+    while (xmatch1.size()) {
+        let e = xmatch1.first(); match.add(e); xmatch1.drop(e);
+    }
+    while (xmatch2.size()) {
+        let e = xmatch2.first(); match.add(e); xmatch2.drop(e);
+    }
+
+    return match;
+}
+
+/** Select the "start" vertex of a component of xmatch1 xor xmatch2.
+ *  @param e is an edge in xmatch1
+ *  @return a vertex u; if e's component is an odd length path, either endpoint
+ *  will do; if it is an even length path, select the max degree endpoint;
+ *  if it is a cycle, any vertex on the cycle will do.
+ */
+function selectStart(e, g, xmatch1, xmatch2, degree, Delta) {
+    // find first endpoint
+    let [u,v] = [g.left(e),g.right(e)];
+    while (true) {
+        let ee = xmatch2.at(v); if (!ee) break; v = g.mate(v,ee);
+        if (v == u) return u; // component is a cycle
+            ee = xmatch1.at(v); if (!ee) break; v = g.mate(v,ee);
+    }
+    // component is a path and v is its "rightmost" endpoint
+    while (true) {
+        let ee = xmatch2.at(u); if (!ee) break; u = g.mate(u,ee);
+            ee = xmatch1.at(u); if (!ee) break; u = g.mate(u,ee);
+    }
+    // now u is its "leftmost" endpoint
+    return degree[u] == Delta ? u : v;
+}
+</textarea> <p>
+
 
 <h4>Finding Euler Partitions</h4>
 
+Gabow's algorithm divides a graph with even max degree into two
+subgraphs that have half the maximum degree by first decomposing the graph
+into a collection of paths and cycles (not necessarily simple),
+where all the path endpoints have odd degree.
+This is done by repeating the following step.
+
+<p style="padding-left:5%">
+Select a vertex $u$ of odd degree if there is one, or any vertex if
+there are none of odd degree.
+Construct a path (or cycle) $p$ by repeatedly selecting an edge $e=\{u,v\}$
+incident to $u$, adding $e$ to $p$, removing $e$ from the graph
+and replacing $u$ with $v$. This process ends when the $u$ has
+no incident edges.
+<p>
+An example of the decomposition into paths and cycles is shown below.
+Note that this graph is not bipartite and the decomposition does not
+require it to be.
+<p>
+<div  style="text-align:center;">
+<img width="90%" src="figs/euler1.png"><br>
+</div>
+<p>
+The paths that terminate at odd-degree vertices do not have maximum degree
+and the vertices of maximum degree are not endpoints of any path.
+Consequently, if alternate edges of each path/cycle are assigned to
+sets $E_1$ and $E_2$, the graphs defined by these subsets both have
+max degree $\Delta/2$.
+So in the example above, the graphs defined by sets
+$\{af,hc,ab,ef,cd,gh,bd,ge\}$ and $\{fh,ca,be,dg,de,bg\}$
+define the subgraphs with maximum degree 2 shown below.
+<p>
+<div  style="text-align:center;">
+<img width="60%" src="figs/euler2.png"><br>
+</div>
+<p>
+
 <h4>Putting it All Together</h4>
+A <i>Javascript</i> implementation of Gabow's algorithm is shown below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let g;            // shared reference to input graph
+let wg;            // current working subgraph
+
+let degree;        // degree[u] is the degree of u in wg
+let active;        // List of vertices with non-zero degree wg
+let subsets;    // vertex subsets that define bipartition
+let emap;        // temp array used to map edge numbers in rcolor
+
+let nextColor;  // next color to apply to edges
+
+export default function ecolorG(cg) {
+    g = cg;
+
+    wg = new Graph(g.n, g.edgeRange);
+    degree = new Int32Array(g.n+1);
+    active = new List(g.n);
+    emap = new Int32Array(g.m+1);
+
+    for (let e = g.first(); e; e = g.next(e)) addEdge(e);
+    subsets = findSplit(g);
+
+    nextColor = 1;
+    rcolor(g.maxDegree());
+}
+
+function rcolor(Delta) {
+    // if wg is a matching, color its edges in g and remove them from wg
+    if (Delta == 1) {
+        for (let e = wg.first(); e; e = wg.first()) {
+            g.color(e,nextColor); dropEdge(e);
+        }
+        nextColor++;
+        return;
+    }
+
+    // for odd Delta, extract matching on all degree Delta vertices,
+    // color its edges and remove them from wg
+    if (Delta & 1) {
+        // first build compact version of wg with no isolated vertices
+        let cg = new Graph(active.length,g.m);
+        let u = 1;
+        for (let v = active.first(); v; v = active.next(v)) {
+            active.value(v,u++); // use value to map wg's vertices to cg's
+        }
+        for (let e = wg.first(); e; e = wg.next(e)) {
+            let [u,v] = [wg.left(e),wg.right(e)];
+            let [uu,vv] = [active.value(u), active.value(v)];
+            let ee = cg.join(uu,vv); emap[ee] = e;
+        }
+
+        // get max degree matching of cg
+        let [match,,stats] = mdmatchG(cg);
+        for (let e = match.first(); e; e = match.next(e)) {
+            let ee = emap[e]; g.color(ee,nextColor); dropEdge(ee);
+        }
+        nextColor++; Delta--;
+    }
+
+    // wg now has even maximum degree
+    let [part1,part2] = eulerPartition();
+    for (let i = 0; i < part1.length; i++) addEdge(part1[i]);
+    rcolor(Delta/2);
+    for (let i = 0; i < part2.length; i++) addEdge(part2[i]);
+    rcolor(Delta/2);
+}
+
+/** Add an edge to working graph.
+ *  Update vertex degrees of endpoints and active vertex list.
+ *  @param e is an edge in g to be added to wg
+ */
+function addEdge(e) {
+    let [u,v] = [g.left(e),g.right(e)];
+    wg.join(u,v,e);
+    if (!degree[u]) active.enq(u);
+    if (!degree[v]) active.enq(v);
+    degree[u]++; degree[v]++;
+}
+
+/** Drop an edge from working graph.
+ *  Update vertex degrees of endpoints and active vertex list.
+ *  @param e is an edge in g to be removed from wg
+ */
+function dropEdge(e) {
+    wg.delete(e);
+    let [u,v] = [g.left(e),g.right(e)];
+    degree[u]--; degree[v]--;
+    if (!degree[u]) active.delete(u);
+    if (!degree[v]) active.delete(v);
+}
+    
+/** Find an Euler partition in the working graph.
+ *  The partition is returned in Lists part1 and part2.
+ */
+function eulerPartition() {
+    // first bring odd degree vertices to front of active list
+    let nextu; let odds = 0;
+    for (let u = active.first(); u; u = nextu) {
+        nextu = active.next(u);
+        if (degree[u]&1) {
+            active.delete(u); active.push(u); odds++;
+        }
+        steps++;
+    }
+
+    let part1 = new Int32Array(wg.m&1 ? (wg.m+1)/2 : wg.m/2);
+    let part2 = new Int32Array(wg.m&1 ? (wg.m-1)/2 : wg.m/2);
+    let n1 = 0; let n2 = 0;
+    while (!active.empty()) {
+        let first = active.first();
+        let v = first; let e = wg.firstAt(v);
+        let balance = (n1 <= n2 ? 1 : 0);
+        do {
+            if (balance) part1[n1++] = e;
+            else         part2[n2++] = e;
+            v = g.mate(v,e); dropEdge(e);
+            e = wg.firstAt(v);
+            balance = !balance; steps++;
+        } while (e);
+        if (active.contains(first)) {
+            // first no longer has odd degree, so move to end of active
+            active.delete(first); active.enq(first);
+        } 
+    }
+    return [part1,part2];
+}
+</textarea> <p>
+Notice that rather than create multiple <code>Graph</code> objects,
+the implementation uses a single <i>working copy</i> of the original graph
+which is modified as needed.
+In particular when edges are colored they are permanently deleted
+from the working copy. Also, when an Euler partition is computed,
+edges are removed from the working copy and the resulting pair of edge
+lists returned.
+These are used later to reconstruct the two required halves of
+the working copy that are needed for the recursive computation.
+The edge lists are returned as arrays of equal (or nearly equal) length.
+The total length of all these arrays $O(\Delta m)$.
+The working copy is maintained using two methods <code>addEdge</code>
+and <code>dropEdge</code> which also maintain the vertex degrees of the
+vertices in the working copy. They also maintain a list of
+<i>active</i> vertices, which are simply vertices with at least
+one incident edge. This allows the algorithm to conveniently iterate
+over the active vertices, rather than all the vertices in the working copy,
+which turns out to be necessary to achieve the target time bound.
 
 <h4>Alon's Algorithm</h4>
 
 <h2>References</h2>
 <dl>
 <dt> [BM76]
-    <i>Graph Theory with Applications</i>,
-	by J. A. Bondy and U. S. R. Murty. North Holland, 1976.
+<dd> <i>Graph Theory with Applications</i>,
+    by J. A. Bondy and U. S. R. Murty. North Holland, 1976.
 <dt> [Gabow76]
 <dd> &ldquo;Using Euler Partitions to Edge Color Multigraphs,&rdquo;
-	by Harold Gabow. In <i>Journal of Computer and Information Sciences</i>,
-	1976.
+    by Harold Gabow. In <i>Journal of Computer and Information Sciences</i>,
+    1976.
 <dt> [vizing64]
 </dl>
 <hr> <h4>&copy; Jonathan Turner - 2022</h4>
