@@ -153,7 +153,7 @@ method. This allows edge colors to be stored with the graph.
 The following script can be used to demonstrate the program.
 <pre style="padding-left:5%">
 let g = randomRegularBigraph(10,3);
-let [ts] = ecolorV(g,1);
+let [ts] = ecolorR(g,1);
 log(ts);
 </pre>
 Some sample trace output appears below.
@@ -185,7 +185,7 @@ The following script can be used to assess the performance of the algorithm.
 <pre style="padding-left:5%">
 let n = 8000; let d = 10;
 let g = randomRegularBigraph(n,d);
-let t = Date.now(); let [,stats] = ecolorV(g,); t = Date.now()-t;
+let t = Date.now(); let [,stats] = ecolorR(g,); t = Date.now()-t;
 log(`${n} ${d} recolors=${stats.recolors} ` +
     `average path length=${stats["avg path length"]} ` +
     `steps=${stats.steps} ${(1000*t/g.m).toFixed(2)} us/edge`);
@@ -197,9 +197,9 @@ Some sample output appears below.
 1000 40 recolors=2512 average path length=51 steps=208843 0.70 us/edge 
 1000 80 recolors=3307 average path length=52 steps=332906 0.70 us/edge 
 
-1000 10 recolors=1244  average path length=34 steps= 63024 0.70 us/edge 
-2000 10 recolors=2528  average path length=38 steps=137826 1.20 us/edge 
-4000 10 recolors=4994  average path length=44 steps=300380 0.88 us/edge 
+1000 10 recolors= 1244 average path length=34 steps= 63024 0.70 us/edge 
+2000 10 recolors= 2528 average path length=38 steps=137826 1.20 us/edge 
+4000 10 recolors= 4994 average path length=44 steps=300380 0.88 us/edge 
 8000 10 recolors=10046 average path length=44 steps=607240 1.34 us/edge 
 </pre>
 Notice that the number of recoloring steps is much smaller than the
@@ -593,11 +593,98 @@ vertices in the working copy. They also maintain a list of
 one incident edge. This allows the algorithm to conveniently iterate
 over the active vertices, rather than all the vertices in the working copy,
 which turns out to be necessary to achieve the target time bound.
+<p>
+There is one last detail to take note of. Whenever a maximum degree matching
+must be computed, a separte graph object is created.
+This is defined on just the active vertices of the working graph,
+to prevent its vertex count from significantly exceeding its edge count.
+<p>
+The following script can be used to demonstrate the program.
+<pre style="padding-left:5%">
+let g = randomRegularBigraph(10,3);
+let [ts] = ecolorG(g,1);
+log(ts);
+</pre>
+Some sample trace output appears below.
+<pre style="padding-left:5%">
+euler partitions and color sets
 
-<h4>Alon's Algorithm</h4>
+1: ei cn dm ak bh fl gj
+2 [en di ck fn bl ah cj bm el gm fi aj dh gk]
+  [dn ci fk bn al ch bj em gl fm ai ej gh dk]
+1 [en fi dh aj ck gm bl]
+  [fn di ah cj gk bm el]
+2: en fi dh aj ck gm bl
+3: fn di ah cj gk bm el
+1 [dn bj em fk ci al gh]
+  [bn ej fm dk ai gl ch]
+4: dn bj em fk ci al gh
+5: bn ej fm dk ai gl ch
 
-<h2>References</h2>
+{
+a[h:3 k:1 l:4 i:5 j:2] b[l:2 h:1 j:4 n:5 m:3] c[n:1 i:4 k:2 j:3 h:5]
+d[n:4 m:1 i:3 h:2 k:5] e[i:1 n:2 m:4 l:3 j:5] f[n:3 m:5 i:2 l:1 k:4]
+g[j:1 m:2 l:5 k:3 h:4] 
+
+h[a:3 b:1 c:5 d:2 g:4] i[e:1 c:4 d:3 f:2 a:5] j[c:3 g:1 b:4 a:2 e:5] 
+k[c:2 a:1 f:4 g:3 d:5] l[b:2 a:4 e:3 f:1 g:5] m[e:4 d:1 f:5 g:2 b:3] 
+n[e:2 c:1 d:4 f:3 b:5]
+}
+</pre>
+In the trace output, each Euler partition is shown as two sets of
+edges, each defining a subgraph with a specified maximum degree.
+The edges assigned to each color ares shown on one line as they
+are colored.
+The fully colored graph is shown at the end.
+<p>
+The following script can be used to assess the performance of the algorithm.
+<pre style="padding-left:5%">
+let n = 1000; let d = 10;
+let g = randomRegularBigraph(n,d);
+let t = Date.now(); let [,stats] = ecolorG(g); t = Date.now()-t;
+log(`${n} ${d} matches=${stats.matches} ` +
+    `steps=${stats.steps} ${(1000*t/g.m).toFixed(2)} us/edge`);
+</pre>
+Some sample output appears below.
+<pre style="padding-left:5%">
+1000  7 matches= 3 steps= 298936  6.71 us/edge 
+1000 15 matches= 7 steps= 763048  7.33 us/edge 
+1000 31 matches=15 steps=1863390  9.04 us/edge 
+1000 63 matches=31 steps=3798969 10.68 us/edge 
+
+1000  8 matches=0 steps= 45996 2.00 us/edge 
+1000 16 matches=0 steps=109980 2.38 us/edge 
+1000 32 matches=0 steps=253856 2.75 us/edge 
+1000 64 matches=0 steps=573118 3.19 us/edge 
+</pre>
+Both groups show what happens as $\Delta$ scales up,
+but the first sets $\Delta$ to one less than a power of 2,
+while the second group sets it to a power of 2.
+The first group maximizes the number of max degree matching
+computations, while the second minimizes it.
+In both cases, the running time is substantially larger than
+for the path recoloring method.
+
+<h3>Remarks</h3>
+Other algorithms for bipartite edge matching have been developed over
+the years that improve on the worst-case performance of Gabow's
+algorithm. One example is Alon's algorithm [Alon03], which has a
+worst-case time bound of $O(m \log n)$.
+Alon's algorithm uses the same basic framework as Gabow's algorithm,
+but replaces the maximum degree matching computation with a
+different matching computation with a worst-case bound of $O(m\log n)$.
+While Alon's algorithm has a better time bound, it is not clear how much
+better it would be in practice.
+Since on random graphs, Gabow's algorithm underperforms the
+simple path recoloring method, even when no matching computations are
+needed, Alon's algorithm may not provide a dramatic improvement
+in practical contexts.
+
+<h3>References</h3>
 <dl>
+<dt> [Alon03]
+<dd> &ldquo;A simple algorithm for edge-coloring bipartite multigraphs,&rdquo;
+	by Noga Alon. In <i>Information Processing Letters</i>, 2003.
 <dt> [BM76]
 <dd> <i>Graph Theory with Applications</i>,
     by J. A. Bondy and U. S. R. Murty. North Holland, 1976.
@@ -605,7 +692,6 @@ which turns out to be necessary to achieve the target time bound.
 <dd> &ldquo;Using Euler Partitions to Edge Color Multigraphs,&rdquo;
     by Harold Gabow. In <i>Journal of Computer and Information Sciences</i>,
     1976.
-<dt> [vizing64]
 </dl>
 <hr> <h4>&copy; Jonathan Turner - 2022</h4>
 <script src="../../googleAnalytics.js"></script>
