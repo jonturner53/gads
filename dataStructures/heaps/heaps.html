@@ -64,7 +64,7 @@ smallest key value.
 Using a suitably structured heap-ordered tree, the various operations
 can be implemented to run in $O(\log n)$ time.
 
-<a id=arrayHeap><h2>Array Heap</h2></a>
+<a id=ArrayHeap><h2>Array Heap</h2></a>
 The <i>array heap</i> (also known as $d$-heap) is a simple version
 of the heap data type that uses an array to implement a
 $d$-ary heap-ordered tree.
@@ -292,7 +292,7 @@ other operations. In such cases, the overall performance can be
 improved by selecting a value of $d$ that makes these operations faster
 at the expense of the others.
 
-<a id=fheaps><h2>Fibonacci Heaps</h2></a>
+<a id=FibHeaps><h2>Fibonacci Heaps</h2></a>
 
 The Fibonacci heaps [FreTar87] data structure represents a collection
 of heaps that define a partition over a common index range $1\ldots n$.
@@ -307,7 +307,7 @@ $d$ <i>delete</i>, <i>deletemin</i> and increasing <i>changekey</i>
 operations, the total running time is $O(m + d\log n)$.
 <p>
 The provided <i>Javascript</i> implementation extends the
-<a href="./trees.html#forest">$\Forest$ data structure</a> and
+<a href="../trees/trees.html#Forest">$\Forest$ data structure</a> and
 includes the following methods.
 <ul>
 <li>    $\key(i,k)$ sets the key of item $i$
@@ -708,7 +708,7 @@ export default class FibHeaps extends Forest {
 }
 </textarea>
 
-<a id=lheaps><h2>Leftist Heaps</h2></a>
+<a id=LeftistHeaps><h2>Leftist Heaps</h2></a>
 
 As with Fibonacci heaps, the leftist heaps [Crane72, Knuth73] data structure
 maintains a collection of meldable heaps which define a partition over a

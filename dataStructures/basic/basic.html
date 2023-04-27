@@ -328,7 +328,7 @@ Most classes also define the following methods.
 <li> <code>clearStats()</code> sets an object's statistic counters to zero.
 </ul>
 
-<a id=list><h2>List</h2></a>
+<a id=List><h2>List</h2></a>
 The <code>List</code> class defines a list of distinct integers in
 a limited range $1\ldots n$ and supports the following methods.
 <ul>
@@ -648,7 +648,7 @@ export default class List extends Top {
 }
 </textarea>
 
-<a id=listPair><h2>ListPair</h2></a>
+<a id=ListPair><h2>ListPair</h2></a>
 The <code>ListPair</code> class defines two complementary lists over
 the same index range. One is referred to as <code>list 1</code>,
 the other as <code>list 2</code>.
@@ -864,7 +864,7 @@ export default class ListPair extends Top {
 </textarea>
 <p>
 
-<a id=dlists><h2>ListSet</h2></a>
+<a id=ListSet><h2>ListSet</h2></a>
 The <code>ListSet</code> class implements a collection of disjoint
 lists on a common index set $1\ldots n$.
 Each list in the collection is identified by its first list item.
@@ -1094,7 +1094,7 @@ export default class ListSet extends Top {
     }
 }
 </textarea>
-<h2>ReverseLists</h2>
+<a id=ReverseLists><h2>ReverseLists</h2></a>
 <p>
 The <code>ReverseLists</code> class is similar to <code>ListSet</code> in
 that it partitions the index range into a set of lists. The distinctive
@@ -1169,7 +1169,7 @@ reverse(f) {
 }
 </textarea>
 
-<a id=dsets><h2>MergeSets</h2></a>
+<a id=MergeSets><h2>MergeSets</h2></a>
 
 The <code>MergeSets</code> class defines a collection of disjoint sets
 over the index set $1\ldots n$ and provides methods to efficiently identify
@@ -1762,7 +1762,7 @@ Finally, it's worth noting that for $m\geq n \beta(n)$, $\alpha(m,n) \leq 2$.
 So, this is analysis is consistent with the previous analysis when
 $m\geq n \beta(n)$.
 
-<a id=scanner><h2>Scanner</h2></a>
+<a id=Scanner><h2>Scanner</h2></a>
 The <code>Scanner</code> class is a utility class used by the various
 data structures to implement their <code>fromString</code>  methods.
 It is initialized with a string and

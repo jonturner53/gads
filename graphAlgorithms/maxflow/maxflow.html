@@ -19,6 +19,13 @@
 </script>
 </head>
 <body bgcolor=ffffff>
+\(
+\newcommand{\level}{\textit{level}}
+\newcommand{\res}{\textit{res}}
+\newcommand{\rem}{\textit{rem}}
+\newcommand{\nextedge}{\textit{nextedge}}
+\)
+
 <h1>Maximum Flows<sup>&copy;</sup></h1>
 
 Let $G=(V,E)$ be a directed graph with a distinguished
@@ -26,8 +33,8 @@ Let $G=(V,E)$ be a directed graph with a distinguished
 and a positive <i>capacity</i> for each edge $e=(u,v)$, denoted
 $cap_e(u,v)$.
 A <i>flow</i> on $G$ is a function that assigns a non-negative
-flow value $f_e(u,v)$ to each edge.
-(The subscript may be omitted for the common case of simple graphs.)
+flow value $f_e(u,v)$ to each edge
+(the subscript may be omitted for the common case of simple graphs).
 A flow function must satisfy the following two properties.
 <ul>
 <li> <i>capacity constraint</i>: $f(u,v) \leq cap(u,v)$.
@@ -56,7 +63,8 @@ to numerical issues. Restricting capacities and flows to integer values
 eliminates this concern.
 
 <h2>Flows and Cuts</h2>
-Let $f(A,B)=\sum_{u\in A, v\in B} f(u,v)$ where $A$ and $B$ are subsets of $V$.
+Let $f(A,B)=\sum_{u\in A, v\in B} f(u,v)$ where $A$ and $B$ are subsets of $V$
+and the summation is over all edges with the tail in $A$ and the head in $B$.
 Similarly for $cap(A,B)$.
 With this notation, the flow conservation property can be written
 $f(u,V)=0$ for all $u$ except $s$ and $t$.
@@ -90,8 +98,8 @@ is equal to the minimum cut capacity.
 <p>
 Before verifying this, let's first
 define the <i>residual capacity</i> of an edge $e=(u,v)$ as
-$res_e(u,v) = cap_e(u,v) - f_e(u,v)$ and
-$res_e(v,u)=f_e(u,v)$ ($=cap_e(v,u)-f_e(v,u)$).
+$\res_e(u,v) = cap_e(u,v) - f_e(u,v)$ and
+$\res_e(v,u)=f_e(u,v)$ ($=cap_e(v,u)-f_e(v,u)$).
 The residual capacity gives the amount by which flow can be increased
 in either the forward or reverse direction on an edge, without
 violating capacity constraints.
@@ -126,10 +134,10 @@ The augmenting path method is the basis for many maximum flow algorithms.
 It starts by initializing the flow on all edges to zero, then applies
 the following step so long as there is an augmenting path.
 <p style="padding-left:5%">
-Select an augmenting path $p$ and add $res(p)$ units of flow to all
+Select an augmenting path $p$ and add $\res(p)$ units of flow to all
 edges on $p$.
 <p>
-This method was first proposed by Ford and Fulkerson [ForFul56].
+This method was first proposed by Ford and Fulkerson [FF56].
 If flow capacities are integers, flow increases by at least 1 on each step,
 so the augmenting path algorithm terminates
 in at most $|f^\ast|$ steps, where $f^\ast$ is a maximum flow.
@@ -143,7 +151,7 @@ could alternate between the paths $[s,a,b,t]$ and $[s,b,a,t]$ taking
 <p>
 Efficient algorithms can be obtained using an appropriate path
 selection policy. There are two natural choices, both suggested
-by Edmonds and Karp [EdKar72]. The first is
+by Edmonds and Karp [EK72]. The first is
 to select augmenting paths of minimum length (where path length is
 simply the number of edges in the path). The second is to select
 paths of maximum residual capacity. Both of these algorithms
@@ -224,11 +232,10 @@ g.fromString('{a->[b:3 d:2] b[c:3 d:7 g:3] c[d:1 e:5] d[e:2 f:1 g:3] ' +
              'e[f:1 g:3 h:4] f[e:1 g:2 h:3] g[e:3 f:2 h:1] ' +
              'h[f:3 i:4 j:2] i[g:5 j:6] ->j[]}');
 let [ts] = maxflowFFsp(g,1);
-log(ts, '\n' + g.toString(1));
+log(ts);
 </pre>
 This produces the output
-<p> <textarea rows="14" cols="80" readonly
-          style="font-size: 95%;background-color:lightCyan">
+<pre style="padding-left:5%">
 augmenting paths with residual capacities
 a:3 b:3 g:1 h:2 j
 a:2 d:2 e:4 h:1 j
@@ -236,18 +243,11 @@ a:1 d:1 e:3 h:4 i:6 j
 a:2 b:3 c:5 e:2 h:3 i:5 j
  
 {
-a->[b:3/3 d:2/2]
-b[c:3/2 d:7 g:3/1]
-c[d:1 e:5/2]
-d[e:2/2 f:1 g:3]
-e[f:1 g:3 h:4/4]
-f[e:1 g:2 h:3]
-g[e:3 f:2 h:1/1]
-h[f:3 i:4/3 j:2/2]
-i[g:5 j:6/3]
-->j[]
+a->[b:3/3 d:2/2] b[c:3/2 d:7 g:3/1] c[d:1 e:5/2]
+d[e:2/2 f:1 g:3] e[f:1 g:3 h:4/4] f[e:1 g:2 h:3]
+g[e:3 f:2 h:1/1] h[f:3 i:4/3 j:2/2] i[g:5 j:6/3] ->j[]
 }
-</textarea> <p>
+</pre> <p>
 Each vertex on the augmenting path is shown, with the
 capacity of the edge to the next vertex.
 Note that the path lengths are non-decreasing.
@@ -257,25 +257,25 @@ separated by a forward slash; zero flow values are omitted.
 The time for each augmenting path step is $O(m)$.
 The number of augmenting path steps can be bounded by first showing
 that the lengths of the augmenting paths increase as the algorithm runs.
-Let $level_i(u)$ be the length of a shortest path from $s$ to $u$
+Let $\level_i(u)$ be the length of a shortest path from $s$ to $u$
 with positive residual capacity, immediately before step $i$ of the algorithm.
 Note that the augmenting path selected in step $i$ must satisfy
-$level_i(v)=level_i(u)+1$ for consecutive vertices $u$ and $v$ in the path.
+$\level_i(v)=\level_i(u)+1$ for consecutive vertices $u$ and $v$ in the path.
 The first step in the analysis is to prove the following lemma.
 <p>
 <i>Lemma 1</i>.
-For all $u\in V$ and all $i > 0$, $level_{i+1}(u) \geq level_i(u)$.
+For all $u\in V$ and all $i > 0$, $\level_{i+1}(u) \geq \level_i(u)$.
 <p>
 <i>Proof</i>.
 Suppose the claim is not true and that $k$ is the smallest integer
-for which there is some vertex $v$ with $level_{i+1}(v)=k < level_{i}(v)$.
-Let $e$ be an edge joining $u$ and $v$ with $res_e(u,v)>0$ following
-step $i$ with $level_{i+1}(u)=k-1$ and note that $level_{i}(u)\leq k-1$.
+for which there is some vertex $v$ with $\level_{i+1}(v)=k < \level_{i}(v)$.
+Let $e$ be an edge joining $u$ and $v$ with $\res_e(u,v)>0$ following
+step $i$ with $\level_{i+1}(u)=k-1$ and note that $\level_{i}(u)\leq k-1$.
 <p>
-Since $level_{i}(v) > k$, $res_e(u,v)=0$ before step $i$.
+Since $\level_{i}(v) > k$, $\res_e(u,v)=0$ before step $i$.
 This means that step $i$ must have added flow to the edge from $v$ to $u$.
-This implies that $level_{i}(v)=level_{i}(u)-1 \leq k-2$ contradicting the
-original assumption that $level_{i}(v)>k$.
+This implies that $\level_{i}(v)=\level_{i}(u)-1 \leq k-2$ contradicting the
+original assumption that $\level_{i}(v)>k$.
 This argument is summarized in the diagram below.
 <p>
 <div  style="text-align:center;">
@@ -283,46 +283,53 @@ This argument is summarized in the diagram below.
 </div>
 $\Box$
 <p>
-The next step is to show that $level_i(t)$ increases by at least 1 after
+The next step is to show that $\level_i(t)$ increases by at least 1 after
 every $m$ steps.
 <p>
 <i>Lemma 2</i>.
 If the number of augmenting path steps is $\geq i+m$, then
-$level_{i+m}(t) > level_i(t)$.
+$\level_{i+m}(t) > \level_i(t)$.
 <p>
 <i>Proof</i>.
-Define an augmenting path to be $i$-rising, if for every consecutive
-pair of vertices on the path $u$ and $v$, $level_i(v)=level_i(u)+1$
-and the path edge $e$ linking $u$ and $v$ had $res_e(u,v)>0$
-immediately before step $i$.
-Now, suppose that $level_i(t) = k$ and that for some $r>0$,
-$level_{i+r}(t)=k$.
-The lemma can be proved by showing that for $i\leq j\leq i+r$,
-the augmenting path selected in step $j$ is $i$-rising.
+For a path $p$ with vertices $[u_0,\ldots,u_k]$,
+define $\level_i(p)$ to be the vector $[\level_i(u_0),\ldots,\level_i(u_k)]$.
+Let $p_i$ be the augmenting path chosen in step $i$ and
+$p_j$ the augmenting path chosen in step $j\geq i$.
+If $p_i$ and $p_j$ have length $k$
+then $\level_j(p_j)=[0,\ldots,k]=\level_i(p_i)$.
 <p>
-Suppose that the path $p$ selected in step $j$
-is not $i$-rising and that $j$ is the smallest
-integer for which this is true.
-Note that since $level_j(t)=level_i(t)$ and $p$ is $j$-rising,
-every consecutive pair $u$ and $v$ on $p$ must
-have $level_i(v)=level_i(u)+1$.
-Since $p$ is not $i$-rising, the edge $e$ linking
-some consecutive pair $u$ and $v$ on the path must have had
-$res_e(u,v)=0$ just before step $i$. This means that some
-augmenting step between $i$ and $j$ must have added flow from $v$ to $u$,
-but since this path was $i$-rising, this implies $level_i(u)=level_i(v)+1$,
-which contradicts the fact that $level_i$ values increase by 1 at all
-pairs on path $p$.
+The lemma can be proved by showing that $\level_j(p_j)=\level_i(p_j)$.
+Assume that $j$ is the smallest integer for which
+$\level_j(p_j)\neq \level_i(p_j)$.
+Since $p_i$ and $p_j$ have the same length
+and both end at $t$, $\level_j(t)=\level_i(t)$.
+Let $u$ be the last vertex
+on $p_j$ for which $\level_j(u) \neq \level_i(u)$,
+and let $e$ be the edge linking $u$ to its successor $v$ on $p_j$.
+Since $$\level_j(u) \neq \level_i(u) = \level_{j-1}(u)$$
+$\level_{j-1}(u) < \level_j(u)$ by the previous lemma.
+Since $\level_j(v)=\level_{j-1}(v)$, $\res_e(u,v)$ must have
+been zero just before step $j-1$.
+Since that is not true after step $j-1$,
+step $j-1$ must have added flow from $v$ to $u$.
+This implies
+$$\level_{j-1}(u) > \level_{j-1}(v)=\level_j(v)>\level_j(u)$$
+yielding a contradiction.
 <p>
-Since every augmenting step saturates at least one edge and there are
-at most $m$ edges joining a pair $u$ and $v$ with $level_i(v)=level_i(u)+1$,
-there can be at most $m$ augmenting steps that select $i$-rising paths
-of length $k$.
-Consequently, $level_{i+m}(t) > level_i(t)$. $\Box$
+Let $P$ be the set of paths $p_j$ with $j\geq i$
+and $p_j$ and $p_i$ of the same length.
+Define two augmenting paths to be <i>consistent</i> if for every edge on both
+paths, the direction of flow is the same.
+Since $\level_j(p_j)=\level_i(p_j)$ for all $p_j\in P$,
+all pairs of paths in $P$ are consistent.
+Consequently, no edge used by paths in $P$ can be saturated more than once.
+Since every augmenting step saturates at least one edge, the number of
+augmenting paths in $P$ is at most $m$.
+Consequently, $\level_{i+m}(t) > \level_i(t)$. $\Box$
 <p>
-Since augmenting paths are simple, $level_i(t) \leq n-1$,
-so $level_i(t)$ can increase at most $n-2$ times.
-By <i>Lemma 2</i> it must increase by at least 1 every $m$ steps, so the
+Since augmenting paths are simple and $\level_i(t) \leq n-1$,
+so $\level_i(t)$ can increase at most $n-2$ times.
+By <i>Lemma 2</i> it must increase by at least once every $m$ steps, so the
 number of steps is $\leq mn$ and the running time of the algorithm
 is $O(m^2n)$. The example below shows how the worst-case behavior can arise.
 <p>
@@ -359,14 +366,14 @@ can all be reversed, making them augmenting paths in $G$. $\Box$
 the version of the
 augmenting path method that selects maximum residual capacity paths.
 <p>
-Define $remainder_i$ to be the difference between the maximum
+Define $\rem_i$ to be the difference between the maximum
 flow value and the current flow value, just before step $i$.
 From the argument used in the proof of <i>Lemma 3</i>, there is a sequence
 of at most $m$ augmenting steps leading to a maximum flow. Therefore,
-the maximum capacity path must have capacity at least $remainder_i/m$.
+the maximum capacity path must have capacity at least $\rem_i/m$.
 If the total number of augmenting path steps is greater than $i+2m$,
 then at least one of the next $2m$ steps must add less than
-$remainder_i/2m$ units of flow.
+$\rem_i/2m$ units of flow.
 This means that after $2m$ steps, the capacity of the maximum capacity path
 is reduced by at least a factor of 2.
 If the maximum edge capacity is $C$, the number of augmenting path steps
@@ -420,31 +427,23 @@ g.fromString('{a->[b:3 d:2] b[c:3 d:7 g:3] c[d:1 e:5] d[e:2 f:1 g:3] ' +
              'e[f:1 g:3 h:4] f[e:1 g:2 h:3] g[e:3 f:2 h:1] ' +
              'h[f:3 i:4 j:2] i[g:5 j:6] ->j[]}');
 let [ts] = maxflowFFmc(g,1);
-log(ts, '\n' + g.toString(1));
+log(ts);
 </pre>
 This produces the output
-<p> <textarea rows="14" cols="80" readonly
-          style="font-size: 95%;background-color:lightCyan">
+<pre style="padding-left:5%">
 augmenting paths with residual capacities
 a:3 b:3 c:5 e:4 h:2 j
 a:2 d:2 e:2 h:4 i:6 j
 a:1 b:3 g:1 h:2 i:4 j
  
 {
-a->[b:3/3 d:2/2]
-b[c:3/2 d:7 g:3/1]
-c[d:1 e:5/2]
-d[e:2/2 f:1 g:3]
-e[f:1 g:3 h:4/4]
-f[e:1 g:2 h:3]
-g[e:3 f:2 h:1/1]
-h[f:3 i:4/3 j:2/2]
-i[g:5 j:6/3]
-->j[]
+a->[b:3/3 d:2/2] b[c:3/2 d:7 g:3/1] c[d:1 e:5/2]
+d[e:2/2 f:1 g:3] e[f:1 g:3 h:4/4] f[e:1 g:2 h:3]
+g[e:3 f:2 h:1/1] h[f:3 i:4/3 j:2/2] i[g:5 j:6/3] ->j[]
 }
-</textarea> <p>
+</pre>
 
-<h2>Capacity Scaling</h2>
+<h3>Capacity Scaling</h3>
 The capacity scaling algorithm is a variant on the maximum capacity
 algorithm, which has $O(m^2\log C)$ execution time at all graph densities.
 This provides a theoretical advantage, but not necessarily one that
@@ -514,7 +513,7 @@ steps, although the number remains $O(m\log C)$.
 <h3>Peformance Comparisons</h3>
 The worst-case performance of the shortest path version of the
 augmenting path algorithm can be demonstrated using the following
-code segment.
+script.
 <pre style="padding-left:5%">
 function hardTest(algo, label, g, k1, k2) {
     g.clearFlow();
@@ -524,10 +523,6 @@ function hardTest(algo, label, g, k1, k2) {
         `paths=${stats.paths} ` +
         `steps/path=${~~(stats.steps/stats.paths)}`);
 }
-
-let k1=10; let k2=10; let g = maxflowHardcase(k1, k2); 
-hardTest(maxflowFFmc, 'FFmc', g, k1, k2);
-
 let k1=10; let k2=10; let g = maxflowHardcase(k1, k2); 
 hardTest(maxflowFFsp, 'FFsp', g, k1, k2);
 </pre>
@@ -540,9 +535,9 @@ central subgraph (<code>k2</code>).
 The results below show the effect of increasing <code>k1</code> from
 10 to 80, while holding <code>k2</code> fixed.
 <pre style="padding-left:5%">
-FFsp k1=10 k2=10 135ms paths=2000 steps/path=575 
-FFsp k1=20 k2=10 407ms paths=4000 steps/path=866 
-FFsp k1=40 k2=10 1413ms paths=8000 steps/path=1446 
+FFsp k1=10 k2=10  135ms paths= 2000 steps/path= 575 
+FFsp k1=20 k2=10  407ms paths= 4000 steps/path= 866 
+FFsp k1=40 k2=10 1413ms paths= 8000 steps/path=1446 
 FFsp k1=80 k2=10 5185ms paths=16000 steps/path=2606
 </pre>
 Note that the number of augmenting paths grows directly with <code>k1</code>,
@@ -551,9 +546,9 @@ Consequently, the running time grows quadratically.
 The results below show the effect of increasing <code>k2</code> from
 10 to 80, while holding <code>k1</code> fixed.
 <pre style="padding-left:5%">
-FFsp k1=10 k2=10 133ms paths=2000 steps/path=575 
-FFsp k1=10 k2=20 988ms paths=8000 steps/path=1255 
-FFsp k1=10 k2=40 10900ms paths=32000 steps/path=3814 
+FFsp k1=10 k2=10    133ms paths=  2000 steps/path=  575 
+FFsp k1=10 k2=20    988ms paths=  8000 steps/path= 1255 
+FFsp k1=10 k2=40  10900ms paths= 32000 steps/path= 3814 
 FFsp k1=10 k2=80 153753ms paths=128000 steps/path=13732 
 </pre>
 In this case, the number of augmenting paths grows quadratically with
@@ -564,14 +559,14 @@ While these graphs are not really worst case for the max capacity and
 capacity scaling algorithms, it's still interesting to see how they
 behave.
 <pre style="padding-left:5%">
-FFmc k1=10 k2=10 2ms paths=20 steps/path=562 
-FFmc k1=20 k2=10 6ms paths=40 steps/path=995 
-FFmc k1=40 k2=10 18ms paths=80 steps/path=1830 
+FFmc k1=10 k2=10  2ms paths= 20 steps/path= 562 
+FFmc k1=20 k2=10  6ms paths= 40 steps/path= 995 
+FFmc k1=40 k2=10 18ms paths= 80 steps/path=1830 
 FFmc k1=80 k2=10 52ms paths=160 steps/path=3526
 
-FFmc k1=10 k2=10 3ms paths=20 steps/path=562 
-FFmc k1=10 k2=20 6ms paths=40 steps/path=949 
-FFmc k1=10 k2=40 20ms paths=80 steps/path=1638 
+FFmc k1=10 k2=10  3ms paths= 20 steps/path= 562 
+FFmc k1=10 k2=20  6ms paths= 40 steps/path= 949 
+FFmc k1=10 k2=40 20ms paths= 80 steps/path=1638 
 FFmc k1=10 k2=80 55ms paths=160 steps/path=2746 
 </pre>
 For the max capacity algorithm, the number of paths grows
@@ -582,14 +577,14 @@ The average number of steps per path search also grows directly
 with both parameters, consequently the run time grows quadratically
 in both cases.
 <pre style="padding-left:5%">
-FFcs k1=10 k2=10 7ms paths=20 steps/path=568 
-FFcs k1=20 k2=10 7ms paths=40 steps/path=862 
-FFcs k1=40 k2=10 20ms paths=80 steps/path=1445 
+FFcs k1=10 k2=10  7ms paths= 20 steps/path= 568 
+FFcs k1=20 k2=10  7ms paths= 40 steps/path= 862 
+FFcs k1=40 k2=10 20ms paths= 80 steps/path=1445 
 FFcs k1=80 k2=10 60ms paths=160 steps/path=2607 
 
-FFcs k1=10 k2=10 3ms paths=20 steps/path=568 
-FFcs k1=10 k2=20 8ms paths=40 steps/path=1232 
-FFcs k1=10 k2=40 31ms paths=80 steps/path=3727 
+FFcs k1=10 k2=10   3ms paths= 20 steps/path=  568 
+FFcs k1=10 k2=20   8ms paths= 40 steps/path= 1232 
+FFcs k1=10 k2=40  31ms paths= 80 steps/path= 3727 
 FFcs k1=10 k2=80 177ms paths=160 steps/path=13397 
 </pre>
 For capacity scaling, the number of paths
@@ -625,7 +620,7 @@ with average out-degree $d$ and a built-in &ldquo;small cut&rdquo;.
 In this case, that small cut contains 125 edges and splits the vertex
 set in half. (This function can also be used to generate graphs with multiple
 small cuts.)
-Running the code produces the output shown below.
+Running the script produces the output shown below.
 <pre style="padding-left:5%">
 FFsp n=202 d=25 cutSize=125 214ms paths=304 steps/path=8271 
 FFmc n=202 d=25 cutSize=125 163ms paths=149 steps/path=9591 
@@ -643,8 +638,8 @@ Doubling the average vertex degree (and hence the number of edges)
 produces the results below.
 <pre style="padding-left:5%">
 FFsp n=402 d=50 cutSize=500 3537ms paths=1165 steps/path=34847 
-FFmc n=402 d=50 cutSize=500 1815ms paths=552 steps/path=28355 
-FFcs n=402 d=50 cutSize=500 2048ms paths=778 steps/path=30562 
+FFmc n=402 d=50 cutSize=500 1815ms paths= 552 steps/path=28355 
+FFcs n=402 d=50 cutSize=500 2048ms paths= 778 steps/path=30562 
 </pre>
 Notice the large increase in the size of the small cut in this case.
 This contributes to an increase in the number of path searches by
@@ -660,11 +655,11 @@ It explicitly divides the execution into distinct phases,
    This enables a more efficient path-finding procedure.
    <p>
    At the start of each phase, Dinic's algorithm computes
-   a function $level(u)$, which is the length of a shortest
+   a function $\level(u)$, which is the length of a shortest
    path with positive residual capacity from $s$ to $u$.
    During the phase, path searches are restricted to edges $e$
-   joining vertices $u$ and $v$ with $res_e(u,v)>0$
-   and $level(v) = level(u)+1$ and $level(u)< level(t)$.
+   joining vertices $u$ and $v$ with $\res_e(u,v)>0$
+   and $\level(v) = \level(u)+1$ and $\level(u)< \level(t)$.
    <p>
    The resulting &ldquo;searchable subgraph&rdquo; can be viewed
    as a directed acyclic graph. Path searches are done using
@@ -742,9 +737,9 @@ to the next vertex on the list whenever the search determines that
 the current <code>nextedge</code> value leads to a deadend.
 <p>
 From the earlier analysis of the shortest augmenting path algorithm,
-the value of $level(t)$ increases with each phase of Dinic's algorithm,
+the value of $\level(t)$ increases with each phase of Dinic's algorithm,
 which means the number of phases is $< n$.
-The computation of $level$ at the start of each phase takes $O(m)$ time
+The computation of $\level$ at the start of each phase takes $O(m)$ time
 and the number of path searches per phase is at most $m$. To determine
 the number of steps required for the path searches, let $N_i$ be
 the number of edges examined by the $i$-th top-level call to
@@ -768,15 +763,15 @@ The time spent following those chains can be significantly reduced
 using the <i>dynamic trees</i> data structure of Sleator and Tarjan.
 
 <a id=maxflowST><h3>Using Dynamic Trees to Represent Unsaturated Paths</h3></a>
-The <a href="../dataStructures/specialty/specialty.html#dtrees">dynamic trees</a>
+The <a href="../../dataStructures/specialty/specialty.html#DynamicTrees">dynamic trees</a>
 data structure can be used to speed up
 augmenting path searches, by storing information about previously
 explored paths with positive residual capacity.
 Each vertex $u$ with parent $v$ in the dynamic trees data
 structure is associated with an edge $e$ joining $u$ and $v$ in the
-flow graph with $res_e(u,v)>0$ and $level(v)=level(u)+1$.
+flow graph with $\res_e(u,v)>0$ and $\level(v)=\level(u)+1$.
 The cost of $u$ in the dynamic trees
-data structure is set to $res_e(u,v)>0$, while the cost of every root
+data structure is set to $\res_e(u,v)>0$, while the cost of every root
 vertex is set to a value large enough so that the root is never the
 minimum cost node on a tree path.
 Consequently, the path from $u$ to its tree root corresponds to
@@ -787,7 +782,7 @@ with a tree edge, flow information is maintained in the flow graph.
 <p>
 The figure illustrates the use of dynamic trees.
 It shows two trees overlaid on the edges of a flow graph joining vertices
-$u$ and $v$ for which $level(v)=level(u)+1$.
+$u$ and $v$ for which $\level(v)=\level(u)+1$.
 Note that the minimum cost on the
 tree path from $a$ to $i$ is 3, implying that the residual
 capacity of the path in the flow graph is also 3.
@@ -804,8 +799,8 @@ to take shortcuts through the flow graph, linking trees together until
 there is a tree path from the source to the sink. When deadends are
 discovered, they are pruned from the tree.
 Because the average time per operation in a sequence of dynamic tree
-operations is $O(\log n)$, this reduces the worst-case time for each
-phase of the algorithm by a factor proportional to $n/\log n$.
+operations is $O(\log n)$, this reduces the worst-case bound for each
+phase of the algorithm by a factor of $n/\log n$.
 <p>
 A <i>Javascript</i> implementation of the dynamic trees variant
 of Dinic's algorithm is shown below.
@@ -942,8 +937,9 @@ If it fails to extend the tree containing the source vertex
 at some point, the loop terminates and the second of the two
 inner loops is executed. This loop prunes the dead end encountered
 in the first loop. This involves removing all the tree
-edges entering the dead end vertex and updating the cost of the
-flow graph. The <code>prune</code> method handles these details.
+edges entering the dead end vertex and transferring the flow
+information for these tree edges to the corresponding flow graph edges.
+The <code>prune</code> method handles these details.
 <p>
 During one phase, <code>prune</code> is called at most $m$ times.
 To see this, note that whenever it is called from <code>findpath</code>
@@ -955,7 +951,7 @@ data structure during a phase and that the running time contributed by
 these operations is $O(m\log n)$, and so the overall runnning time
 is $O(mn\log n)$.
 
-<h2>Performance Comparisons</h2>
+<h3>Performance Comparisons</h3>
 The following script compares the performance of the shortest augmenting
 path algorithm with both versions of Dinic's algorithm on worst-case
 examples.
@@ -969,16 +965,16 @@ hardTest(maxflowDST,  'DST ', g, k1, k2);
 Running this for two parameter settings produces the results below.
 <pre style="padding-left:5%">
 FFsp k1=8 k2=25   1638ms paths=10000 steps/path=1686 
-D    k1=8 k2=25     67ms paths=10000 steps/path=128 
-DST  k1=8 k2=25     89ms paths=10000 steps/path=27 
+D    k1=8 k2=25     67ms paths=10000 steps/path= 128 
+DST  k1=8 k2=25     89ms paths=10000 steps/path=  27 
 
 FFsp k1=16 k2=50 42430ms paths=80000 steps/path=5869 
-D    k1=16 k2=50   883ms paths=80000 steps/path=223 
-DST  k1=16 k2=50   645ms paths=80000 steps/path=25 
+D    k1=16 k2=50   883ms paths=80000 steps/path= 223 
+DST  k1=16 k2=50   645ms paths=80000 steps/path=  25 
 </pre>
 In the second group, the value of $n$ is roughly doubled,
 while the value of $m$ is roughly quadrupled.
-So, the time for the shortest augmenting paths algorithm
+So, the time for the shortest augmenting path algorithm
 is expected to go up by a factor of 32, the time for Dinic's
 algorithm by a factor of 16 and the dynamic trees variant
 by a factor of 8. The reported times are consistent with this.
@@ -996,7 +992,7 @@ The higher overhead of the dynamic trees variant means that
 it is slower for the smaller graphs.
 <p>
 To compare the algorithms on random graphs, enter the following
-code in the web app.
+script in the web app.
 <pre style="padding-left:5%">let n=202; let d=25;
 let g = randomFlograph(n, d); 
 g.randomCapacities(randomInteger, 1, 99);
@@ -1008,16 +1004,16 @@ randomTest(maxflowDST,  'DST ', g, d);
 Here are the results from running this with three parameter settings.
 <pre style="padding-left:5%">
 FFsp n=202 d=25 cutSize=125  224ms paths=333 steps/path=8368 
-D    n=202 d=25 cutSize=125   10ms paths=333 steps/path=289 
-DST  n=202 d=25 cutSize=125   19ms paths=333 steps/path=419 
+D    n=202 d=25 cutSize=125   10ms paths=333 steps/path= 289 
+DST  n=202 d=25 cutSize=125   19ms paths=333 steps/path= 419 
 
 FFsp n=402 d=25 cutSize=138  582ms paths=392 steps/path=18152 
-D    n=402 d=25 cutSize=138   17ms paths=392 steps/path=470 
-DST  n=402 d=25 cutSize=138   35ms paths=392 steps/path=687 
+D    n=402 d=25 cutSize=138   17ms paths=392 steps/path=  470 
+DST  n=402 d=25 cutSize=138   35ms paths=392 steps/path=  687 
 
 FFsp n=402 d=50 cutSize=500 3491ms paths=1189 steps/path=35067 
-D    n=402 d=50 cutSize=500   34ms paths=1189 steps/path=300 
-DST  n=402 d=50 cutSize=500   61ms paths=1189 steps/path=431 
+D    n=402 d=50 cutSize=500   34ms paths=1189 steps/path=  300 
+DST  n=402 d=50 cutSize=500   61ms paths=1189 steps/path=  431 
 </pre>
 Once again, both versions of Dinic's algorithm are dramatically faster,
 due to the more efficient path searches, but the version using dynamic
@@ -1056,22 +1052,22 @@ First, add flow to all edges leaving the source, saturating them.
 Then, as long as there is an unbalanced vertex, repeat the following step.
 <p style="padding-left:5%">
 Select an unbalanced vertex $u$; if $u$ has an <i>admissible edge</i>
-$e=(u,v)$, add $\min\{res_e(u,v), \Delta(u)\}$
+$e=(u,v)$, add $\min\{\res_e(u,v), \Delta(u)\}$
 units of flow from $u$ to $v$; otherwise, expand the set
 of admissible edges at $u$.
 <p>
 So, the preflow-push method attempts to balance vertices by pushing flow
 out on its admissible edges.
-Goldman and Tarjan [GolTar86] proposed a method for determining which edges
+Goldman and Tarjan [GT86] proposed a method for determining which edges
 should be admissible that is similar to
 the <i>level</i> function in Dinic's algorithm.
 Each vertex $u$ is assigned a <i>distance label</i> $d(u)$ and
 an edge $e=(u,v)$ is defined to be admissible at $u$
-if $res_e(u,v)>0$ and $d(u)=d(v)+1$.
+if $\res_e(u,v)>0$ and $d(u)=d(v)+1$.
 The distance labels are said to be <i>valid</i> if $d(s)=n$,
-$d(t)=0$ and $d(u)\leq d(v)+1$ for every edge $e=(u,v)$ with $res_e(u,v)>0$.
+$d(t)=0$ and $d(u)\leq d(v)+1$ for every edge $e=(u,v)$ with $\res_e(u,v)>0$.
 Distance labels are said to be <i>exact</i> if $d(u)= d(v)+1$
-for every edge with $res_e(u,v)>0$.
+for every edge with $\res_e(u,v)>0$.
 <p>
 With these definitions, the general preflow-push method can be stated
 as follows.
@@ -1081,12 +1077,12 @@ non-saturated path from $u$ to the sink, for all other vertices.
 Then, repeat the following step, so long as there is an unbalanced vertex.
 <p style="padding-left:5%">
 Select an unbalanced vertex $u$; if $u$ has an <i>admissible edge</i>
-$e=(u,v)$, add $\min\{res_e(u,v), \Delta(u)\}$ units of flow from $u$ to $v$;
+$e=(u,v)$, add $\min\{\res_e(u,v), \Delta(u)\}$ units of flow from $u$ to $v$;
 otherwise, let $d(u)=\min_{e=(u,v)} d(v)+1$ where the minimum is over all
-edges with $res_e(u,v)>0$.
+edges with $\res_e(u,v)>0$.
 <p>
 Note that each step preserves the validity of the distance labels.
-Also, note that following initialization, there is a saturated cut separating
+Following initialization, there is a saturated cut separating
 the source from the sink. This remains true at every step.
 To understand why, note that if a saturated cut exists before a step 
 at vertex $u$ but not after the step, the step must add flow to an
@@ -1149,11 +1145,11 @@ The time required to relabel a vertex is bounded by the number
 of edges incident it, so the total time
 spent relabeling all vertices is $O(mn)$.
 <p>
-Note that as long as the label of a vertex does not change,
+As long as the label of a vertex does not change,
 none of its non-admissible edges can become admissible.
 This means that once an edge at $u$ has been checked
 for admissibility, it need not be checked again until $u$ is relabeled.
-If $nextedge(u)$ is initialized to the first edge in $u$'s adjacency
+If $\nextedge(u)$ is initialized to the first edge in $u$'s adjacency
 list whenever $u$ is relabeled and is advanced to the next edge in
 the adjacency list whenever an inadmissible edge is found,
 all edges at $u$ can be checked for admissibility in a single pass
@@ -1164,7 +1160,6 @@ spent searching for admissible edges is $O(mn)$.
 Since any step that saturates an edge $e=(u,v)$ makes $e$ inadmissible
 at $u$ and because fewer than $2n$ steps make any edge admissible at $u$,
 the time spent on steps that saturate an edge at $u$ is $O(mn)$.
-<p>
 What remains is to determine the time spent on steps that add flow to
 an edge but do not saturate it.
 The following lemma bounds the number of these steps.
@@ -1492,8 +1487,7 @@ A single asterisk at the end of a line indicates that an
 incremental relabeling operation was done at that point,
 and a double asterisk indicates that a batch relabeling
 was done. The final flow is shown at the end.
-<p> <textarea rows="14" cols="80" readonly
-          style="font-size: 95%;background-color:lightCyan">
+<pre style="padding-left:5%">
 unbalanced vertex, distance label, excess, push edges
 d 3 6 (d,e,2/2) (d,f,1/1) (d,g,3/3)
 b 3 5 (b,g,3/3) *
@@ -1516,51 +1510,11 @@ f 12 1 (d,f,1)
 d 11 3 (a,d,6/3)
 
 {
-a->[b:5/5 d:6/3]
-b[c:3/2 d:7 g:3/3]
-c[d:1 e:5/2]
-d[e:2 f:1 g:3/3]
-e[f:1/1 g:3 h:4/4]
-f[e:1 g:2 h:3/3]
-g[e:3/3 f:2/2 h:1/1]
-h[f:3 i:4/3 j:5/5]
-i[g:5 j:6/3]
-->j
+a->[b:5/5 d:6/3] b[c:3/2 d:7 g:3/3] c[d:1 e:5/2]
+d[e:2 f:1 g:3/3] e[f:1/1 g:3 h:4/4] f[e:1 g:2 h:3/3]
+g[e:3/3 f:2/2 h:1/1] h[f:3 i:4/3 j:5/5] i[g:5 j:6/3] ->j
 }
-unbalanced vertex, distance label, excess, push edges
-d 3 6 (d,e,2/2) (d,f,1/1) (d,g,3/3)
-b 3 5 (b,g,3/3) *
-e 2 2 (e,h,4/2)
-f 2 1 (f,h,3/1)
-g 2 6 (g,h,1/1) *
-b 4 2 (b,c,3/2)
-h 1 4 (h,j,5/4)
-g 3 5 (g,e,3/3) (g,f,2/2)
-c 3 2 (c,e,5/2)
-e 2 5 (e,h,4/4) *
-f 2 2 (f,h,3/3)
-h 1 4 (h,j,5/5) *
-e 3 3 (e,f,1/1)
-h 2 3 (h,i,4/3)
-f 2 1
-i 1 3 (i,j,6/3) **
-e 12 2 (d,e,2)
-f 12 1 (d,f,1)
-d 11 3 (a,d,6/3)
- 
-{
-a->[b:5/5 d:6/3]
-b[c:3/2 d:7 g:3/3]
-c[d:1 e:5/2]
-d[e:2 f:1 g:3/3]
-e[f:1/1 g:3 h:4/4]
-f[e:1 g:2 h:3/3]
-g[e:3/3 f:2/2 h:1/1]
-h[f:3 i:4/3 j:5/5]
-i[g:5 j:6/3]
-->j[]
-}
-</textarea> <p>
+</pre>
 
 <h3>Highest Label First Selection Method</h3>
 The highest label first selection method
@@ -1604,8 +1558,7 @@ total time spent in the while loop is $O(n^2)$.
 The trace output from <code>maxflowPPhl</code>
 when run on the sample graph from the last section
 is shown below.
-<p> <textarea rows="14" cols="80" readonly
-          style="font-size: 95%;background-color:lightCyan">
+<pre style="padding-left:5%">
 unbalanced vertex, distance label, excess, push edges
 d 3 6 (d,e,2/2) (d,f,1/1) (d,g,3/3)
 b 3 5 (b,g,3/3) *
@@ -1628,18 +1581,11 @@ h 2 3 (h,i,4/3)
 i 1 3 (i,j,6/3)
  
 {
-a->[b:5/5 d:6/3]
-b[c:3/2 d:7 g:3/3]
-c[d:1 e:5/2]
-d[e:2/2 f:1 g:3/1]
-e[f:1/1 g:3 h:4/4]
-f[e:1 g:2 h:3/3]
-g[e:3/1 f:2/2 h:1/1]
-h[f:3 i:4/3 j:5/5]
-i[g:5 j:6/3]
-->j[]
+a->[b:5/5 d:6/3] b[c:3/2 d:7 g:3/3] c[d:1 e:5/2]
+d[e:2/2 f:1 g:3/1] e[f:1/1 g:3 h:4/4] f[e:1 g:2 h:3/3]
+g[e:3/1 f:2/2 h:1/1] h[f:3 i:4/3 j:5/5] i[g:5 j:6/3] ->j[]
 }
-</textarea>
+</pre>
 
 <h3>Performance Comparisons</h3>
 The following script can be used to compare different
@@ -1699,7 +1645,7 @@ batch relabeling steps.
 The results below compare the FIFO and highest-label-first approaches
 for three different random graphs.
 <pre style="padding-left:5%">
-f  n=202 d=25  7ms rcount=189 rsteps=41501  bcount=807  bsteps=29278  
+f  n=202 d=25  7ms rcount=189 rsteps=41501  bcount= 807 bsteps=29278  
 hl n=202 d=25  8ms rcount=268 rsteps=56569  bcount=1370 bsteps=36238  
 
 f  n=402 d=25 13ms rcount=373 rsteps=82454  bcount=1454 bsteps=55379  
@@ -1736,7 +1682,6 @@ This can be done by first making an ordinary flow graph with
 the same edges as the original, but no floors.
 Each edge's capacity is set to the difference between the
 original edge's capacity and its floor.
-<p>
 Next, a high capacity edge is added from the sink to the source.
 Then a new source, $s'$ is added, along with a new sink, $t'$.
 Now, for each original edge $e=(u,v)$ with a floor of $f$,
@@ -1751,7 +1696,7 @@ computed flow for that edge plus its floor value.
 This is a feasible flow on the original graph for the specified floors.
 The feasible flow can be extended to a maximum flow, using a slightly
 modified definition of the residual capacity. Specifically, for
-an edge $e=(u,v)$, $res_e(v,u)=f_e(u,v) - floor(e)$. 
+an edge $e=(u,v)$, $\res_e(v,u)=f_e(u,v) - floor(e)$. 
 This change prevents the max flow algorithm from reducing the flow on
 an edge below its floor value.
 <p>
@@ -1808,7 +1753,7 @@ export default function flowfloor(g) {
 Note that any max flow algorithm can be used to find the maximum flow in
 <code>g1</code>. Dinic's algorithm was chosen here, as it makes
 the trace output easier to follow.
-The following code can be used to demonstrate the program.
+The following script can be used to demonstrate the program.
 Flow floors are shown by replacing edge capacities with flow ranges.
 So, in the example below, the edge $(b,d)$ has a flow range of between 2 and 7,
 corresponding to a floor of 2.
@@ -1822,8 +1767,7 @@ log((f < 0 ? 'no ' : '') + 'feasible flow');
 log(ts + '\n' +  g.toString(1));
 </pre>
 This produces the output shown below.
-<p> <textarea rows="14" cols="80" readonly
-          style="font-size: 95%;background-color:lightCyan">
+<pre style="padding-left:5%">
 feasible flow
 augmenting paths with residual capacities
 k:2 g:2 l
@@ -1834,33 +1778,18 @@ k:1 f:2 h:2 j:75 a:3 b:2 l
 k:1 d:1 e:3 h:1 j:74 a:2 b:1 l
 
 {
-a[b:3/2 d:2]
-b[c:3 d:5 g:3 l:2/2]
-c[d:1 e:5]
-d[e:2/2 f:1 g:3]
-e[f:1 g:3 h:3/1 l:1/1]
-f[e:1 g:2 h:3/2]
-g[e:3 f:5 h:1 l:2/2]
-h[f:3 i:4/2 j:2/2]
-i[g:3 j:6 l:2/2]
-j[a:75/2]
-k->[d:2/2 h:1/1 f:2/2 g:2/2]
-->l
+a[b:3/2 d:2] b[c:3 d:5 g:3 l:2/2] c[d:1 e:5]
+d[e:2/2 f:1 g:3] e[f:1 g:3 h:3/1 l:1/1] f[e:1 g:2 h:3/2]
+g[e:3 f:5 h:1 l:2/2] h[f:3 i:4/2 j:2/2] i[g:3 j:6 l:2/2] j[a:75/2]
+k->[d:2/2 h:1/1 f:2/2 g:2/2] ->l
 }
 
 {
-a->[b:3/2 d:2]
-b[c:3 d:2-7/2 g:3]
-c[d:1 e:5]
-d[e:2/2 f:1 g:3]
-e[f:1 g:3 h:1-4/2]
-f[e:1 g:2 h:3/2]
-g[e:3 f:2-7/2 h:1]
-h[f:3 i:4/2 j:2/2]
-i[g:2-5/2 j:6]
-->j
+a->[b:3/2 d:2] b[c:3 d:2-7/2 g:3] c[d:1 e:5]
+d[e:2/2 f:1 g:3] e[f:1 g:3 h:1-4/2] f[e:1 g:2 h:3/2]
+g[e:3 f:2-7/2 h:1] h[f:3 i:4/2 j:2/2] i[g:2-5/2 j:6] ->j
 }
-</textarea> <p>
+</pre>
 The augmenting paths in the augmented flow graph are shown first,
 followed by the resulting flow. The flow in the original graph is
 shown last.
@@ -1875,14 +1804,14 @@ shown last.
 <dd> &ldqu;Algorithm for solution of a problem of maximum flow in a network
      with power estimation&rdquo; by E. A. Dinic. Inn <i>Soviet Math Daklady</i>
      1970.
-<dt> [EdKar72]
+<dt> [EK72]
 <dd> &ldquo;Theoretical improvements in algorithmic efficiency for network
      flow problems&rdquo; by J. Edmonds and R. M. Karp. In <i>Journal of
      the Association for Computing Machinnery</i>, 1972.
-<dt> [ForFul56]
+<dt> [FF56]
 <dd> &ldquo;Maximal Flow Through a Network&rdquo; by L. R. Ford, Jr. and
      D. R. Fulkerson. In <i>Canadian Journal of Mathematics</i> 1956.
-<dt> [GolTar86]
+<dt> [GT86]
 <dd> &ldquo;A new approach to the maximum flow problem&rdquo; by A. V. Goldberg
      and R. E. Tarjan. In <i>Proceedings of the ACM Symposium on the Theory of
      Computing</i>, 1986.

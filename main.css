@@ -123,35 +123,41 @@ col, colgroup, table, tbody, td, tr	{
 	}	
 		
 a:link	{	
-	text-decoration:underline;
-	font-weight:normal;
-	color: DarkCyan;
+	text-decoration:none;
+	font-weight:600;
+	font-style: italic;
+	color:Teal;
 	background: normal;
 	}	
 		
 a:visited	{	
-	text-decoration:underline;
-	font-weight:normal;
-	color: DarkSeaGreen;
+	text-decoration:none;
+	font-weight:600;
+	font-style: italic;
+	color:Teal;
 	background:  normal;
 	}	
 		
 a:active	{	
 	text-decoration:	none;
-	font-weight:	normal;
-	color:	#F00;
+	font-weight:600;
+	font-style: italic;
+	color:#F00;
 	background:	#FC0;
 	}	
 		
 a:hover	{	
 	text-decoration:	none;
+	font-weight:600;
+	font-style: italic;
 	color:	#66c;
 	background:	#8bb;
 	}	
 		
 a.offsite	{	
-	text-decoration:underline;
-	font-weight:normal;
+	text-decoration:none;
+	font-weight:600;
+	font-style: italic;
 	color:	#C00;
 	background:	#ffc;
 	}	

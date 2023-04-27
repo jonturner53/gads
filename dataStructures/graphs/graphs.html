@@ -35,7 +35,7 @@ including heaps and binary search trees.
 Finally, it includes a section describing several methods for generating
 random graphs.
 
-<h2>Undirected Graphs</h2>
+<a id=Graph><h2>Undirected Graphs</h2></a>
 
 The implementation of the <code>Graph</code> class is illustrated below.
 <p>
@@ -282,7 +282,7 @@ export default class Graph extends Top {
 }
 </textarea>
 
-<h2>Directed Graphs</h2>
+<a id=Digraph><h2>Directed Graphs</h2></a>
 The <code>Digraph</code> class extends the <code>Graph</code> class,
 adding the following methods.
 <ul>
@@ -431,7 +431,7 @@ export default class Digraph extends Graph {
 }
 </textarea>
 
-<h2>Flow Graphs</h2>
+<a id=Flograph><h2>Flow Graphs</h2></a>
 The <code>Flograph</code> class extends the <code>Digraph</code> class,
 adding an array of edge capacities and an array of edge flows.
 It also defines two special vertices, the <i>source</i> vertex and
@@ -615,7 +615,7 @@ export default class Flograph extends Digraph {
 }
 </textarea>
 
-<h2>Random Graphs</h2>
+<a id=RandomGraphs><h2>Random Graphs</h2></a2>
 The <code>RandomGraphs</code> module provides a collection of methods for
 generating simple (no self-loops or parallel edges) random graphs
 of all three types.

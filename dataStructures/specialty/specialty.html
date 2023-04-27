@@ -65,7 +65,7 @@ more general-purpose data structures is admittedly fuzzy
 (and subjective), it seems sensible to put these in a separate
 category.
 
-<h2>Group Heap</h2>
+a id=GroupHeap><h2>Group Heap</h2></a2>
 
 The <i>group heap</i> data structure was originally devised to enable a
 specific algorithm for the weighted matching problem in general graphs [GMG86].
@@ -309,7 +309,7 @@ The last line shows a more concise representation, in which the
 groups are hidden, and only the minimum key item of each active group is
 shown, with an asterisk highlighting the item with the smallest key.
 
-<a id=oheaps><h2>Ordered Heaps</h2></a>
+<a id=OrderedHeaps><h2>Ordered Heaps</h2></a>
 
 The <i>ordered heaps</i> data structure was introduced in the last section.
 Recapping, it implements a collection of heaps in which the items within
@@ -504,7 +504,7 @@ export default class OrderedHeaps extends BalancedForest {
 }
 </textarea><p>
 
-<a id=dtrees><h2>Dynamic Trees</h2></a>
+<a id=DynamicTrees><h2>Dynamic Trees</h2></a>
 The <i>dynamic trees</i> data structure represents a collection of
 trees with each tree node $u$ having a cost denoted $\cost(u)$.
 It was invented by Sleator and Tarjan [Tarjan87] to enable faster
@@ -711,7 +711,7 @@ The remaining lines show each tree as a linked collection of paths.
 So for example, the <code>f</code> preceding the path <code>[b:1]</code>
 indicates that the <code>f</code> is the successor of this path.
 
-<a id=pathSets><h2>Path Sets</h2></a>
+<a id=PathSets><h2>Path Sets</h2></a>
 The <i>path sets</i> data structure was introduced in the last section.
 Recapping, this data structure supports the following methods.
 <ul>

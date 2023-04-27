@@ -31,7 +31,7 @@ The diagram below shows an edge-weighted graph with
 bold edges that highlight a minimum spanning tree.  
 <p>
 <div  style="text-align:center;">
-<img width="20%" src="figs/mstExample.png"><br>
+<img width="17%" src="figs/mstExample.png"><br>
 </div>
 <p>
 
@@ -193,14 +193,14 @@ described above.
 <p>
 Prim's algorithm can be implemented using any heap data structure,
 but it is most commonly implemented using an
-<a href="../dataStructures/heaps/heaps.html#arrayHeap">array heap</a>.
+<a href="../../dataStructures/heaps/heaps.html#ArrayHeap">array heap</a>.
 If the heap operations are excluded, the running time
 is $O(m)$, since the innermost loop is executed no more than $2m$ times.
 The heap operations include $n-1$ <i>insert</i> operations,
 $n-1$ <i>deletemin</i> operations and up to $m-n$ <i>changekey</i>
 operations, all of which reduce the key value.
 This leads to a worst-case running time of
-$O(m \log_d n + n d\log_d n)$ when a $d$-heap is used.
+$O(m \log_d n + n d\log_d n)$ when an array heap is used.
 The value of $d$ can be selected to yield the
 best tradeoff between the operations using <i>siftup</i> and
 those using <i>siftdown</i>
@@ -244,9 +244,9 @@ is a small constant (say 2 or 4) and the
 expected running time is $O(m + n \log n)$.
 <p>
 If Prim's algorithm is implemented using a
-<a href="../dataStructures/heaps/heaps.html#fheaps">Fibonacci heap</a>,
+<a href="../../dataStructures/heaps/heaps.html#FibHeaps">Fibonacci heap</a>,
 its worst-case running time is $O(m + n \log n)$, which does provide a modest
-improvement over the worst-case when $d$-heaps are used.
+improvement over the worst-case when array heaps are used.
 In practice however, the added complexity of
 Fibonacci heaps puts it at a disadvantage in most situations.
 <p>
@@ -308,12 +308,8 @@ it produces the following output.
 <textarea id="components" rows="10" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 {
-a[b:3 d:2 e:5]
-b[a:3 c:7 f:4]
-c[b:7 d:1 f:2]
-d[a:2 c:1 e:3]
-e[a:5 d:3 f:1]
-f[b:4 c:2 e:1]
+a[b:3 d:2 e:5] b[a:3 c:7 f:4] c[b:7 d:1 f:2]
+d[a:2 c:1 e:3] e[a:5 d:3 f:1] f[b:4 c:2 e:1]
 }
 
 selected vertex, tree edge, heap contents
@@ -385,7 +381,7 @@ n=1024 density=128
 prim time=24ms steps/m=4.72 
 prim_2 time=26ms steps/m=5.87
 </pre>
-To evaluate program's performance on random graphs, replace the second
+To evaluate the program's performance on random graphs, replace the second
 line of the code in the web app with
 <pre style="padding-left:5%;">
 let g = randomGraph(n,m); g.randomWeights(randomFraction);
@@ -435,7 +431,7 @@ a cut that has one of the trees by itself on one side of the cut,
 with all other vertices on the other side.
 <p>
 The
-<a href="../dataStructures/basic/basic.html#dsets">disjoint sets</a>
+<a href="../../dataStructures/basic/basic.html#MergeSets">merge sets</a>
 data structure can be used to keep track of the
 vertices in the different trees. This leads directly to the following
 implementation (abridged for clarity).
@@ -449,13 +445,13 @@ export default function mstK(g) {
     edges.sort((e1, e2) => g.weight(e1) - g.weight(e2));
 
     // now examine edges in order, merging separate subtrees
-    let treeEdges = []; let subtrees = new Sets(g.n);
+    let treeEdges = []; let subtrees = new MergeSets(g.n);
     for (let i = 0; i < edges.length; i++) {
         let e = edges[i];
         let u = g.left(e); let v = g.right(e);
         let cu = subtrees.find(u); let cv = subtrees.find(v);
         if (cu != cv) {
-            treeEdges.push(e); subtrees.link(cu, cv);
+            treeEdges.push(e); subtrees.merge(cu, cv);
         }
     }
     return treeEdges;
@@ -472,7 +468,7 @@ function used to sort the edges.
 
 <h2>The Cheriton-Tarjan algorithm</h2>
 
-The Cheriton-Tarjan algorithm [CheTar76, Tarjan87], like Kruskal's algorithm, 
+The Cheriton-Tarjan algorithm [CT76, Tarjan87], like Kruskal's algorithm, 
 builds multiple subtrees in parallel, gradually linking them together
 until there is one tree for each connected component of the graph.
 Specifically, it starts with each vertex defining its own tree
@@ -484,12 +480,12 @@ $T_1$ to some other tree, let $T_2$ be the tree with the lightest edge
 linking it to $T_1$; remove $T_2$ from the heap, combine the two trees
 and add the combined tree to the end of the queue.
 <p>
-To make this efficient, the disjoint sets data structure is used to
+To make this efficient, the merge sets data structure is used to
 keep track of the vertices in each tree (as in Kruskal's algorithm), and
-<a href="../dataStructures/heaps/heaps.html#lheaps">leftist heaps</a>
+<a href="../../dataStructures/heaps/heaps.html#LeftistHeaps">leftist heaps</a>
 are used to keep track of the edges incident to each tree.
 By selecting the lightest edge in the heap for $T_1$, the algorithm
-can quickly identify $T_2$, then <i>link</i> the vertex sets for the two trees
+can quickly identify $T_2$, then <i>merge</i> the vertex sets for the two trees
 and <i>meld</i> their heaps.
 The melds are done using lazy melding.
 Items in the heap are considered to be deleted if
@@ -544,12 +540,12 @@ export default function mstCT(g) {
 </textarea>
 <p>
 Note that each tree in the queue is represented by the vertex that
-identifies the tree's set within the disjoint sets data structure.
+identifies the tree's set within the merge sets data structure.
 Also, in the array of heaps, $h[u]$ is the heap of edges incident
-to the tree whose identifier in the disjoint sets data structure is $u$.
+to the tree whose identifier in the merge sets data structure is $u$.
 Hence, the line
 <pre>
-    h[trees.link(tu, tv)] = eph.lazyMeld(h[tu], h[tv]);
+    h[trees.merge(tu, tv)] = eph.lazyMeld(h[tu], h[tv]);
 </pre>
 combines the heaps associated with the trees whose identifiers
 are $tu$ and $tv$ and assigns the resulting heap to the identifier of
@@ -570,16 +566,8 @@ Running this code yields
 <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 {
-a[b:3 d:2]
-b[a:3 c:7]
-c[b:7 d:1]
-d[a:2 c:1]
-e[f:1 g:3]
-f[e:1 g:2 h:3]
-g[e:3 f:2 h:1]
-h[f:3 g:1]
-i[j:5]
-j[i:5]
+a[b:3 d:2] b[a:3 c:7] c[b:7 d:1] d[a:2 c:1] e[f:1 g:3]
+f[e:1 g:2 h:3] g[e:3 f:2 h:1] h[f:3 g:1] i[j:5] j[i:5]
 }
 
 selected edge, queue, tree vertex sets
@@ -629,7 +617,7 @@ To analyze the time required for the <i>findmins</i>, the execution of the
 algorithm is divided into <i>passes</i> where a pass ends when all heaps
 that were on the queue at the start of the pass have been removed and
 combined with some other heap.
-For now, let's ignore the time consumed by operations on the disjoint sets
+For now, let's ignore the time consumed by operations on the merge sets
 data structure.
 Observe that during a pass, every tree that was on the queue at the start
 of the pass is combined with at least one other tree during the pass.
@@ -648,13 +636,13 @@ heap during that execution of <i>findmin</i>.
 Note that $\sum_{i=1}^{n-1} m_i \leq (2m+n-1)\lg n$ and
 that the time required for the <i>heapify</i> in the $i$-th <i>findmin</i> is
 $O(k_i \max(1,\log(m_i/k_i))$ based on the
-<a href="../dataStructures/heaps/heaps.html#heapify">earlier analysis
+<a href="../../dataStructures/heaps/heaps.html#heapify">earlier analysis
 of <i>heapify</i></a>.
 <p>
 A <i>findmin</i> is called <i>small</i> if $k_i \leq m_i/(\lg n)^2)-1$;
 otherwise, it is called <i>large</i>.
 
-Excluding time spent on operations on the disjoint sets data structure,
+Excluding time spent on operations on the merge sets data structure,
 the total time spent on the small <i>findmin</i>s is
 $$
 O\left( \sum_{i=1}^{n-1} \frac{m_i}{(\log n)^2} \log m_i\right)
@@ -667,9 +655,9 @@ O\left( \sum_{i=1}^{n-1} k_i \log \frac{m_i }{ m_i/(\log n)^2}\right)
 =O\left( \sum_{i=1}^{n-1} k_i \log\log n\right)
 =O( m\log\log n )
 $$
-This implies that the number of disjoint set operations is
-$O(m\log\log n)$ and so the time spent on disjoint set operations is
-$O(m\log\log n\alpha(m\log\log n, n) = O(m \log\log n)$.
+This implies that the number of merge sets operations is
+$O(m\log\log n)$ and so the time spent on merge sets operations is
+$O(\alpha(m\log\log n, n)m\log\log n) = O(m \log\log n)$.
 
 <h2>Performance Comparison</h2>
 The figure below illustrates the relative growth rates of the functions
@@ -727,11 +715,11 @@ prim time=18ms steps/m=5.41
 kruskal time=67ms steps/m=14.00 
 cheriton-tarjan time=53ms steps/m=6.30 
 </textarea> <p>
-In all cases Prim's algorithm out-performs the others.
+In all but the very lowest density, Prim's algorithm out-performs the others.
 
 <h2>References</h2>
 <dl>
-<dt> [CheTar76]
+<dt> [CT76]
 <dd> &ldquo;Finding minimum spanning trees,&rdquo;
     by D. Cheriton and R. E. Tarjan. <i>SIAM Journal on Computing</i>, 1976.
 <dt> [Johnson75]

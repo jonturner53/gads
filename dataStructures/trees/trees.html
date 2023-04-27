@@ -33,7 +33,7 @@ While trees can be represented using the graph data structures already
 defined, it is often convenient to have a data structure that is
 designed for the special case of trees and forests.
 
-<a id=forest><h2>Forest</h2></a>
+<a id=Forest><h2>Forest</h2></a>
 The <code>Forest</code> class defines a collection of directed trees
 that partition a common vertex set.
 Each vertex has a defined <i>parent</i> and a <i>first child</i>.
@@ -213,7 +213,7 @@ export default class Forest extends Top {
 }
 </textarea>
 
-<a id=binaryForest><h2>Binary Forest</h2></a>
+<a id=BinaryForest><h2>Binary Forest</h2></a>
 
 A <i>binary tree</i> is a tree in which each vertex has at most two children,
 and the children are explicitly identified as either the <i>left child</i>
@@ -797,7 +797,7 @@ These functions can be used to assist in balancing the data structure,
 and/or maintaining client data that may be affected by the
 tree structure.
 
-<a id=balancedForest><h2>Balanced Forest</h2></a>
+<a id=BalancedForest><h2>Balanced Forest</h2></a>
 The <i>balanced forest</i> data structure extends the <i>binary forest</i>
 in order to improve its worst-case performance.
 There are many ways to keep the trees balanced, so that the maximum
@@ -1094,7 +1094,7 @@ export default class BalancedForest extends BinaryForest {
 Observe how the <code>refresh</code> function arguments are used
 to implement the re-balancing.
 
-<a id=splayForest><h2>Splay Forest</h2></a>
+<a id=SplayForest><h2>Splay Forest</h2></a>
 
 Another way to improve the performance of binary trees is using
 <i>splay trees</i> [Tarjan87].
