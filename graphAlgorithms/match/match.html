@@ -33,6 +33,7 @@
 \newcommand{\drop}{\texttt{drop}}
 \newcommand{\size}{\texttt{size}}
 \newcommand{\weight}{\texttt{weight}}
+\newcommand{\find}{\textit{find}}
 \)
 
 <h1>Matchings in Graphs<sup>&copy;</sup></h1>
@@ -133,7 +134,7 @@ The implementation appears below.
         style="font-size: 95%;background-color:lightCyan">
 let g;            // shared copy of graph
 let match;        // Matching object
-let link = null;  // link[u] is parent edge of u in augmenting path
+let link;         // link[u] is parent edge of u in augmenting path
 let free;         // free contains unmatched vertices in first subset
 let level;        // level[u] is distance to u from a free vertex
 let nextedge;     // nextedge[u] is next edge at u to be processed
@@ -142,16 +143,11 @@ let q;            // q is List used by newPhase
 export default function bimatchHK(bg) {
     g = bg; 
     match = new Matching(g); // match is returned
-    if (link == null || link.length != g.n+1) {
-        // avoid rebuilding data structures when possible
-        link = new Int32Array(g.n+1);
-        level = new Int32Array(g.n+1);
-        nextedge = new Int32Array(g.n+1);
-        free = new List(g.n); free.addPrev();
-        q = new List(g.n);
-    } else {
-        free.clear();
-    }
+    link = new Int32Array(g.n+1);
+    level = new Int32Array(g.n+1);
+    nextedge = new Int32Array(g.n+1);
+    free = new List(g.n); free.addPrev();
+    q = new List(g.n);
 
     // divide vertices into two independent sets
     subsets = findSplit(g);
@@ -262,10 +258,11 @@ Observe that the code effectively mimics Dinic's maxflow algorithm.
 There is a subtlety associated with the $\add$ method of
 the <code>Matching</code> class.
 If an edge is added to the matching that conflicts with some other edge
-already in the matching, the $\add$ method does not remove that other edge.
+already in the matching, the $\add$ method accepts the new edge but does
+not remove the conflicting edge.
 It is the client code's responsibility to do this.
-In the case of non-bipartite graphs, allowing (temporary) inconsistencies
-in the matching turns out to be useful.
+Allowing inconsistencies in the matching turns out to be useful
+in some situations.
 <p>
 The following script can be used to demonstrate the operation of the
 algorithm.
@@ -278,16 +275,8 @@ log(ts);
 Here is some sample output.
 <p> <pre style="padding-left:5%">
 {
-a[f g i j]
-b[f h]
-c[f g h i j]
-d[f g i]
-e[f]
-f[a b c d e]
-g[a c d]
-h[b c]
-i[a c d]
-j[a c]
+a[f g i j] b[f h] c[f g h i j] d[f g i] e[f]
+f[a b c d e] g[a c d] h[b c] i[a c d] j[a c]
 }
  
 initial matching: [{a,g} {b,f} {c,i}]
@@ -369,14 +358,14 @@ algorithm is nearly five times faster than the flow-based algorithm.
 There are some advantages to the flow-based algorithm. In particular,
 it can be used to solve a more general version of the matching problem
 in which the objective is to find a maximum size subgraph with at
-most $k$ edges per vertex, rather than at most 1 edge per vertex. This is
-done simply by making the capacities of the source/sink edges $k$.
-One can also find subgraphs with a minimum number of edges at some vertices,
-by specifying flow floors on some source/sink edges.
+most $b$ edges per vertex, rather than at most 1 edge per vertex. This is
+done simply by making the capacities of the source/sink edges $b$.
 This generalized matching is known as a $b$-matching, where $b$ can be
 a constant or an integer function on the vertices.
+One can also find subgraphs with a minimum number of edges at some vertices,
+by specifying flow floors on some source/sink edges.
 <p>
-A <i>Javascript</i> implementation that supports $b$-matching algorithm is
+A <i>Javascript</i> implementation that supports $b$-matching is
 shown below. In this implementation, the optional arguments <code>dmin</code>
 and <code>dmax</code> are arrays with <code>dmin[u]</code> specifying a minimum
 degree for vertex $u$, while <code>dmax[u]</code> specifies a maximum degree.
@@ -450,23 +439,19 @@ is shown below.
 let g;            // shared copy of graph
 let match;        // match[u] is edge incident to u in matching or 0
 let lab;          // lab[u] is vertex label at u
-let link = null;  // link[u] is edge to parent of u in shortest path forest
+let link;         // link[u] is edge to parent of u in shortest path forest
 let free;         // list containing free vertices in first subset
 let leaves;       // heap containing leaves in forest
 let cost;         // cost[u]=cost of shortest path to u in forest
 
 export default function wbimatchH(bg) {
     g = bg;
-    if (link == null || link.length < g.n+1) {
-        link = new Int32Array(g.n+1);
-        match = new Int32Array(g.n+1);
-        lab = new Int32Array(g.n+1);
-        free = new List(g.n); free.addPrev();
-        leaves = new ArrayHeap(g.n,4);
-        cost = new Float32Array(g.n+1);
-    } else {
-        match.fill(0); free.clear(); leaves.clear();
-    }
+    link = new Int32Array(g.n+1);
+    match = new Int32Array(g.n+1);
+    lab = new Int32Array(g.n+1);
+    free = new List(g.n); free.addPrev();
+    leaves = new ArrayHeap(g.n,4);
+    cost = new Float32Array(g.n+1);
 
     // divide vertices into two independent sets
     let subsets = findSplit(g);
@@ -581,18 +566,10 @@ log(ts);
 Sample output appears below.
 <p> <pre style="padding-left:5%">
 {
-a[g:2 h:4 j:5]
-b[h:7 k:8 l:7]
-c[k:1 l:6]
-d[g:5 l:2]
-e[g:2 h:5 i:3 k:6]
-f[g:9 i:3 k:8 l:4]
-g[a:2 d:5 e:2 f:9]
-h[a:4 b:7 e:5]
-i[e:3 f:3]
-j[a:5]
-k[b:8 c:1 e:6 f:8]
-l[b:7 c:6 d:2 f:4]
+a[g:2 h:4 j:5] b[h:7 k:8 l:7] c[k:1 l:6]
+d[g:5 l:2] e[g:2 h:5 i:3 k:6] f[g:9 i:3 k:8 l:4]
+g[a:2 d:5 e:2 f:9] h[a:4 b:7 e:5] i[e:3 f:3]
+j[a:5] k[b:8 c:1 e:6 f:8] l[b:7 c:6 d:2 f:4]
 }
 
 augmenting path, path weight
@@ -609,31 +586,31 @@ The following script can be used to evaluate the performance of the
 Hungarian algorithm and compare it to the similar algorithm
 using minimum cost flows.
 <p> <pre style="padding-left:5%">
-let g = randomBigraph(1600,3); 
+let n=100; let d=3;
+let g = randomBigraph(n,d); 
 g.randomWeights(randomInteger, 0, 999);
 let t0; let t1; let stats;
 t0 = Date.now(); [,,stats] = wbimatchH(g); t1 = Date.now();
-let s = `${g.n} ${g.m} ${t1-t0}ms ${stats.paths} ${stats.steps}`
+let s = `${n} ${d} H ${stats.paths} ${(stats.steps/g.m).toFixed()} ${t1-t0}ms`;
 t0 = Date.now(); [,,stats] = wbimatchF(g); t1 = Date.now();
-log(`${s} ${t1-t0}ms ${stats.paths} ${stats.steps}`);
+log(`${s}    F ${stats.paths} ${(stats.steps/g.m).toFixed()} ${t1-t0}ms `);
 </pre> <p>
 Some sample results appear below.
 Note that the for both algorithms, the number of path searches grows
 directly with the number of vertices and the number
-of steps per path grows directly with the number of edges.
-and the 
+of steps per edge grows directly slightly faster than the number of vertices.
 <p> <pre style="padding-left:5%">
- 200  300  25ms  83   92492   36ms  84   244913 
- 400  600  43ms 172  427012   77ms 173  1106388 
- 800 1200  90ms 337 1700237  255ms 338  4430702 
-1600 2400 340ms 668 6856527 1004ms 669 18499202 
-</pre> <p>
+100 3   H  86  331   7ms    F  86  862  15ms  
+200 3   H 165  609  18ms    F 165 1727  49ms  
+400 3   H 325 1310  61ms    F 325 3620 191ms  
+800 3   H 660 2803 243ms    F 660 7964 785ms  
+</pre>
 
 <h2>Maximum Size Matchings in General Graphs</h2>
 Finding a maximum matching in a general graph is more complicated
 than for bipartite graphs, due to the presence of odd length cycles.
-A cycle with $2k+1$ edges has at most $k$ matching edges in the cycle,
-leaving one vertex that is either unmatched or connected to a vertex
+A cycle with $2k+1$ edges and $k$ matching edges in the cycle,
+has one vertex that is either unmatched or connected to a vertex
 outside the cycle by a matching edge. The choice of matching edges
 within the cycle determines which vertices in the cycle can have
 matching edges outside the cycle, making the task of finding a maximum
@@ -657,7 +634,7 @@ status of the edges on the path, as illustrated below.
 Such paths are referred to as augmenting paths.
 This observation suggests that maximum matchings can be found by
 repeatedly identifying
-augmenting paths and expanding the current by matching by flipping the
+augmenting paths and expanding the current matching by reversing the
 status of the path's edges.
 <p>
 To justify this method, let $M$ be a matching and $M'$ be a matching with
@@ -688,7 +665,8 @@ an edge $\link(u)$ that joins $u$ to its parent in the tree.
 Tree vertices are classified as <i>even</i> or <i>odd</i> depending
 on the length of their path to the root in the tree and leaves
 are always even, implying that for a leaf $u$, $\link(u)$ is a
-matching edge. An example of such a collection of trees
+matching edge. Vertices that are not part of any tree are
+classified as <i>unbound</i>. An example of such a collection of trees
 is illustrated below, along with some non-tree edges (dashed)
 and with the even and odd vertices indicated
 by plus or minus symbols, respectively.
@@ -697,27 +675,27 @@ by plus or minus symbols, respectively.
 <img width="35%" src="figs/altPathTrees.png"><br>
 </div>
 <p>
-The even vertices are indicated by a plus sign ($+$) and the odd
-vertices by a minus sign ($-$) and tree edges are indicated by
-arrows pointing from child to parent.
 Notice that edge $\{i,m\}$ joins two even vertices in different
 trees and that the path from $i$ to the root of its tree can be
 linked to the path from $m$ to the root of its tree through $\{i,m\}$
 yielding an augmenting path from $a$ to $j$.
 <p>
-The algorithm starts by making every vertex a tree root
-and placing every edge in a queue of <i>pending edges</i>.
-When restricted to bipartite graphs it then repeats the
+For bipartite graphs, the algorithm starts by making every vertex a
+tree root and placing every edge in a queue of <i>pending edges</i>.
+In general, the pending queue contains edges with at least
+one even endpoint.
+The algorithm then repeats the
 following step until no more augmenting paths can be found.
 <p style="padding-left:5%">
-Remove an edge $e=\{u,v\}$ from the pending queue and then
+Remove an edge $e=\{u,v\}$ with $u$ even from the pending queue and then
 apply the appropriate case from the list below.
 <ul style="padding-left:8%">
 <li> If $v$ is odd, just ignore $e$.
 <li> If $v$ is not yet in any tree, add $e$ and $v$ to $u$'s tree;
      if $f=\{v,w\}$ is the matching edge at $v$, add $f$ and $w$ to the tree.
      Add all edges incident to $w$ to the queue of pending edges.
-<li> If $v$ is an even vertex in some other tree, then an augmenting
+<li> If $v$ is an even vertex, then it must be in a different tree than $u$.
+	 So, an augmenting
      path can be formed by linking the tree path from $u$ to the root
      of its tree to the tree path from $v$ to the root of its tree
      through $e$. Augment the matching, then discard the current set of
@@ -726,8 +704,7 @@ apply the appropriate case from the list below.
      to the pending queue.
 </ul>
 Note that in the second case, $v$ must be matched since unmatched vertices
-are tree roots. Also note that the pending queue contains edges with at
-least one even endpoint and that for bipartite graphs, there can be no
+are tree roots. In the third case, there can be no
 edge $e$ joining vertices in the same tree, since this would imply the
 presence of an odd length cycle.
 <p>
@@ -748,8 +725,8 @@ joining its endpoints to their nearest common ancestor in the tree
 is an odd-length cycle.
 The algorithm handles the cycle by
 <i>shrinking</i> it to form a new vertex called a <i>blossom</i>.
-This can lead to a situation like the shown below, in which the
-odd cycle $[u,v,w,x,y]$ has been shrunk to form the blossom $B$.
+This can lead to a situation like the one shown below, in which the
+odd length cycle $[u,v,w,x,y]$ has been shrunk to form the blossom $B$.
 The resulting graph has two augmenting paths, $[a,c,B,d,e,f]$ and
 $[a,c,B,h,g,f]$.
 <p>
@@ -776,7 +753,7 @@ This means that at the time a blossom is formed, the base is even;
 consequently, the blossom is also considered even.
 Also notice that for an even vertex on a blossom cycle,
 the even length path to the base of the blossom goes up the tree,
-but for odd vertex on a blossom cycle, the path must pass through
+but for an odd vertex on a blossom cycle, the path must pass through
 the edge that led to the formation of the blossom.
 This edge is referred to as the <i>bridge</i> of the blossom.
 <p>
@@ -798,7 +775,7 @@ To simplify the presentation, let $U$ denote the outer blossom
 containing a vertex $u$ (if $u$ is an outer vertex, let $U=u$).
 The algorithm builds alternating trees as before and an outer blossom
 in a tree is considered even or odd based on the length of the tree path to
-to its tree root.
+its tree root.
 As before, the algorithm starts by making every vertex a tree root
 and placing every edge in the pending queue.
 It then repeats the following step until no more augmenting paths
@@ -840,11 +817,9 @@ The first three steps expand these trees, while the third one
 forms a new blossom containing vertices $i$, $k$ and $l$.
 The diagram uses plus symbols to identify even vertices, odd symbols
 to identify odd vertices and arrows to identify tree edges.
-This information is preserved for internal vertices and edges
+This information is preserved for internal vertices and edges,
 and odd vertices within blossoms are also labeled with the edge that
 led to the discovery of the blossom.
-This information can be used to assist in the extension of augmenting paths
-to blossoms when the blossoms are expanded.
 The next diagram shows the result of three more steps, leading to
 the formation of two new blossoms.
 <p>
@@ -866,8 +841,8 @@ Observe that the algorithm maintains the following two properties
 <ol>
 <li> If a vertex $v$ is in a tree and matched, $\mate(v)$ is also in a tree,
     it is in the same tree as $v$.
-<li> If $v$ is an unmatched vertex contained in a blossom $B$,
-    then $B$ is unmatched.
+<li> If $v$ is an unmatched vertex contained in an outer blossom $B$,
+    then $B$ is unmatched (in the outer graph).
 </ol>
 Also, if the algorithm fails to discover an augmenting path,
 then any two adjacent vertices that are both even (or inner) are contained in
@@ -889,7 +864,7 @@ Also, if one is even, the other must be odd.
 Consequently, at least one of them must be odd.
 <p>
 Assume that $x_k$ is odd.
-Since $\mate(x_k)=x_{k-1}$, $k$ must be even.
+Since the edge $\{x_{k-1},x_k\}$ is in the matching, $k$ must be even.
 Let $j$ be the smallest integer such that $j$ is even, while $x_j$ is odd.
 If all vertices $\{x_0,\ldots,x_{j-1}\}$ are even, they must
 be contained in a common blossom and since $x_0$ is unmatched, this
@@ -897,11 +872,11 @@ blossom must be unmatched.
 However, since $j$ is even, the edge $\{x_{j-1},x_j\}$ is a matching
 edge, with one end in the blossom. Consequently, some vertex in
 $\{x_0,\ldots,x_{j-1}\}$ must be odd.
-Let $i$ be the largest integer $\lt j$ for which $x_i$ is odd
-and note the $j$ must be even, implying that $\{x_j,x_{j+1}\}$ is a
+Let $i\lt j$ be the largest integer for which $x_i$ is odd
+and note the $i$ must be odd, implying that $\{x_i,x_{i+1}\}$ is a
 matching edge.
-This implies that $\{x_{i+1},\ldots,x_{j-1}\}$ is a blossom with two
-incident matching edges.
+This implies that $\{x_{i+1},\ldots,x_{j-1}\}$ are contained in a blossom
+with two incident matching edges.
 This contradicts the assumption that the algorithm fails to find an augmenting
 path.
 The diagram below summarizes this argument.
@@ -954,7 +929,7 @@ For an even vertex on a blossom cycle, the even length path to the base
 of the blossom goes up the tree, while for an odd vertex,
 the even length path passes through the bridge.
 So one can extend an augmenting path that enters a blossom at an odd vertex
-$x$ by combining bridge with the tree path segments connecting it
+$x$ by combining the bridge with the tree path segments connecting it
 to $x$ and the base of the blossom.
 So in the example above, when edge $\{e,j\}$ is processed the
 path segment $[c,d,f,g,e]$ is constructed with the assistance
@@ -962,16 +937,17 @@ of $\bridge(e)=[\{f,g\},g]$. (Note, the diagram shows the bridge in
 an abbreviated form.)
 <p>
 To analyze the performance, first note that edges must be added to the queue
-of edges with an even endpoint not only when a new branch is added,
+of pending edges not only when a new branch is added,
 but also when a blossom is formed. Specifically, the edges incident to
 odd vertices on the blossom cycle must be added, since after the blossom
 is shrunk, these vertices are contained in a blossom and all blossoms are even.
 This implies that edges may be added to the queue more than once per phase
 (but not more than twice).
 So, the number of steps per phase is now bounded by $2m$.
-Also note that when an edge is removed from the queue, one must determine if
-the edge is outer by comparing if its endpoints are in same subset.
-This requires a pair of <i>find</i> operations on the merge sets data structure.
+Also note that when an edge is removed from the queue, one must verify that
+the edge is outer by comparing its endpoints to determine if
+they are in same subset.
+This requires a pair of $\find$ operations on the merge sets data structure.
 <p>
 The time spent adding branches to trees is $O(n)$ per phase,
 excluding the time for adding edges to the queue.
@@ -984,13 +960,13 @@ external edges on the blossom cycle.
 The sum of the lengths of all the blossom cycles formed during an augmenting
 path search is $\leq 3n/2$, so the total number of steps involved in 
 finding nearest common ancestors is $O(n)$ per phase.
-Note that each step involves a find operation on the merge sets data structure,
-so the time required is bounded by the time required for the finds.
+Note that each step involves a $\find$ operation on the merge sets data structure,
+so the time required is bounded by the time required for the $\find s$.
 Similarly, the number of steps required to shrink all the blossoms is $O(n)$
-per phase and since each step requires a find operation,
-the time is bounded by the finds.
+per phase and since each step requires a $\find$ operation,
+the time is bounded by the $\find s$.
 <p>
-The total number of find operations performed during a phase
+The total number of $\find$ operations performed during a phase
 is $O(m+n)$, so the time contributed by these operations is
 $O(m \alpha(m,n))$. This also bounds the time for the complete phase,
 yielding a bound of $O(mn\alpha(m,n))$ on the time to compute the matching.
@@ -1328,7 +1304,7 @@ This reduces the number of phases required and the average time consumed
 to produce each augmenting path.
 
 <h2>Maximum Weight Matchings in General Graphs</h2>
-The maximum weighted matching problem on general graphs is considerably
+The maximum weight matching problem on general graphs is considerably
 more complicated than the maximum size problem. However, there is
 a version of Edmond's algorithm that addresses the maximum weight case.
 To understand the motivation behind this algorithm, it's helpful to know
@@ -1384,7 +1360,7 @@ where $W$ is a vector of edge weights and $A[u,e]=1$ whenever
 vertex $u$ is an endpoint of edge $e$ and zero otherwise.
 Note that for bipartite graphs, the rows of $A$ can be divided into
 two subsets using the bipartition, so that no column contains two
-ones in the same subset. Hence $A$ is TU.
+ones in the same subset. Hence $A$ is totally unimodular.
 The dual can be written
 $$
 \textrm{minimize}\;[1]\!\cdot\! Z \;\textrm{subject to}\;
@@ -1460,7 +1436,7 @@ The value of $\delta$ is chosen so that the dual variables remain
 non-negative and no dual constraints are violated.
 This can be accomplished by making
 $\delta=\min\{\delta_1,\delta_2, \delta_3\}$, where
-$\delta_1$ is the smallest $z_u$ value,
+$\delta_1$ is the smallest $z_u$ value for an even vertex $u$,
 $\delta_2$ is the smallest slack in a dual constraint involving an edge with
 one even endpoint and one unbound endpoint and
 $\delta_3$ is one half the smallest slack in a dual constraint involving
@@ -1479,12 +1455,12 @@ This algorithm can be implemented to run in $O(mn)$ time if one excludes
 the relabeling steps. Let the period between two augmentations of the
 matching be called a <i>phase</i>.
 The number of relabeling steps that can occur within a phase
-is $O(n)$, since each relabeling step that makes an edge
-joining an even endpoint to an unbound endpoint tight
-ensures that the tree will be expanded at least once before
-the next relabeling operation.
-Since a tree can be expanded at most $n/2$ times per phase,
-the total number of relabeling steps is $O(n^2)$.
+is $O(n)$, since each relabeling step that makes an edge tight
+ensures that either a new branch or a new blossom will be created
+before the next relabeling operation in the phase and
+the number of branches created per phase is at most $n/2$ and
+the number of blossoms created per phase is at most $n/2$.
+Hence, the total number of relabeling steps is $O(n^2)$.
 The relabeling steps can be done in $O(m)$ time,
 leading to an overall running time of $O(mn^2)$.
 
@@ -1538,17 +1514,13 @@ unweighted matchings, because blossoms may have to be expanded
 during a phase in order to find an augmenting path.
 Also, blossoms with non-zero dual variables have to be
 retained from one phase to the next, which creates the
-possibility of odd blossoms in the subsequent phase.
+possibility of odd blossoms in the subsequent phases.
 This means that the algorithm must keep track of all the blossoms
 and their sub-blossoms.
 <p>
-Blossoms that are not contained in any other blossoms are
-referred to as <i>outer blossoms</i> and correspond to vertices
-in the current outer graph;
-all others are called <i>inner blossoms</i> or sub-blossoms.
 A vertex $u$ within a blossom is considered even (odd) if the
 outer blossom containing $u$ is even (odd).
-To simplify the language, individual vertices are considered
+Individual vertices are considered
 to be (trivial) blossoms and for a vertex $u$, its outermost blossom
 is denoted by $U$ (for outer vertices, $U=u$).
 A blossom that is not part of any tree is considered <i>unbound</i>.
@@ -1557,8 +1529,7 @@ As in the bipartite case, the algorithm starts with an empty matching
 and makes every vertex a tree root. The vertex labels $z_u$, are all set
 to one-half the maximum edge weight and the labels for the odd subsets
 are all implicitly zero.
-It also places every maximum weight edge in a queue of tight edges
-with at least one even endpoint.
+It also places every maximum weight edge in a pending queue.
 In general, outer edges are added to the queue when they are tight
 and have at least one even endpoint.
 The algorithm then constructs a matching by repeating the following step.
@@ -1589,32 +1560,37 @@ Process $e$ using the appropriate case below:
      tree roots. Add all edges incident to unmatched blossoms to the queue.
 </ul>
 <p style="padding-left:5%">
-If there is no queued edge modify the vertex labels by
+If there is no queued edge, modify the vertex labels by
 subtracting $\delta$ from the labels of all even vertices and
-adding $\delta$ to the labels of all odd vertices,
-add $2\delta$ to the labels of all non-trivial odd outer blossoms
+adding $\delta$ to the labels of all odd vertices;
+also add $2\delta$ to the labels of all non-trivial odd outer blossoms
 and subtract $2\delta$ from the labels of all non-trivial even outer blossoms.
+If the relabeling makes $z_u=0$ for all unmatched vertices $u$,
+the algorithm can terminate.
 If the relabeling makes any dual constraints tight, add the
 edges for those dual constraints to the queue.
-If the relabeling makes $z_B=0$ for some odd outer blossom $B$,
-expand all such blossoms.
+If the relabeling makes $z_B=0$ for some odd outer blossom $B$, expand $B$.
 <p>
 Notice that edges are checked to confirm that they are <i>eligible</i>
-for use before they are processed. Inelgible edges are discarded.
-In order for an edge to be eligible, it must be outer and have no
-odd endpoint. Edges must be checked because they can become inner
-or acquire an odd endpoint while they are in the queue.
+for use before they are processed. Ineligible edges are discarded.
+In order for an edge to be eligible, it must be tight, outer, have an even
+endpoint, but no odd endpoint.
+Edges on the queue need not be checked for tightness or having an
+even endpoint, since they are only placed on the queue if they have
+these properties and they retain these properties while on the queue.
+Edges must be checked for the other two properties because they can
+become inner or acquire an odd endpoint while they are in the queue.
+<p>
 The value of $\delta$ is chosen so that the dual variables remain
 non-negative and no dual constraints are violated.
 This can be accomplished by making
 $\delta=\min\{\delta_1,\delta_2, \delta_3,\delta_4\}$, where
-$\delta_1$ is the smallest vertex label,
+$\delta_1$ is the smallest label for an even vertex,
 $\delta_2$ is the smallest slack in a dual constraint involving an
-outer edge with one even endpoint and one unbound endpoint and
+outer edge with one even and one unbound endpoint and
 $\delta_3$ is one half of the smallest slack in a dual constraint involving
 an outer edge with two even endpoints.
 $\delta_4$ is one half of the smallest blossom label for an odd blossom.
-<p>
 Notice that for inner edges and for
 outer edges joining an even blossom to an odd blossom,
 the relabeling operation does not change the slackness in their
@@ -1638,7 +1614,7 @@ since every relabeling step reduces the label for every unmatched vertex
 and no vertex becomes unmatched, once it is matched.
 So in this case, the solution satisfies all the CS conditions
 meaning that the current matching has maximum weight.
-If $\delta=\delta_4$ at least one odd blossom is expanded.
+If $\delta=\delta_4$ an odd blossom is expanded.
 Otherwise, at least one edge with an even endpoint becomes tight,
 allowing the search for augmenting paths to resume.
 <p>
@@ -1763,8 +1739,8 @@ It supports the following methods.
         unbound blossom <code>V</code>; <code>V</code> and the blossom
         <code>W</code> at the other endpoint of its incident matching edge
         are added to the tree.
-<li>    <code>addBlossom(e,A)</code> adds a blossom from the outer blossoms
-        containing the endpoints of <code>e</code> to their nearest
+<li>    <code>addBlossom(e,A)</code> forms a new blossom from the outer blossoms
+		on the cycle connecting the endpoints of <code>e</code> to their nearest
         common ancester <code>A</code> in the outer graph.
 <li>    <code>expand(B)</code> expands an outer blossom <code>B</code> and
         propagates the matching in the outer graph to <code>B</code>'s
@@ -1775,7 +1751,7 @@ It supports the following methods.
         $B$ that are in its tree, then after the blossom is expanded,
         $U$ and $V$ are the new outer-blossoms containing $u$ and $v$.
         The new outer blossoms along the even length segment of 
-        of the blossom cycle connecting $U$ and $V$ is integrated into
+        of the blossom cycle connecting $U$ and $V$ are integrated into
         the tree, while the remaining new outer blossoms become unbound.
         Outer edges incident to the new outer blossoms that become even
         are added to the pending queue.
@@ -1787,8 +1763,9 @@ The structure of the blossoms and sub-blossoms is maintained as a
 its tree being the smallest blossom that contains <code>b</code>.
 <p>
 The <code>Blossoms</code> object can be configured to use one of
-two different methods to compute <code>outer(b)</code>.
-The simplest one simply maintains an array mapping
+three different methods to compute <code>outer(b)</code>.
+The simplest simply goes up the blossom structure tree to its root.
+The next simplest maintains an array mapping
 a vertex or blossom to its outer blossom.
 This array is modified whenever
 a new blossom is formed or an existing blossom is expanded.
@@ -2132,12 +2109,12 @@ let match = new Matching(g);
 match.fromString('[{b,c} {e,f} {f,g} {h,i} {j,k} {m,n}]');
 let bloss = new Blossoms(g,match);
 bloss.fromString('{{[A(d e !f)]} ' +
-                 '{[a(b(c(A{d,c}(g{g,f}) h(i))) j(k))] [l(m(n))]}}');
+                 '{[a(b(c(A{d,c}(g{g,f}))) j(k))] [l(m(n))]}}');
 log(bloss.outerGraph2string());
 </pre>
 Notice that the <code>Blossoms</code> object is defined relative to
 a previously defined graph and matching.
-The <code>Blossoms</code> object is defined to include one non-trivial
+The new object <code>bloss</code> is defined to include one non-trivial
 blossom and two alternating path trees.
 In the <code>fromString</code> method, the first component of
 the string shows the blossom, designated by an upper-case <code>A</code>.
@@ -2632,7 +2609,7 @@ n=100 d=40 weights=100 branches=252 blossoms=17 relabels=16 deblossoms=0
 </pre>
 Doubling the number of vertices, while keeping the same edge density,
 increases the time required to find a matching by roughly a factor of four,
-or half what would predict based on the worst-case analysis.
+or half what one would predict based on the worst-case analysis.
 Blossom formation, expansion and relabeling all remain fairly rare,
 reducing the time spent on these steps and also reducing the time
 needed to maintain the mapping from vertices to outer blossoms.
@@ -2659,7 +2636,7 @@ Galil, Micali and Gabow [GMG86] showed how the worst-case performance
 could be improved to $O(mn\log n)$ with the help of some additional
 data structures.
 <p>
-First, the algorithm maintain several heaps to speedup the relabeling process.
+First, the algorithm maintains several heaps to speedup the relabeling process.
 An <code>ArrayHeap</code> with an <code>add2keys</code>
 method (allowing an offset to be added to the keys of all items in
 constant time) is suitable for this purpose.
@@ -2689,7 +2666,7 @@ $\delta_2$ as <code>findmin(euh)</code> and
 $\delta_3$ as <code>findmin(eeh)</code> and 
 $\delta_4$ as <code>findmin(obh)</code>.
 Also, dual variables can be effectively updated by adding or subtracting
-$\delta$ to all the keys in each of these heaps.
+$\delta$ or $2\delta$ to all the keys in each of these heaps.
 This ensures that the key values in the heaps
 continue to reflect the proper dual variable values or slacks.
 Of course, when a vertex or blossom is removed from its heap,
@@ -2708,27 +2685,27 @@ That in turn means that they may have to be added and removed from
 <code>euh</code> many times, leading to a potentially large added overhead.
 <p>
 The issue can be addressed by replacing <code>euh</code> with a
-<a href="../../dataStructures/specialty/specialty.html#GroupHeap"><code>GroupHeap</code></a>,
+<a href="../../dataStructures/specialty/specialty.html#GroupHeap">group heap</a>,
 <code>exh</code>. 
 Recall that in a group heap, the heap items are partitioned into groups
 that are classified as <i>active</i> or <i>inactive</i>.
 The usual heap operations effectively ignore inactive items, allowing one
-to quckly find an active item with the smallest key and to update the
+to quickly find an active item with the smallest key and to update the
 keys of all active items. In the context of Edmond's algorithm,
 the heap items are edges with one even endpoint and another that is
 either odd or unbound.
 There is a group for the edges incident to each odd or unbound outer blossom,
 with the groups for the edges at unbound blossoms treated as active.
 When an odd blossom is expanded, its edges in <code>exh</code> are
-distributed according to which sub-blossom they are incident to.
+distributed according to which of the new outer blossoms they are incident to.
 <ul>
-<li> If the new sub-blossom is odd, a new inactive group is created for it.
-<li> If the new sub-blossom is unbound, a new active group is created for it.
-<li> If the new sub-blossom is even, its edges are added to <code>eeh</code>,
+<li> If the new outer blossom is odd, a new inactive group is created for it.
+<li> If the new outer blossom is unbound, a new active group is created for it.
+<li> If the new outer blossom is even, its edges are added to <code>eeh</code>,
      the heap for even-to-even edges.
 </ul>
 To make this operation efficient, the algorithm uses the
-<code>GroupHeap</code>'s <code>divide</code> operation
+group heap's <code>divide</code> operation
 and orders the edges within each group so that those edges incident to
 a particular sub-blossom are grouped together.
 More precisely, if $e_1=\{u_1,v_1\}$ and $e_2=\{u_2,v_2\}$ are edges
@@ -2742,14 +2719,14 @@ similarly split into smaller groups. Because the edges for these smaller
 groups are ordered in the same way as the blossom structure tree,
 they can be separated using the divide operation.
 <p>
-There is one last issue about the implementation of <code>exh</code>
+There is another issue about the implementation of <code>exh</code>
 that must be addressed.
 There are times when an individual edge $e$ must be added to a group $g$
 associated with outer blossom $B$.
 In order to maintain the edge ordering, $e$
 must be inserted with the other edges with which it shares an endpoint in $B$.
 To facilitate this, $g$ includes a <i>marker</i> item $v_m$
-or every vertex in $B$. So, when inserting $e=\{u,v\}$ with $v\in B$,
+for every vertex in $B$. So, when inserting $e=\{u,v\}$ with $v\in B$,
 $e$ is inserted immediately after the marker item $v_m$.
 <p>
 There is one last issue that must be addressed to achieve the
@@ -2762,7 +2739,7 @@ proportional to $n^3$ in the worst-case, that method does not meet
 the performance objective.
 <p>
 An alternative method is to maintain a separate
-balanced binary forest in which the vertex set of each tree
+<a href="../../dataStructures/trees/trees.html#BalancedForest">balanced binary forest</a> in which the vertex set of each tree
 corresponds to the vertices and inner blossoms contained in an outer blossom.
 If the vertices in such an <i>outer blossom tree</i> are maintained in the
 same order as the vertices within the corresponding blossom structure tree,
@@ -2777,6 +2754,8 @@ Since all the tree operations take $O(\log n)$ time and the number of
 tree operations performed by Edmond's algorithm is $O(mn)$,
 the time required for using and maintaining this data structure
 is $O(mn\log n)$.
+<p>
+Here is a <i>Javascript</i> implementation of this algorithm.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 let g=null;       // shared copy of graph
@@ -3134,24 +3113,14 @@ An example of trace output from a demonstration run is shown below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 {
-a[b:3 h:1 j:3 k:3]
-b[a:3 f:2 g:1 j:3 p:2]
-c[f:1 m:1]
-d[g:2]
-e[f:2 g:3 i:2 n:1]
-f[b:2 c:1 e:2 l:2 o:3 p:1]
-g[b:1 d:2 e:3 k:1 o:1]
-h[a:1]
-i[e:2]
-j[a:3 b:3]
-k[a:3 g:1 p:3]
-l[f:2 o:1]
-m[c:1 o:2 p:1]
-n[e:1]
-o[f:3 g:1 l:1 m:2]
-p[b:2 f:1 k:3 m:1]
+a[b:3 h:1 j:3 k:3] b[a:3 f:2 g:1 j:3 p:2] c[f:1 m:1]
+d[g:2] e[f:2 g:3 i:2 n:1] f[b:2 c:1 e:2 l:2 o:3 p:1]
+g[b:1 d:2 e:3 k:1 o:1] h[a:1] i[e:2] j[a:3 b:3]
+k[a:3 g:1 p:3] l[f:2 o:1] m[c:1 o:2 p:1] n[e:1]
+o[f:3 g:1 l:1 m:2] p[b:2 f:1 k:3 m:1]
 }
 eligible: [ab bj aj ak kp eg fo]
+
 augment: {a,b,3} a-ab!-b
 augment: {e,g,3} e-eg!-g
 augment: {f,o,3} f-fo!-o
