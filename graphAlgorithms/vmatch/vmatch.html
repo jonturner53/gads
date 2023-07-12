@@ -1,0 +1,1233 @@
+<html>
+<head>
+<title>Variations on Matching</title>
+<link type="text/css" rel="stylesheet" href="../../main.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+</head>
+<body bgcolor=ffffff>
+\(
+\newcommand{\mate}{\textit{mate}}
+\newcommand{\match}{\textit{match}}
+\newcommand{\bridge}{\textit{bridge}}
+\newcommand{\link}{\textit{link}}
+\newcommand{\state}{\textit{state}}
+\newcommand{\first}{\texttt{first}}
+\newcommand{\next}{\texttt{next}}
+\newcommand{\at}{\texttt{at}}
+\newcommand{\contains}{\texttt{contains}}
+\newcommand{\add}{\texttt{add}}
+\newcommand{\drop}{\texttt{drop}}
+\newcommand{\size}{\texttt{size}}
+\newcommand{\weight}{\texttt{weight}}
+\newcommand{\find}{\textit{find}}
+\)
+
+<h1>Variations on Matching<sup>&copy;</sup></h1>
+
+This section describes some variations on the standard
+matching problem that are useful in some applications.
+
+<h2>Maximum Priority Matchings</h2>
+In the maximum priority matching problem,
+each vertex is $u$ assigned an integer priority $p(u)$
+in $[0,n]$ and the objective is to find the highest priority
+matching. The vertex priorities for a matching define a vector
+$C=[c(n),\ldots,c(1)]$ of <i>priority counts</i> where $c(i)$
+is just the number of matched vertices of capacity $c$.
+An example is shown below.
+<p>
+<div  style="text-align:center;">
+<img width="35%" src="figs/pmatch1.png"><br>
+</div>
+<p>
+Notice that if the matching status on the edges on the
+path $[j,f,g,e,b]$ are reversed, the resulting higher priority
+matching has priority counts $[3,2,1,0]$
+In general, the higher priority of two matchings is determined
+by comparing
+the counts from left to right. The first position where the values
+differ determines which has higher priority
+<h3>Okumura's algorithm</h3>
+Okumura described the priority matching problem in connection
+with an application related to kidney transplantion [Okumura14].
+He showed that the problem could be reduced to a maximum weight matching
+problem by defining edge weights equal to the sum of the priorities
+of their endpoints. Note that with these weights, the total weight of
+the matching is equal to the sum of the priorities of the matched
+vertices. However, a matching can have higher priority than another,
+while having a smaller priority sum, so it's
+not immediately clear why the maximum weight
+matching has the highest priority, but it does.
+<p>
+To understand why this is true, let $M$ be a maximum weight matching
+and $M'$ a matching with higher priority than $M$.
+Define $H$ to be the graph defined by edges that are in $M$ or $M'$
+but not both, and note the $H$ consists of a collection of paths
+and cycles, with edges that alternate between the two matchings.
+The vertices in each cycle contribute equally to the priority
+count vectors of both $M$ and $M'$. The vertices that are
+internal to each path also contribute equally to both priority counts.
+So the difference in the priority count vectors
+is determined by the path endpoints in $H$. If $k$ is the highest
+priority among all the path endpoints, then $M'$ must match more
+of the priority $k$ endpoints than $M$. This implies there must be
+at least one path $P$ in $H$ where $M'$ matches more priority $k$
+endpoints than $M$. Consequently, the weight of the edges in $P$
+that are matched by $M'$ is larger than the weight of the edges
+matched by $M$. This means that the weight of $M$ can be increased
+by exchanging its matching edges in $P$ with those in $M'$,
+contradicting the fact that $M$ has maximum weight.
+<p>
+A Javascript implementation of Okumura's algorithm is shown below.
+Note that the program checks to see if the graph is bipartite and
+if so uses the Hungarian algorithm to compute the weighted matching.
+Otherwise, it uses Edmond's algorithm.
+<p> <textarea rows="15" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function priorityMatchO(g0, priority) {
+    let g = new Graph(g0.n, g0.edgeRange); g.assign(g0);
+    for (let e = g.first(); e; e = g.next(e)) {
+        let [u,v] = [g.left(e),g.right(e)];
+        g.weight(e, priority[u] + priority[v]);
+    }
+    let subsets = findSplit(g);
+    let [match0,,stats0] = subsets ? wbimatchH(g,subsets) :
+                                     wmatchE(g,subsets);
+    if (!match0) return [];
+    let match = new Matching(g0);
+    for (let e = match0.first(); e; e = match0.next(e))
+        match.add(e);
+    return match;
+}
+</textarea> <p>
+The program can be demonstrated using the following script.
+<pre style="padding-left:5%">
+let g = randomGraph(16,3);
+let prio = new Int32Array(g.n+1);
+randomFill(prio, p => randomGeometric(p)-1, .3);
+let [,ts] = priorityMatchO(g,prio,1);
+log(ts);
+</pre>
+Sample output appears below.
+<pre style="padding-left:5%">
+{ a:5[i] b:0[g m] c:7[j] d:5 e:4 f:6[j q] g:7[b p] h:1[m n o]
+i:3[a n p] j:3[c f l m] k:3 l:1[j] m:2[b h j] n:0[h i p] o:2[h r]
+p:6[g i n q] q:7[f p r s] r:3[o q] s:4[q] }
+
+matching: [gp fq cj ai or hm]
+</pre>
+The vertex priorities are shown as properties of
+the graph's vertices. The following script can be
+used to examine the performance on random graphs.
+<pre style="padding-left:5%">
+let n = 250; let d = 20; let pmax = n-1; algo = 'o/g '
+let g = randomGraph(n,d);
+let prio = new Int32Array(g.n+1); randomFill(prio, p => randomInteger(0,pmax));
+let t = Date.now(); let [,,stats] = pmatchO(g,prio,1); t = Date.now() - t;
+log(`${algo} n=${g.n} m=${g.m} pmax=${pmax} steps=${stats.steps} ${t}ms`);
+</pre>
+In the results below, the first line shows how
+Okumura's algorithm performs on a general graph.
+The second shows how it performs on a bipartite 
+graph of the same size.
+The third shows how it performs on a bipartite graph when the program is
+modified to use Edmonds's algorithm in all cases.
+<pre style="padding-left:5%">
+o/g  n=500 m=5000 pmax=499 steps=22648837 1298ms
+o/b  n=500 m=5000 pmax=499 steps= 1928640   56ms
+o/b* n=500 m=5000 pmax=499 steps= 5333600  349ms 
+</pre>
+
+<h3>Direct Solution of Priority Matching Problems</h3>
+Okumura showed that one can raise the priority of a matching using a
+<i>priority improving path</i>, which is an even-length alternating
+path with the unmatched endpoint having a higher priority than the
+matched endpoint.
+This observation was also reported in [Turner15a] and used as the
+basis for priority matching algorithms that do not require the
+solution of a weighted matching problem.
+Specifically, Turner showed how to extend Edmond's algorithm for
+unweighted matching to compute priority matchings.
+Like Edmond's algorithm, Turner's algorithm
+performs a series of path searches by building
+alternating path trees.
+Unlike Edmond's algorithm, it terminates a path search with
+either an augmenting path or a priority improving path.
+It also builds the trees one at a time in decreasing
+order of the priority of their roots.
+Whenever an augmenting or priority-improving path is found,
+the matching is modified accordingly and a new path search
+is begun. Each path search starts with the construction of
+a priority-ordered list of unmatched tree roots.
+The first root $r$ is then removed from this list,
+making it the &ldquo;current root&rdquo; and its incident edges
+are placed in the queue of pending edges.
+The algorithm then repeats the following step.
+<p style="padding-left:5%">
+Remove an edge $e=\{u,v\}$ from the pending queue, where $U$ is
+assumed to be even (recall that $U$ denotes the outer blossom containing $u$).
+If the queue is empty, first let $r$ be the next root
+in the root list, remove it from the list and add its incident edges to the
+queue.
+Apply the appropriate case from the list below.
+<ul style="padding-left:8%">
+<li> If $U=V$ or $V$ is odd, just ignore $e$.
+<li> If $V$ is not yet in any tree, add $e$ and $v$ to $u$'s tree
+     (this is also $r$'s tree);
+     if $\{v,w\}$ is the matching edge incident to $v$,
+     add it and $w$ to the tree.
+     If $p(w) \lt p(r)$ the tree path from $w$ to $r$ is a priority-improving
+     path; reverse the matching status of the edges on this path and start a
+     new path search.
+     Otherwise, add all edges incident to $w$ to the pending queue.
+<li> If $V$ is even and in the same tree as $U$, then $e$
+     together with the tree path from $U$ and $V$ to their nearest
+     common ancestor in the outer graph is an odd cycle.
+     If any of the odd vertices on this cycle has smaller priority than $r$,
+     there is a priority-improving path from that vertex to $r$;
+     reverse the matching status of the edges on this path and start a new
+     path search.
+     Otherwise, shrink the cycle to form a new blossom, while adding
+     external edges incident to the formerly odd vertices to the
+     pending queue.
+<li> If $V$ is even and in some other tree, then an augmenting
+     path can be formed by linking the tree path from $U$ to the root
+     of its tree to the tree path from $V$ to the root of its tree
+     through $e$. Augment the matching using this path and start
+     a new path search.
+</ul>
+A <i>Javascript</i> implementation shown below is based on Gabow's
+implementation of Edmond's algorithm.
+<p> <textarea rows="15" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let g;            // shared copy of graph
+let match;        // match is a Matching object
+
+let link;         // link[u] is parent edge of u in matching forest
+let q;            // q is list of edges to be processed
+let outer;        // MergeSets object partitioning graph into blossoms
+let apath;        // ReverseLists object used to build augmenting paths
+let base;         // base[b] is the base of an outermost blossom b
+let bridge;       // bridge[x] is pair [e,u] where e is bridge in x's blossom
+                  // and u is the endpoint of e that is a descendant of x
+let state;        // state[u] is 0 if u is unreached, +1 if even, -1 if odd
+let mark;         // mark[u] is a flag used when computing nca
+
+let pmax;         // largest vertex priority (assumed <= g.n)
+let prio;         // prio[u] is priority of vertex u
+let plists;       // ListSet with separate list per priority class
+let first;        // first[k] is first vertex in priority k list
+let roots;        // priority-ordered list of unmatched vertices
+
+export default function pmatchEGT(g0, prio0) {
+    g = g0; prio = prio0;
+
+    match = new Matching(g);
+    link = new Int32Array(g.n+1);
+    q = new List(g.edgeRange);
+    outer = new MergeSets(g.n);
+    apath = new ReverseLists(g.edgeRange);
+    base = new Int32Array(g.n+1);
+    bridge = new Array(g.n);
+    state = new Int8Array(g.n+1);
+    mark = new Int8Array(g.n+1);
+
+    plists = new ListSet(g.n);
+    first = new Int32Array(g.n+1);
+    roots = new List(g.n);
+
+    // Create separate list for each priority class.
+    pmax = 0;
+    for (let u = 1; u <= g.n; u++) {
+        first[prio[u]] = plists.join(first[prio[u]], u);
+        pmax = Math.max(pmax, prio[u]);
+    }
+
+    // First sort graph's endpoint lists by priority
+    g.sortAllEplists((e1,e2,v) => prio[g.mate(v,e2)] - prio[g.mate(v,e1)]);
+
+    // build initial matching with pretty good priority score
+    // also build list of unmatched vertices, sorted by priority
+    for (let k = pmax; k; k--) {
+        if (!first[k]) continue;
+        for (let u = first[k]; u; u = plists.next(u)) {
+            steps++;
+            if (match.at(u)) continue;
+            for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+                if (!match.at(g.mate(u,e))) {
+                    match.add(e); break;
+                }
+            }
+            if (!match.at(u)) roots.enq(u);
+        }
+    }
+
+    for (let u = 1; u <= g.n; u++) base[u] = u;
+
+    let r = newPhase();
+    while (!q.empty() || !roots.empty()) {
+        while (q.empty() && !roots.empty()) {
+            r = roots.deq(); add2q(r);
+        }
+        if (q.empty()) break;
+        let e = q.deq(); let u = g.left(e); let U = bid(u);
+        if (state[U] != +1) { u = g.right(e); U = bid(u); }
+        let v = g.mate(u,e); let V = bid(v);
+        if (U == V || state[V] < 0) continue;
+            // skip edges internal to a blossom and edges to odd vertices
+
+        if (state[V] == 0) {
+            let ee = addBranch(u,e,r);
+            if (ee) {
+                // found priority-improving path
+                augment(ee); r = newPhase();
+            }
+        } else {
+            // U and V are both even
+            let A = nca(U,V);
+            if (A) {
+                let ee = addBlossom(e,A,r);
+                if (ee) {
+                    // found priority-improving path
+                    augment(ee); r = newPhase();
+                }
+            } else {
+                // U, V are in different trees - augment and start new phase
+                let r1 = root(U); let r2 = root(V);
+                let ee = apath.join(apath.reverse(path(u,r1)),e);
+                augment(apath.join(ee, path(v,r2)));
+                r = newPhase();
+            }
+        }
+    }
+    return match;
+}
+
+function newPhase() {
+    outer.clear(); q.clear(); link.fill(0); state.fill(0);
+    roots.clear();
+    for (let k = pmax; k >= 0; k--) {
+        if (!first[k]) continue;
+        for (let u = first[k]; u; u = plists.next(u)) {
+            base[u] = u; steps++;
+            if (!match.at(u)) {
+                state[u] = 1;
+                if (k > 0) roots.enq(u);
+            }
+        }
+    }
+    let r = 0;
+    while (q.empty() && !roots.empty()) {
+        r = roots.deq(); add2q(r);
+    }
+    return r;
+}
+
+function addBranch(u, e, r) {
+    steps++;
+    let v = g.mate(u,e);  state[v] = -1; link[v] = e;
+    let ee = match.at(v);
+    let w = g.mate(v,ee); state[w] = +1; link[w] = ee;
+    if (prio[w] < prio[r]) {
+        return apath.reverse(path(w,r));
+    }
+    add2q(w);
+    return 0;
+}
+
+/** Add edges incident to a new even vertex to q.
+ *  @param u is a vertex that just became even
+ */
+function add2q(u) {
+    for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+        if (!match.contains(e) && !q.contains(e)) q.enq(e);
+        steps++;
+    }
+}
+
+function addBlossom(e,A,r) {
+    bcount++;
+    let u = g.left(e);  let U = bid(u);
+    let v = g.right(e); let V = bid(v);
+
+    // check for presence of priority-improving path
+    let x = U;
+    while (x != A) {
+        x = g.mate(x,link[x]); // x now odd
+        if (prio[x] < prio[r]) {
+            let ee = apath.reverse(path(v,r));
+            return apath.join(apath.join(ee,e),path(u,x));
+        }
+        x = bid(g.mate(x,link[x]));
+        steps++;
+    }
+
+    x = V;
+    while (x != A) {
+        x = g.mate(x,link[x]); // x now odd
+        if (prio[x] < prio[r]) {
+            let ee = apath.reverse(path(u,r));
+            return apath.join(apath.join(ee,e),path(v,x));
+        }
+        x = bid(g.mate(x,link[x]));
+        steps++;
+    }
+
+    // proceed to forming new blossom
+    x = U; let s = '';
+    while (x != A) {
+        base[outer.merge(outer.find(x), outer.find(A))] = A;
+        x = g.mate(x,link[x]); // x now odd
+        base[outer.merge(x, outer.find(A))] = A;
+        bridge[x] = [e,u];
+        add2q(x);
+        x = bid(g.mate(x,link[x]));
+        steps++;
+    }
+    x = V;
+    while (x != A) {
+        base[outer.merge(outer.find(x), outer.find(A))] = A;
+        x = g.mate(x,link[x]); // x now odd
+        base[outer.merge(x,outer.find(A))] = A;
+        bridge[x] = [e,v];
+        add2q(x);
+        x = bid(g.mate(x,link[x]));
+    }
+    return 0;
+}
+
+function augment(e) {
+    while (true) {
+        match.add(e);
+        if (apath.isLast(e)) break;
+        e = apath.pop(e); match.drop(e);
+        if (apath.isLast(e)) break;
+        e = apath.pop(e);
+    }
+}
+
+function bid(u) {
+    return base[outer.find(u)];
+}
+
+function root(rv) {
+    while (link[rv] != 0) {
+        rv = bid(g.mate(rv,link[rv])); steps++;
+    }
+    return rv;
+}
+
+function nca(u, v) {
+    let result;
+
+    // first pass to find the nca
+    let x = u; let y = v;
+    while (true) {
+        if (x == y) { result = x; break; }
+        if (mark[x]) { result = x; break; }
+        if (mark[y]) { result = y; break; }
+        if (link[x] == 0 && link[y] == 0) { result = 0; break; }
+        if (link[x] != 0) {
+            mark[x] = true;
+            x = g.mate(x,link[x]);
+            x = bid(g.mate(x,link[x]));
+        }
+        if (link[y] != 0) {
+            mark[y] = true;
+            y = g.mate(y,link[y]);
+            y = bid(g.mate(y,link[y]));
+        }
+    }
+    // second pass to clear mark bits
+    x = u;
+    while (mark[x]) {
+        mark[x] = false; x = g.mate(x,link[x]); x = bid(g.mate(x,link[x]));
+    }
+    y = v;
+    while (mark[y]) {
+        mark[y] = false; y = g.mate(y,link[y]); y = bid(g.mate(y,link[y]));
+    }
+    return result;
+}
+
+function path(a, b) {
+    steps++;
+    if (a == b) return 0;
+    if (state[a] > 0) { // a is even
+        let e1 = link[a];  let pa = g.mate(a,e1);
+        if (pa == b) return e1;
+        let e2 = link[pa]; let p2a = g.mate(pa,e2);
+        let e = apath.join(e1,e2);
+        if (p2a == b) return e;
+        return apath.join(e, path(p2a,b));
+    } else {
+        let [e,v] = bridge[a]; let w = g.mate(v,e);
+        e = apath.join(apath.reverse(path(v,a)), e);
+        e = apath.join(e, path(w, b));
+        return e;
+    }
+}
+</textarea> <p>
+This implementation starts by constructing an initial matching
+with a high priority score. It does this, by first sorting the graph's
+adjacency lists in decreasing priority order, then scanning the vertices
+in decreasing priority order, looking for the first eligible
+edge to match a given vertex. This often eliminates the vast
+majority of path searches, speeding up the algorithmm in typical
+cases, if not in the worst-case.
+<p>
+The script used earlier can be adapted for this program.
+Here is some sample output.
+In this example, the construction of the initial matching is
+disabled, to better illustrate the operation of the program.
+<p> <textarea rows="15" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+{
+a:0[d l] b:0[p d c] c:0[e n j h k b] d:2[p a b] e:5[k l c] f:4[n m h k o]
+g:1[m h k l] h:2[f g c] i:4[m k] j:4[m p l c] k:2[e f i m l g c]
+l:2[e j p k g a] m:4[f i j k g] n:5[f o c] o:1[n f p] p:3[j d l o b]
+}
+initial matching: []
+augment: ek
+    [ek]
+augment: fn
+    [ek fn]
+augment: im
+    [ek fn im]
+branch: j--m--i
+augment: jp
+    [ek fn im jp]
+branch: d--p--j
+augment: ad
+    [ek fn im jp ad]
+branch: h--f--n
+augment: gh
+    [ek fn im jp ad gh]
+branch: l--e--k
+branch: l--j--p
+blossom: {l,p} l [l p j]
+    {[p j l]}
+blossom: {k,l} l [l e k]
+    {[p e j k l]}
+branch: l--g--h
+branch: l--a--d
+branch: k--f--n
+branch: k--i--m
+blossom: {k,m} l [l m i]
+    {[p e i j k l m]}
+augment: ck ek el
+    [fn im jp ad gh ck el]
+branch: o--n--f
+blossom: {f,o} o [o n f]
+    {[f n o]}
+branch: o--p--j
+branch: f--m--i
+branch: f--h--g
+branch: found o-c path
+augment: no fn fk ck
+    [im jp ad gh el no fk]
+final matching: [im jp ad gh el no fk]
+</textarea> <p>
+The trace output shows the edges in the matching after
+each modification (either through an augmenting path
+or a priority-improving path).
+The discovery of priority-improving paths are reported
+as they occur, and are immediately followed by an adjustment
+to the matching.
+For each new blossom formed, the trace output shows the
+edge that triggered the formation of the new blossom,
+the vertex at the base of the blossom and the vertices on the
+blossom cycle. This is followed by a line that shows the vertices
+within each outer blossom.
+<p>
+The earlier performance script can be adapted to show how
+this algorithm performs.  Here is some sample output.
+<pre style="padding-left:5%">
+egt n=500 m=5000 pmax=499 paths=261 steps=358608 56ms 
+egt n=500 m=5000 pmax=499 paths= 29 steps= 67107 17ms 
+egt n=500 m=5000 pmax=499 paths= 14 steps= 40855  9ms 
+</pre>
+In these results the count of the paths includes
+both the augmenting paths and the priority-improving paths.
+The first line shows how the program performs on a random graph
+with the computation of the initial matching disabled.
+The second line shows how it performs with the initial matching 
+computation enabled and the third shows how it performs on a random
+bipartite graph.
+Comparing these to the earlier results demonstrates that
+the direct solution approach is substantially faster for random
+graphs.
+<p>
+One can compute priority matchings more efficiently
+for bipartite graphs, using multiple applications of the
+Hopcroft-Karp algorithm [Turner15b].
+Recall that for a bipartite graph with bipartition $(V_1,V_2)$,
+the Hopcroft-Karp algorithm can find augmenting paths by
+computing alternating path trees with roots in either $V_1$ or $V_2$.
+For priority matching, the alternating path trees can be used to
+identify priority improving paths, as well as augmenting paths.
+<p>
+In the case of two priority classes, one first searches for paths using
+alternating path trees rooted at high priority vertices in $V_1$,
+adjusting the matching for each path found.
+This maximizes the number of matched high priority vertices in $V_1$.
+One then repeats this procedure using alternating
+path trees rooted at high priority vertices in $V_2$.
+If there are $k$ priority classes, this two step procedure must be
+iterated, with each iteration using trees rooted at vertices of
+priority $i>0$ for decreasing values of $i$.
+This yields an $O(k m n^{1/2})$ algorithm.
+<p>
+There is a variant of this algorithm that is often significantly faster.
+Instead of each iteration being limited to trees rooted
+at vertices in a single priority class, it allows each iteration to use trees
+rooted at vertices of multiple classes, but processes them in priority order.
+Within each iteration, it first searches for paths using trees rooted in $V_1$,
+then using trees rooted in $V_2$.
+It continues until an iteration produces no further progress, then halts.
+When the number of priority classes is large, this can greatly reduce
+the number of iterations, leading to a significant improvement in performance.
+<p>
+A <i>Javascript</i> implementation appears below.
+This program implements both the <i>strict</i> (original) version of
+the algorithm and the relaxed version.
+<p> <textarea rows="15" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let g;            // shared copy of graph
+let match;        // Matching object
+let prio;         // prio[u] is priority of u (in [0,n])
+let pmax;         // largest priority value
+let subsets;      // ListPair defining bipartition
+let link;         // link[u] is parent edge of u in augmenting path
+let plists;       // ListSet with separate list per priority class
+let first;        // first[k] is first vertex in priority k list
+let roots;        // roots contains unmatched vertices in first subset
+let level;        // level[u] is distance to u from a root vertex
+let nextedge;     // nextedge[u] is next edge at u to be processed
+let q;            // q is List used by newPhase
+
+export default function pbimatchHKT(g0, prio0, strict=false) {
+    g = g0; prio = prio0;
+
+    match = new Matching(g);
+    link = new Int32Array(g.n+1);
+    level = new Int32Array(g.n+1);
+    nextedge = new Int32Array(g.n+1);
+    roots = new List(g.n); roots.addPrev();
+    q = new List(g.n);
+
+    // divide vertices into two independent sets
+    subsets = findSplit(g);
+    if (!subsets) return [];
+
+    // Create separate list for each priority class.
+    plists = new ListSet(g.n);
+    first = new Int32Array(g.n+1);
+    pmax = 0;
+    for (let u = 1; u <= g.n; u++) {
+        first[prio[u]] = plists.join(first[prio[u]], u);
+        pmax = Math.max(pmax, prio[u]);
+    }
+
+    // First sort graph's endpoint lists by priority
+    g.sortAllEplists((e1,e2,v) => prio[g.mate(v,e2)] - prio[g.mate(v,e1)]);
+
+    // build initial matching with pretty good priority score
+    for (let k = pmax; k; k--) {
+        if (!first[k]) continue;
+        for (let u = first[k]; u; u = plists.next(u)) {
+            if (match.at(u)) continue;
+            for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+                if (!match.at(g.mate(u,e))) {
+                    match.add(e); break;
+                }
+            }
+        }
+    }
+
+    for (let rp = pmax; rp; rp--) {
+        if (!first[rp]) continue;
+        let p0 = paths;
+        extendMatching(1, rp, strict);
+        extendMatching(2, rp, strict);
+        if (!strict && paths == p0) break;
+            // early termination when no progress
+    }
+    return match;
+}
+
+function extendMatching(side, rp, strict) {
+    // build list of roots with priority rp (strict case) and
+    // <= rp otherwise
+    roots.clear();
+    for (let k = rp; k; k--) {
+        for (let r = first[k]; r; r = plists.next(r)) {
+            if (!match.at(r) &&
+                (side == 1 && subsets.in(r,1) ||
+                 side == 2 && subsets.in(r,2)))
+                roots.enq(r);
+        }
+        if (strict) break;
+    }
+
+    while (newPhase(strict)) {
+        let r = roots.first();
+        while (r) {
+            link[r] = 0;
+            let [u,e] = findpath(r);
+            if (u) {
+                augment(u,e); r = roots.delete(r);
+            } else {
+                r = roots.next(r);
+            } 
+        }
+    }
+}
+
+function newPhase(strict) {
+    if (roots.empty()) return 0;
+
+    for (let u = 1; u <= g.n; u++) {
+        level[u] = g.n+1; nextedge[u] = g.firstAt(u); steps++;
+    }
+    // add roots with highest priority to q
+    q.clear(); let r = roots.first(); let rp = prio[r];
+    for ( ; r && prio[r] == rp; r = roots.next(r)) {
+        level[r] = 0; q.enq(r); steps++;
+    }
+    // r is now the first root with priority <rp (or 0)
+
+    let stopLevel = g.n+1; // used to terminate early
+
+    while (rp) {
+        // label each vertex with its distance from the nearest root
+        // of priority rp, ignoring those already labeled
+        while (!q.empty()) {
+            let u = q.deq(); // u is in root subset
+            for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+                if (e == match.at(u)) continue;
+                let v = g.mate(u,e); // v in "non-root" subset
+                if (level[v] != g.n+1) continue;
+                // first time we've seen v
+                level[v] = level[u] + 1; 
+                let ee = match.at(v);
+                if (!ee) {
+                    // there's an augmenting path from v back to a root
+                    if (stopLevel == g.n+1) stopLevel = level[v] + 1;
+                    continue;
+                }
+                // ee in matching
+                let w = g.mate(v,ee);
+                level[w] = level[v] + 1;
+                if (stopLevel == g.n+1 && prio[w] < rp) {
+                    stopLevel = level[w];
+                }
+                if (level[w] < stopLevel) q.enq(w);
+            }
+        }
+        // update rp and add priority rp roots to q
+        rp = (r ? prio[r] : 0);
+        for ( ; r && prio[r] == rp; r = roots.next(r)) {
+            level[r] = 0; q.enq(r); steps++;
+        }
+        // r is now the first root with priority <rp (or 0)
+    }
+    return (stopLevel <= g.n);
+}
+
+function findpath(u,r=u) {
+    for (let e = nextedge[u]; e; e = g.nextAt(u,e)) {
+        let v = g.mate(u,e);
+        if (level[v] != level[u] + 1) continue;
+        link[v] = e;
+        let ee = match.at(v);
+        if (!ee) {
+            // there's an augmenting path to v
+            nextedge[u] = e; link[v] = e; return [v,e];
+        }
+        // ee is in matching
+        let w = g.mate(v,ee);
+        if (level[w] != level[v] + 1) continue;
+        if (prio[w] < prio[r]) {
+            nextedge[u] = e; link[v] = e; link[w] = ee; return [w,ee];
+        }
+        let [x,elast] = findpath(w,r);
+        if (x) {
+            nextedge[u] = e; link[v] = e; link[w] = ee; return [x,elast];
+        }
+    }
+    nextedge[u] = 0; return [];
+}
+
+function augment(u,e) {
+    let ts = '';
+    if (!match.contains(e)) {
+        // extra step for augmenting path
+        match.add(e); u = g.mate(u,e);
+    }
+    while (link[u]) {
+        steps++;
+        e = link[u]; u = g.mate(u,e); match.drop(e);
+        e = link[u]; u = g.mate(u,e); match.add(e);
+    }
+}
+</textarea> </p>
+
+Two sample runs are shown below. The first uses the strict variant
+of the algorithm, while the second shows the relaxed variant.
+In both cases, the intial matching computation has been disabled.
+
+<p> <textarea rows="15" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+{ a:3[q v t] b:2 c:2[m n] d:2[m v u o] e:0[x u o] f:0[m t w] g:3[u]
+h:0[x w] i:0 j:4[r o] k:3[r o] l:2[q w] m:5[c d f] n:3[c] o:0[j k d e]
+p:4 q:5[a l] r:4[j k] s:2 t:1[a f] u:1[g d e] v:2[a d] w:1[l f h] x:2[e h] }
+
+-- Strict --
+
+initial matching: []
+paths
+5 [cm]
+5 [aq]
+4 [jr]
+3 [gu]
+3 [ko]
+3 [cn cm dm]
+    [aq jr gu ko dm cn]
+2 [lq aq av]
+    [jr gu ko dm cn av lq]
+2 [ex]
+1 [ft]
+1 [hw]
+final matching: [jr gu ko dm cn av lq ex ft hw]
+
+-- Relaxed --
+
+initial matching: []
+paths
+4 [jr]
+3 [aq]
+3 [gu]
+3 [ko]
+2 [cm]
+2 [dv]
+2 [lw]
+3 [cn cm dm dv]
+    [jr aq gu ko lw dm cn]
+2 [ex]
+1 [ft]
+2 [av aq lq lw]
+    [jr gu ko dm cn ex ft lq av]
+1 [hw]
+final matching: [jr gu ko dm cn ex ft lq av hw]
+</textarea> </p>
+Each path found by the algorithm is preceded by the priority of the
+root its tree. For non-trivial paths, the updated matching is shown
+after the path.
+Note how the root priorities are non-increasing in the strict case,
+while in the relaxed case they are not.
+<p>
+The following script can be used to compare the performance of all
+the algorithms on bipartite graphs.
+<pre style="padding-left:5%">
+let n = 1000; let d = 3; let pmax = 15;
+let g = randomBigraph(n,d);
+let prio = new Int32Array(g.n+1); randomFill(prio, p => randomInteger(0,pmax));
+let t; let stats;
+t = Date.now(); [,,stats] = pmatchO(g,prio); t = Date.now() - t;
+log(`o/h   n=${g.n} m=${g.m} pmax=${pmax} steps=${stats.steps} ${t}ms`);
+t = Date.now(); [,,stats] = pmatchEGT(g,prio,1); t = Date.now() - t;
+log(`egt   n=${g.n} m=${g.m} pmax=${pmax} steps=${stats.steps} ${t}ms`);
+t = Date.now(); [,,stats] = pbimatchHKT(g,prio,1); t = Date.now() - t;
+log(`hkt/s n=${g.n} m=${g.m} pmax=${pmax} passes=${stats.passes} ` +
+    `paths=${stats.paths} steps=${stats.steps} ${t}ms`);
+t = Date.now(); [,,stats] = pbimatchHKT(g,prio,0); t = Date.now() - t;
+log(`hkt/r n=${g.n} m=${g.m} pmax=${pmax} passes=${stats.passes} ` +
+    `paths=${stats.paths} steps=${stats.steps} ${t}ms`);
+</pre>
+In the sample results shown below, the <i>passes</i> field refers to
+the number of iterations performed by the  Hopcorft-Karp-Turner algorithm
+and paths refers to the number of paths found.
+<pre style="padding-left:5%">
+o/h   n=2000 m=3000 pmax=5                        steps= 9110432 232ms 
+egt   n=2000 m=3000 pmax=5                        steps= 1846363 222ms 
+hkt/s n=2000 m=3000 pmax=5   passes=5   paths=172 steps=   98594   6ms 
+hkt/r n=2000 m=3000 pmax=5   passes=4   paths=169 steps=   89746  10ms 
+
+o/h   n=2000 m=3000 pmax=20                       steps=10526568 251ms 
+egt   n=2000 m=3000 pmax=20                       steps= 2045797 244ms 
+hkt/s n=2000 m=3000 pmax=20  passes=20  paths=256 steps=  279379  12ms 
+hkt/r n=2000 m=3000 pmax=20  passes= 5  paths=265 steps=  136071   6ms 
+
+o/h   n=2000 m=3000 pmax=100                      steps=11320779 268ms 
+egt   n=2000 m=3000 pmax=100                      steps= 2163126 240ms 
+hkt/s n=2000 m=3000 pmax=100 passes=100 paths=288 steps=  609148  32ms 
+hkt/r n=2000 m=3000 pmax=100 passes=  8 paths=295 steps=  183612   8ms 
+</pre>
+The first two algorithms are roughly comparable for bipartite graphs.
+but the last two perform much better. When the number of priority classes
+is limited, the strict version is better than the relaxed version,
+but as the number of classes increases, the relaxed version does much better.
+For larger graph densities, Okumura's algorithm is at relative disadvantage
+to all the others, which benefit from the initial matching computation
+which is highly effective for dense graphs.
+
+<h2>Maximum Degree Matchings</h2>
+There is a special case of priority matching that is of separate
+interest. In <i>maximum degree matching</i>, one seeks a matching
+that maximizes the number of vertices of maximum degree that are matched.
+This can clearly be solved as a priority matching problem with two
+priority classes and for bipartite graphs, the resulting matching
+matches all vertices of maximum degree (this is not true for all
+graphs, since not all vertices in an odd length cycle can be matched).
+<p>
+[Gabow76] describes a procedure to find a matching in a bipartite graph $G$
+with maximum degree $\Delta$ that has a worst-case time bound
+of $O(m n^{1/2})$, matching the time bound that can be obtained using
+priority matching. The procedure is outlined below. 
+<p style="padding-left:5%">
+Let $V_1$ and $V_2$ be vertex subsets that define a bipartition of $G$.
+Let $H_1$ be the subgraph induced by the vertices of maximum degree in $V_1$
+and their neighbors, and let $H_2$ be the subgraph induced by the vertices
+of maximum degree in $V_2$ and their neighbors.
+<p style="padding-left:5%">
+Let $M_1$ be a maximum matching of $H_1$ and $M_2$ be a maximum
+matching of $H_2$.
+Hall's theorem [BM76] implies that $M_i$ matches all vertices in $V_i$.
+<p style="padding-left:5%">
+Construct a matching $M$ of $G$ by first including every edge that is in both
+$M_1$ and $M_2$ and removing these edges from $M_1$ and $M_2$.
+The remaining edges in $M_1$ and $M_2$ define a collection of paths and
+even length cycles with edges alternating between the two matchings.
+For each of the cycles add every other edge to $M$.
+For each of the odd length paths add the alternate edges that include the
+first and last edges.
+For each of the even length paths, select the set of alternate edges
+that includes a path endpoint corresponding to a vertex
+of degree $\Delta$ in $G$.
+<p>
+Notice that each edge in matching $M_i$ has an endpoint of
+maximum degree and since the terminal edges of the even length
+paths are in different matchings, one endpoint of these paths
+must have maximum degree.
+The procedure described in the last step is known as the
+Dulmage-Mendelsohn decomposition.
+An example of the overall process appears below.
+<p>
+<div  style="text-align:center;">
+<img width="95%" src="figs/mdmatch.png"><br>
+</div>
+<p>
+A <i>Javascript</i> implementation of Gabow's max degree matching
+algorithm is shown below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function mdmatchG(g) {
+    // initialize supporting data structures
+    let degree = new Int32Array(g.n+1);
+    let subsets = findSplit(g);
+    let Delta = 0;
+    for (let u = 1; u <= g.n; u++) {
+        degree[u] = g.degree(u);
+        if (degree[u] > Delta) Delta = degree[u];
+    }
+
+    let xg = new Graph(g.n,g.m); // scratch graph
+
+    // compute subgraph xg that includes all edges incident to max degree
+    // vertices in first subset of bipartition; then get its matching
+    for (let e = g.first(); e; e = g.next(e)) {
+        let [u,v] = [g.left(e),g.right(e)];
+        if (degree[subsets.in1(u) ? u : v] != Delta) continue;
+        xg.join(u,v,e);
+    }
+        
+    let xmatch1 = bimatchHK(xg,0,subsets);
+
+    // repeat xg for xmatch2;
+    xg.clear();
+    for (let e = g.first(); e; e = g.next(e)) {
+        let [u,v] = [g.left(e),g.right(e)];
+        if (degree[subsets.in2(u) ? u : v] != Delta) continue;
+        xg.join(u,v,e); steps++;
+    }
+    let [xmatch2,,stats2] = bimatchHK(xg,0,subsets);
+
+    // Include edges from both matchings in match and discard
+    let match = new Matching(g); let nexte;
+    for (let e = xmatch1.first(); e; e = nexte) {
+        nexte = xmatch1.next(e);
+        if (xmatch2.contains(e)) {
+            match.add(e); xmatch1.drop(e); xmatch2.drop(e);
+        }
+    }
+
+    // remaining edges in xmatch1,2 define alternating paths or cycles
+    while (xmatch1.size() && xmatch2.size()) {
+        let e = xmatch1.first();
+        let u = selectStart(e, g, xmatch1, xmatch2, degree, Delta);
+        let v = u;
+        while (xmatch1.at(v)) {
+            let ee = xmatch1.at(v); match.add(ee); xmatch1.drop(ee);
+            v = g.mate(v,ee); ee = xmatch2.at(v);
+            if (!ee) break;
+            v = g.mate(v,ee); xmatch2.drop(ee);
+        }
+        v = u;
+        while (xmatch2.at(v)) {
+            let ee = xmatch2.at(v); match.add(ee); xmatch2.drop(ee);
+            v = g.mate(v,ee); ee = xmatch1.at(v);
+            if (!ee) break;
+            v = g.mate(v,ee); xmatch1.drop(ee);
+        }
+    }
+    while (xmatch1.size()) {
+        let e = xmatch1.first(); match.add(e); xmatch1.drop(e);
+    }
+    while (xmatch2.size()) {
+        let e = xmatch2.first(); match.add(e); xmatch2.drop(e);
+    }
+
+    return match;
+}
+
+/** Select the "start" vertex of a component of xmatch1 xor xmatch2.
+ *  @param e is an edge in xmatch1
+ *  @return a vertex u; if e's component is an odd length path, either endpoint
+ *  will do; if it is an even length path, select the max degree endpoint;
+ *  if it is a cycle, any vertex on the cycle will do.
+ */
+function selectStart(e, g, xmatch1, xmatch2, degree, Delta) {
+    // find first endpoint
+    let [u,v] = [g.left(e),g.right(e)];
+    while (true) {
+        let ee = xmatch2.at(v); if (!ee) break; v = g.mate(v,ee);
+        if (v == u) return u; // component is a cycle
+            ee = xmatch1.at(v); if (!ee) break; v = g.mate(v,ee);
+    }
+    // component is a path and v is its "rightmost" endpoint
+    while (true) {
+        let ee = xmatch2.at(u); if (!ee) break; u = g.mate(u,ee);
+            ee = xmatch1.at(u); if (!ee) break; u = g.mate(u,ee);
+    }
+    // now u is its "leftmost" endpoint
+    return degree[u] == Delta ? u : v;
+}
+</textarea> <p>
+
+The following script can be used to demonstrate the algorithm.
+<pre style="padding-left:5%">
+let g = randomRegularBigraph(13, 5);
+for (let i = 0; i <= 10; i++) {
+    let u = randomInteger(1,g.n);
+    let e = g.firstAt(u);
+    if (e) g.delete(e);
+}
+let [,ts] = mdmatchG(g,1);
+log(ts);
+</pre>
+An example run is shown below.
+<pre style="padding-left:5%">
+graph:
+{ a[t n v o z] b[r s y o x] c[w r v u] d[q t p y] e[o q n w z]
+f[r x s t p] g[u v p q] h[w s z] i[r z t p] j[x p q] k[o y u n]
+l[w o u x s] m[s y x] n[e a k] o[k e a b l] p[d j g f i] q[e d j g]
+r[i f b c] s[h f m b l] t[a d f i] u[g k l c] v[g a c] w[h c e l]
+x[f j b m l] y[k b m d] z[h e a i] }
+
+first matching: [at br eo fx lw]
+second matching: [ao bs dp fx]
+final matching: [fx eo at bs lw dp]
+</pre>
+The following script can be used to compare the performance of Gabow's
+algorithm to the Hopcroft-Karp-Turner algorithm.
+<pre style="padding-left:5%">
+let n = 5000; let d = 5;
+let g = randomRegularBigraph(n,d);
+for (let i = 0; i <= .2*g.n; i++) {
+    let u = randomInteger(1,g.n);
+    let e = g.firstAt(u);
+    if (e) g.delete(e);
+}
+let t = Date.now(); let [,,stats] = mdmatchG(g); t = Date.now() - t;
+log(`g   ${g.n} ${g.m} size=${stats.size} steps=${stats.steps} ${t}ms`);
+
+let prio = new Int32Array(g.n+1);
+let md = g.maxDegree();
+for (let u = 1; u <= g.n; u++) 
+    prio[u] = g.degree(u) == md ? 1 : 0;
+t = Date.now(); [,,stats] = pbimatchHKT(g,prio,1); t = Date.now() - t;
+log(`hkt ${g.n} ${g.m} size=${stats.size} steps=${stats.steps} ${t}ms`);
+</pre>
+Some sample output appears below.
+<pre style="padding-left:5%">
+g   10000  22999 size=3931 steps= 235409 18ms 
+hkt 10000  22999 size=3687 steps=  94617 13ms 
+
+g   10000 497066 size=3870 steps=2166918 313ms 
+hkt 10000 497066 size=3221 steps= 552919 418ms 
+</pre>
+The HKT algorithm performs better at smaller edge densities, but
+Gabow's alogrithm does better as the density grows.
+It's interesting to note that HKT
+tends to produce smaller matchings, implying that more of its matching
+edges have both endpoints of maximum degree.
+This can be explained by the initial matching computation,
+which favors such edges.
+
+<h2>Stable Matchings</h2>
+In the <i>stable matching</i> problem, a bipartite graph has subsets
+$(X,Y)$ of equal size and each vertex has an ordered list of its
+incident edges, where the position of an edge in the list is interpreted
+as a relative <i>preference</i> for the neighboring vertex.
+The objective is to pair adjacent vertices in such a way that the collection
+of pairs is <i>stable</i>.
+A matching is unstable if a vertex $x\in X$ prefers a vertex $y\in Y$
+to its current <i>partner</i> and $y$ prefers $x$ to its current partner.
+Otherwise, it is considered stable.
+The problem is usually defined with each element of the two sets having
+an expressed preference for <i>all</i> the potential partners.
+The version given here generalizes this to allow for strong
+incompatibilities between some partners.
+<p>
+The Gale-Shapley algorithm for stable matching performs a series of
+<i>rounds</i>. Each round consists of a series of steps.
+In each step, an unmatched vertex $x\in X$ makes an <i>offer</i>
+to a potential partner $y\in Y$.
+If $y$ is unmatched or prefers $x$ to its current
+partner, it drops its current partner in favor of $x$.
+<p>
+The algorithm is guaranteed to produce a stable matching if one exists.
+To see this, suppose it does not. That is, it produces a matching for
+which there is pair of vertices $x\in X$ and $y\in Y$ that prefer each
+other to their current partners. This implies that at some point $x$
+made an offer to $y$ that was rejected and when $y$ rejected $x$,
+it preferred its current partner to $x$. This yields a contradiction since,
+vertices in $Y$ only &ldquo;trade up.&rdquo; meaning that $y$ must also
+prefer its final partner to $x$.
+<p>
+Note that one can implement the algorithm by advancing a pointer
+for each vertex in $X$ to the next neighbor in its list following each offer.
+With the aid of an array mapping an edge $\{x,y\}$ to the position of
+$x$ in $y$'s preference list, each step can be implemented in constant time.
+Consequently, the algorithm can be implemented to run in $O(m)$ time.
+<p>
+A <i>Javascript</i> implementation is shown below.
+<p> <textarea rows="15" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function smatchGS(g, pref, subsets) {
+    let match = new Matching(g);
+
+    // for each edge e={x,y} compute rank[e],
+    // the position of e in y's preference list
+    let rank = new Int32Array(g.edgeRange+1);
+    for (let y = subsets.first(2); y; y = subsets.next(y,2)) {
+        for (let i = 1; i < pref[y].length; i++)
+            rank[pref[y][i]] = i;
+    }
+
+    // next[x] is x's current position in its preference list
+    let next = new Int32Array(g.n+1).fill(1);
+
+    let progress = true;
+    for (let pass = 1; progress; pass++) {
+        progress = false;
+        for (let x = subsets.first(1); x; x = subsets.next(x,1)) {
+            while (!match.at(x) && next[x] < pref[x].length) {
+                let e = pref[x][next[x]]; let y = g.mate(x,e);
+                if (!match.at(y)) {
+                    match.add(e); progress = true;
+                } else if (rank[e] < rank[match.at(y)]) {
+                    match.drop(match.at(y)); match.add(e); progress = true;
+                }
+                next[x]++;
+            }
+        }
+    }
+        
+    return match;
+}
+</textarea> <p>
+
+The script below can be used to demonstrate the algorithm
+on random graphs with random preference lists.
+<pre style="padding-left:5%">
+let g = randomBigraph(7,3);
+let subsets = new ListPair(g.n);
+for (let u = 1; u <= g.n/2; u++) subsets.swap(u);
+let pref = [[]];
+for (let u = 1; u <= g.n; u++) {
+    pref.push([0]);
+    for (let e = g.firstAt(u); e; e = g.nextAt(u,e))
+        pref[u].push(e);
+    scramble(pref[u]);
+}
+let [,ts,stats] = smatchGS(g,pref,subsets,1);
+log(ts);
+</pre>
+Sample output appears below.
+<pre style="padding-left:5%">
+{ a[l m k] b[k i j n] c[h k] d[i h n l] e[h i j m] f[n h i] g[k]
+h[f e d c] i[e f b d] j[b e] k[c b g a] l[d a] m[e a] n[f d b] }
+
+new edges in each pass
+1: al bk ch di eh fn
+2: ck
+3: bi dl
+4: am
+5:
+final matching: [eh fn ck bi dl am]
+ 
+</pre>
+The trace output shows the graph with the neighboring vertices listed in
+order of preference. It also shows the edges added to the matching in
+each pass.
+Note that when an edge is added, it may conflict with a currently
+matched edge, which is removed to accommodate the new match.
+
+<h2>References</h2>
+<dl>
+<dt> [BM76]
+<dd> <i>Graph Theory with Applications</i>,
+    by J. A. Bondy and U. S. R. Murty. North Holland, 1976.
+<dt> [GS62]
+<dd> &ldquo;College Admissions and the Stability of Marriage,&rdquo;
+     by D. Gale and L. S. Shapley.
+     In <i>American Mathematical Monthly</i>, 1962.
+<dt> [Gabow76]
+<dd> &ldquo;Using Euler Partitions to Edge Color Multigraphs,&rdquo;
+     by Harold Gabow. In <i>Journal of Computer and Information Sciences</i>,
+     1976.
+<dt> [Okumura14]
+<dd> &ldquo;Priority Matchings Revisited&rdquo; by Yasunori Okumura.
+     In <i>Games and Economic Behavior</i>, 2014.
+<dt> [Turner15a]
+<dd> &ldquo;Maximum Priority Matchings&rdquo; by Jonathan Turner.
+     Washington University Computer Science and Engineering technical
+     report WUCSE-2015-06, 11/2015. Also available in Computing Research
+     Repository (CoRR) arXiv:1512.08555 [cs.DS].
+<dt> [Turner15b]
+<dd> &ldquo;Faster Maximum Priority Matchings in Bipartite Graphs&rdquo;
+     by Jonathan Turner.
+     Washington University Computer Science and Engineering technical
+     report WUCSE-2015-08, 12/2015. Also available in Computing Research
+     Repository (CoRR) arXiv:1512.09349 [cs.DS].
+</dl>
+<hr> <h4>&copy; Jonathan Turner - 2022</h4>
+<script src="../../googleAnalytics.js"></script>
+</body>
+</html>
