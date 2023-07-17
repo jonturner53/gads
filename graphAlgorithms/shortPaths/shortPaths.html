@@ -28,6 +28,12 @@
 </script>
 </head>
 <body bgcolor=ffffff>
+\(
+\newcommand{\length}{\textit{length}}
+\newcommand{\distance}{\textit{distance}}
+\newcommand{\dist}{\textit{dist}}
+\newcommand{\link}{\textit{link}}
+\)
 <h1>Shortest Paths<sup>&copy;</sup></h1>
 
 (This chapter is loosely based on Chapter 7 of [Tarjan87].)
@@ -145,10 +151,10 @@ $s$ if and only if it contains a shortest path tree with root $s$.
 Shortest path trees have an important property that can be
 used to define a shortest path algorithm.
 Let $T$ be a directed spanning tree of $G$ with root $s$, and
-let $\textit{distance}(u)$ be the length of the path from $s$ to $u$ in $T$
+let $\distance(u)$ be the length of the path from $s$ to $u$ in $T$
 or infinity if $u$ is not reachable from $s$.
 Consider an edge $(u,v)$ in $G$ that is not in $T$ and note that
-if $\textit{distance}(v)>\textit{distance}(u)+\textit{length}(u,v)$,
+if $\distance(v)>\distance(u)+\length(u,v)$,
 then the tree path from $s$ to $u$ is not a shortest path.
 <p>
 <div  style="text-align:center;">
@@ -156,26 +162,26 @@ then the tree path from $s$ to $u$ is not a shortest path.
 </div>
 <p>
 Hence, if $T$ is a shortest path tree,
-$\textit{distance}(v)\leq\textit{distance}(u)+\textit{length}(u,v)$
+$\distance(v)\leq\distance(u)+\length(u,v)$
 for all edges $(u,v)$ in $G$. 
 <p>
 What about the converse? That is, if
-$\textit{distance}(v)\leq\textit{distance}(u)+\textit{length}(u,v)$
+$\distance(v)\leq\distance(u)+\length(u,v)$
 for all edges $(u,v)$ in $G$, does that imply
 that all paths in $T$ are shortest paths?
 The converse can be confirmed by
 showing that for any path $p$ in $G$ from $s$
-to a vertex $x$, $\textit{distance}(x)\leq\textit{length}(p)$.
+to a vertex $x$, $\distance(x)\leq\length(p)$.
 Note that if $p$ consists of a single edge $(s,x)$, then
 $$
-\textit{length}(p)=\textit{distance}(s)+\textit{length}(s,x)\geq \textit{distance}(x)
+\length(p)=\distance(s)+\length(s,x)\geq \distance(x)
 $$
 <p>
 So, let's try to prove the general result using induction on the number of
 edges in $p$.
 Assume then that $p$ has $k+1$ edges and that 
 for all vertices $x'$ and all paths $p'$ with $k$ edges,
-$\textit{distance}(x')\leq \textit{length}(p')$.
+$\distance(x')\leq \length(p')$.
 Now, let $q$ be the path consisting of the first $k$ edges of $p$
 and let $y$ be the last vertex in $q$.
 <p>
@@ -185,17 +191,17 @@ and let $y$ be the last vertex in $q$.
 <p>
 Then,
 \begin{eqnarray*}
-\textit{distance}(x)&\leq&\textit{distance}(y)+\textit{length}(y,x) \\
-&\leq&\textit{length}(q)+\textit{length}(y,x) \\
-&=&\textit{length}(p)
+\distance(x)&\leq&\distance(y)+\length(y,x) \\
+&\leq&\length(q)+\length(y,x) \\
+&=&\length(p)
 \end{eqnarray*}
 This yields the following theorem.
 <p>
 <a id="sptTheorem"><i>Theorem 3</i></a>.
 Let $T$ be a directed spanning tree of $G$ with root $s$, and
-let $\textit{distance}(u)$ be the length of the path from $s$ to $u$ in $T$.
+let $\distance(u)$ be the length of the path from $s$ to $u$ in $T$.
 $T$ is a shortest path tree if and only if, 
-$\textit{distance}(v)\leq\textit{distance}(u)+\textit{length}(u,v)$
+$\distance(v)\leq\distance(u)+\length(u,v)$
 for all edges $(u,v)$ in $G$.
 <p>
 The property described in Theorem 3 is called the
@@ -217,16 +223,16 @@ violate the shortest path tree property and modifying the tree to eliminate
 those violations.
 It uses two mappings, a <i>parent</i> mapping that maps a vertex $u$ to $p(u)$,
 its tentative parent in the current subtree, and a
-<i>distance</i> mapping that maps vertex $u$ to $\textit{dist}(u)$,
+<i>distance</i> mapping that maps vertex $u$ to $\dist(u)$,
 the distance from the source vertex to $u$ in the current subtree.
-Initially, $p(u)=\textbf{null}$ for all $v$ and $\textit{dist}(u)=\infty$
-for all $u$ except the source $s$, for which $\textit{dist}(s)=0$.
+Initially, $p(u)=\textbf{null}$ for all $v$ and $\dist(u)=\infty$
+for all $u$ except the source $s$, for which $\dist(s)=0$.
 It then repeatedly applies the following labeling step.
 <p style="padding-left:5%;">
 Select an edge $(u,v)$ with
-$\textit{dist}(v) > \textit{dist}(u) + \textit{length}(u,v)$;
+$\dist(v) > \dist(u) + \length(u,v)$;
 let $p(v) = u$ and
-$\textit{dist}(v) = \textit{dist}(u) + \textit{length}(u,v)$.
+$\dist(v) = \dist(u) + \length(u,v)$.
 <p>
 If there is a shortest path tree at $s$, then when the labeling method halts,
 its parent pointers define a shortest path tree and the <i>dist</i> values match
@@ -251,9 +257,9 @@ Initially, the source is labeled and all others are unlabeled.
 The algorithm then repeats the following <i>scanning step</i>.
 <p style="padding-left:5%;">
 Select a labeled vertex $u$ and for all edges $(u,v)$ with
-$\textit{dist}(v) > \textit{dist}(u) + \textit{length}(u,v)$;
+$\dist(v) > \dist(u) + \length(u,v)$;
 let $p(v) = u$ and
-$\textit{dist}(v) = \textit{dist}(u) + \textit{length}(u,v)$ and
+$\dist(v) = \dist(u) + \length(u,v)$ and
 make the state of $v$ labeled.
 On completion of the scanning step, the state of $u$ becomes scanned.
 <p>
@@ -278,7 +284,7 @@ function that implements a topological sort.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function sptDag(g, s) {
+export default function sptDag(g, s, trace) {
     let topo = toposort(g); // sorted list of vertices
     if (!topo) assert(0, 'graph is not acyclic');
 
@@ -299,7 +305,7 @@ export default function sptDag(g, s) {
         }
     }
 
-    return [link, dist];
+    return [link, dist, ..];
 }
 
 function toposort(g) {
@@ -328,22 +334,19 @@ function toposort(g) {
 Note that the version shown above has been abridged for clarity.
 The provided implementation also provides execution tracing and
 performance statistics.
-This provided version can be run in the web app's scratchpad by
-entering the following text.
+It can be run in the web app's scratchpad by entering the following text.
 <pre style="padding-left:5%">
 let g = new Digraph();
 g.fromString('{a[g:2] b[c:1] c[i:-2 e:1] d[a:-2 c:3 h:1] e[] ' +
              'f[a:4 d:-7 g:1] g[e:-4] h[b:-3] i[g:-1] j[e:4 h:-1 f:3]}');
-let [link, dist, traceString] = sptDag(g, 10, true);
-log(traceString);
-log(g.elist2string(link,null,true));
-log(g.nlist2string(dist));
+let [link, dist, ts] = sptDag(g, 10, 1);
+log(ts);
 </pre>
 This produces the result shown below.
 <pre style="padding-left:5%">
 {
-a[g:2] b[c:1] c[e:1 i:-2] d[a:-2 c:3 h:1] e[]
-f[a:4 d:-7 g:1] g[e:-4] h[b:-3] i[g:-1] j[e:4 f:3 h:-1]
+a[g:2] b[c:1] c[i:-2 e:1] d[a:-2 c:3 h:1] e
+f[a:4 d:-7 g:1] g[e:-4] h[b:-3] i[g:-1] j[e:4 h:-1 f:3]
 }
 sorted vertex list: [j f d a h b c i g e]
 
@@ -353,16 +356,13 @@ f 3 (j,f,3)
 d -4 (f,d,-7)
 a -6 (d,a,-2)
 h -3 (d,h,1)
-b -6 (h,b,-3
+b -6 (h,b,-3)
 c -5 (b,c,1)
 i -7 (c,i,-2)
 g -8 (i,g,-1)
 e -12 (g,e,-4)
- 
-[- (d,a,-2) (h,b,-3) (b,c,1) (f,d,-7) (g,e,-4) (j,f,3) (i,g,-1) (d,h,1) (c,i,-2) -] 
-[Infinity -6 -6 -5 -4 -12 3 -8 -3 -7 0] 
-
 </pre>
+<p>
 Next, let's consider an algorithm that can be applied to any
 graph with no negative edges. This algorithm selects the labeled vertex
 with the smallest tentative distance label and is known as
@@ -381,7 +381,7 @@ A <i>Javascript</i> version is shown below.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function sptD(g, s) {
+export default function sptD(g, s, trace) {
     let link = new Int32Array(g.n+1);
     let dist = new Array(g.n+1).fill(Infinity);
     let border = new ArrayHeap(g.n, 2+Math.floor(g.m/g.n));
@@ -399,7 +399,7 @@ export default function sptD(g, s) {
             }
         }
     }
-    return [link, dist];
+    return [link, dist, ..];
 }
 </textarea>
 <p>
@@ -447,7 +447,7 @@ A <i>Javascript</i> version appears below.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function sptBM(g, s) {
+export default function sptBM(g, s, trace) {
     let link = new Int32Array(g.n+1);
     let dist = new Array(g.n+1).fill(Infinity);
 
@@ -472,7 +472,7 @@ export default function sptBM(g, s) {
         if (u == last && !q.empty()) { pass++; last = q.last(); }
         if (pass >= g.n) assert(0, 'negative cycle');
     }
-    return [link, dist];
+    return [link, dist, ..];
 }
 </textarea>
 <p>
@@ -497,20 +497,20 @@ for the transformed edge lengths.
 The edge-length transformation is computed by first computing a shortest
 path tree in an augmented version of the original graph. The augmented
 version simply adds a source vertex $s$ with a zero length edge to every other
-vertex. For each vertex $u$ in the orignal graph, define $\textit{distance}(u)$
+vertex. For each vertex $u$ in the orignal graph, define $\distance(u)$
 to be the length of the shortest path from $s$ to $u$ in this augmented graph.
 Then for each edge $(u,v)$ in the original graph, let
 $$
-\textit{length}'(u,v) = \textit{length}(u,v) +
-\textit{distance}(u) - \textit{distance}(v)
+\length(u,v) = \length(u,v) +
+\distance(u) - \distance(v)
 $$
 Note that if there a shortest path tree rooted at every vertex,
-the shortest path tree theorem implies that $\textit{length}'(u,v)>0$.
+the shortest path tree theorem implies that $\length(u,v)>0$.
 For any path $p$ from $u$ to $v$, one can show (by induction on the path length)
 that
 $$
-\textit{length}'(p) = \textit{length}(p) +
-\textit{distance}(u) - \textit{distance}(v)
+\length(p) = \length(p) +
+\distance(u) - \distance(v)
 $$
 Since the lengths of all $u$-$v$ paths are shifted by the same amount,
 a shortest path tree computed with the transformed lengths is also
@@ -533,7 +533,7 @@ and a corresponding array of distances.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function allpairsEK(g) {
+export default function allpairsEK(g, trace) {
     let dist = []; dist.push(null);
     let link = []; link.push(null);
     
@@ -558,7 +558,7 @@ export default function allpairsEK(g) {
         g.length(e, g.length(e) - (d[g.tail(e)] - d[g.head(e)]));
     }
 
-    return [link, dist];
+    return [link, dist, ..];
 }
 </textarea>
 <p>
@@ -633,7 +633,7 @@ A <i>Javascript</i> implementation is shown below.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function allpairsF(g) {
+export default function allpairsF(g, trace) {
     let dist = []; dist.push(null);
     let link = []; link.push(null);
     
@@ -662,7 +662,7 @@ export default function allpairsF(g) {
             }   
         }   
     }
-    return [link, dist];
+    return [link, dist, ..];
 }
 </textarea>
 <p>
@@ -703,7 +703,7 @@ and the number of steps performed by Dijkstra's algorithm
 (counting the siftup and siftdown steps in the heap).
 This makes it clear that Dijkstra's algorithm dominates
 the computation.
-The statistics shown for the Floyd's algorithm are the
+The statistics shown for Floyd's algorithm are the
 total steps in the inner loop and the number of steps that
 produce a change in the distance values.
 If the edge density is reduced to 10 edges per vertex,

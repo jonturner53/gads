@@ -35,7 +35,7 @@
 
 <h1>Edge Coloring<sup>&copy;</sup></h1>
 
-An <i>edge coloring</i> in an undirected graph is a function $\color$
+An <i>edge coloring</i> in an undirected graph is a function
 that maps each edge to a <i>color</i>, where no vertex is incident
 to more than one edge of the same color.
 The objective is to color the edges using the smallest number of colors.
@@ -50,8 +50,8 @@ Note that the edges assigned any specific color form a matching and
 that since the maximum vertex degree in the example is 4, no coloring
 can use fewer than 4 edges.
 In fact, <i>Vizing's theorem</i> [BM76] states that the number of colors
-needed to color any graph is either $\Delta$ or $\Delta+1$, where $\Delta$
-is the maximum vertex degree.
+needed to color any simple graph is either $\Delta$ or $\Delta+1$,
+where $\Delta$ is the maximum vertex degree.
 Edge coloring is NP-complete for general graphs, but for
 bipartite graphs, the number of colors needed is exactly $\Delta$.
 
@@ -64,7 +64,7 @@ incident to $u$.
 These sets are initialized to $\{1,\dots,\Delta\}$.
 It colors the graph by repeating the following step.
 <p style="padding-left:5%">
-let $e=\{u,v\}$ be an uncolored edge. If $\avail(u)$ and $\avail(v)$ have
+Let $e=\{u,v\}$ be an uncolored edge. If $\avail(u)$ and $\avail(v)$ have
 a color $c$ in common, let $\color(e)=c$ and proceed to the next edge. 
 Otherwise, let $c_u\in avail(u)$, $c_v\in avail(v)$ and identify the
 path $p$ starting at $v$ and consisting of edges with colors alternating

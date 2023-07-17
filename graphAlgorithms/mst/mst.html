@@ -28,6 +28,11 @@
 </script>
 </head>
 <body bgcolor=ffffff>
+
+\(
+\newcommand{\weight}{\textit{weight}}
+\newcommand{\link}{\textit{link}}
+\)
 <h1>Minimum Spanning Trees<sup>&copy</sup></h1>
 
 A <i>spanning tree</i> in a connected, undirected graph is a subtree of
@@ -100,7 +105,7 @@ as shown below.
 </div>
 <p>
 Since the cut contains no tree edges, $e'$ cannot be a tree edge,
-so $\textit{weight}(e) \leq \textit{weight}(e')$.
+so $\weight(e) \leq \weight(e')$.
 Consequently, the forest obtained from $F$ by replacing $e'$ with $e$
 is also a minimum spanning forest.
 This result is summarized in the following theorem.
@@ -133,68 +138,68 @@ tree and the remainder of the graph. A border vertex is one that
 is not in the tree but does have one or more edges linking it to
 tree vertices. A border vertex $u$ is stored in the heap, using a key
 equal to the weight of the lightest edge joining $u$ to a tree vertex.
-The identity of that lightest edge is stored as $\textit{light}(u)$.
+The identity of that lightest edge is stored as $\link(u)$.
 Note that this implies that if $u$ has the smallest key of any vertex in
-the heap, then $\textit{light}(u)$ is the lightest edge with one endpoint
+the heap, then $\link(u)$ is the lightest edge with one endpoint
 in the tree.
 With these definitions, the selection rule
 can be rephrased as follows.
 <p style="padding-left:5%;">
 Remove the vertex $u$ with the smallest key from the border heap
-and add $\textit{light}(u)$ to the set of tree edges.
+and add $\link(u)$ to the set of tree edges.
 <p>
 To ensure that this leads to a valid algorithm, it's also necessary to
 maintain the following invariant.
 <p style="padding-left:5%;">
 Before each selection step, the border heap
 defines the set of border vertices and
-for each border vertex $u$, $\textit{light}(u)$
+for each border vertex $u$, $\link(u)$
 is the lightest edge joining $u$ to a tree vertex.
 <p>
 <p>
 Initially, the start vertex $s$ is the only tree vertex,
 so the invariant can be established by
-setting $\textit{light}(u)=\{s,u\}$ for each neighbor $u$ of $s$ and
+setting $\link(u)=\{s,u\}$ for each neighbor $u$ of $s$ and
 adding $u$ to the border heap with a key value of 
-$\textit{weight}(\textit{light}(u))$.
+$\weight(\link(u))$.
 <p>
 To maintain the invariant after removing $u$ from the heap,
 the neighbors of $u$ are <i>scanned</i>. For each neighor $v$ that
-is being scanned for the first time $\textit{light}(v)$ is set to $\{u,v\}$
+is being scanned for the first time $\link(v)$ is set to $\{u,v\}$
 and $v$ is added to the heap with a key value of
-$\textit{weight}(\textit{light}(v))$.
+$\weight(\link(v))$.
 For each neighbor that is already in the border set,
-the edge $\{u,v\}$ is compared with $\textit{light}(v)$.
-If $\{u,v\}$ is lighter than $\textit{light}(v)$, $\textit{light}(v)$ is
+the edge $\{u,v\}$ is compared with $\link(v)$.
+If $\{u,v\}$ is lighter than $\link(v)$, $\link(v)$ is
 set to $\{u,v\}$ and the key of $v$ in the heap is reduced to
-$\textit{weight}(\textit{light}(v))$.
+$\weight(\link(v))$.
 <p>
 When there are no more border vertices the algorithm completes,
 and for each tree vertex $u\neq s$,
-$\textit{light}(u)$ can be viewed as the edge connecting $u$
+$\link(u)$ can be viewed as the edge connecting $u$
 to its &ldquo;parent&rdquo; in the minimum spanning tree.
 A <i>Javascript</i> implementation of the main part of the algorithm is shown
 below.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-let light = new Int32Array(g.n+1).fill(-1);
-let s = 1; light(s) = 0; border.insert(s, 0);
+let link = new Int32Array(g.n+1).fill(-1);
+let s = 1; link[s] = 0; border.insert(s, 0);
 while (!border.empty()) {
     let u = border.deletemin();
     for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
         let v = g.mate(u,e);
-        if (light[v] < 0) {
-            border.insert(v, g.weight(e)); light[v] = e;
+        if (link[v] < 0) {
+            border.insert(v, g.weight(e)); link[v] = e;
         } else if (h.contains(v) && g.weight(e) < h.key(v)) {
-            border.changekey(v, g.weight(e)); light[v] = e;
+            border.changekey(v, g.weight(e)); link[v] = e;
         }
     }
 }
 </textarea>
 <p>
-In this implementation $\textit{light}(u)$ is initialized to $-1$
-for all $u \neq s$ and $\textit{light}(s)$ is set to zero.
-Once a vertex $u$ is scanned, $\textit{light}(u) \geq 0$.
+In this implementation $\link(u)$ is initialized to $-1$
+for all $u \neq s$ and $\link(s)$ is set to zero.
+Once a vertex $u$ is scanned, $\link(u) \geq 0$.
 Also, the heap is intialized to contained $s$.
 This means that the first loop iteration serves to establish the
 invariant, while the remaining iterations maintain the invariant as
@@ -241,7 +246,7 @@ causes a vertex to move from the
 bottom of the heap to the top, maximizing the number of steps
 performed by <i>siftup</i>. This example can be easily extended to
 arbitrary values of $n$ and by taking subgraphs, one can construct
-worst-case examples at any density.
+worst-case examples of any density.
 It is worth noting that the example does depend critically
 on the order in which the edges are examined. For example, if the
 edges incident to each vertex are examined in <i>increasing</i> order of weight,
@@ -266,30 +271,30 @@ it produces a minimum spanning forest of the graph.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function mstP(g) {
-    let light = new Int32Array(g.n+1).fill(-1);
+export default function mstP(g,d,trace) {
+    let link = new Int32Array(g.n+1).fill(-1);
     let border = new ArrayHeap(g.n, d);
     for (let s = 1; s <= g.n; s++) {
-        if (light[s] >= 0) continue;
-        border.insert(s, 0); light[s] = 0;
+        if (link[s] >= 0) continue;
+        border.insert(s, 0); link[s] = 0;
         while (!border.empty()) {
             let u = border.deletemin();
             for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
                 let v = g.mate(u,e);
-                if (light[v] < 0) {
-                    border.insert(v, g.weight(e)); light[v] = e;
+                if (link[v] < 0) {
+                    border.insert(v, g.weight(e)); link[v] = e;
                 } else if (border.contains(v) && g.weight(e) < border.key(v)) {
-                    border.changekey(v, g.weight(e)); light[v] = e;
+                    border.changekey(v, g.weight(e)); link[v] = e;
                 }
             }
         }
     }
-    // convert light into a list of edge numbers
+    // convert link into a list of edge numbers
     let j = 0;
     for (let i = 1; i <= g.n; i++)
-        if (light[i] > 0) light[j++] = light[i];
-    light.length = j;
-    return light;
+        if (link[i] > 0) link[j++] = link[i];
+    link.length = j;
+    return [link ..];
 }
 </textarea>
 <p>
@@ -303,6 +308,9 @@ computes a minimum spanning tree of a distinct connnected component.
 The version shown above has been abridged for clarity.
 The complete version (available on the web app) supports execution tracing
 and performance statistics.
+Note that the return value is a triple that includes an array of
+the edges numbers for the edges in the tree, as well as a trace string
+and a statistics object (not shown).
 <p>
 If the following script is run in the scratch pad of the web app
 <pre style="padding-left:5%;">
@@ -339,7 +347,7 @@ is shown, along with its lightest edge, and the heap.
 To compare the experimental performance to the predicted worst-case
 performance, enter the following script into the web app.
 <pre style="padding-left:5%;">
-let n = 1024; let m = n*(n-1)/2;
+let n = 1024; let d = n-1; let m = d*n/2;
 let g = hardcaseP(n, m); 
 log(`n=${n} density=${g.m/g.n}`);
 let t0, t1, steps, stats;
@@ -359,20 +367,20 @@ When it is omitted, $d$ is chosen to match the edge density.
 Running this code on graphs of increasing size produces the output
 <pre style="padding-left:5%;">
 n=128 density=63.5 
-prim time=2ms steps/m=5.01 
-prim_2 time=3ms steps/m=8.50
- 
+prim time=1ms steps/m=5.01 
+prim_2 time=2ms steps/m=8.50 
+
 n=256 density=127.5 
-prim time=7ms steps/m=5.01 
-prim_2 time=8ms steps/m=9.43
- 
+prim time=12ms steps/m=5.01 
+prim_2 time=6ms steps/m=9.43 
+
 n=512 density=255.5 
-prim time=26ms steps/m=5.00 
-prim_2 time=34ms steps/m=10.39
- 
+prim time=10ms steps/m=5.00 
+prim_2 time=19ms steps/m=10.39 
+
 n=1024 density=511.5 
-prim time=110ms steps/m=5.00 
-prim_2 time=151ms steps/m=11.37 
+prim time=49ms steps/m=5.00 
+prim_2 time=86ms steps/m=11.37 
 </pre>
 Observe that when $d$ matches the edge density,
 the number of steps per edge remains constant, even as the edge density
@@ -387,13 +395,13 @@ The impact of $d$ is greatest when the graphs are maximally dense.
 Reducing the density for the last test case shows a much smaller effect.
 <pre style="padding-left:5%;">
 n=1024 density=128 
-prim time=24ms steps/m=4.72 
-prim_2 time=26ms steps/m=5.87
+prim time=11ms steps/m=4.72 
+prim_2 time=13ms steps/m=5.87
 </pre>
 To evaluate the program's performance on random graphs, replace the second
 line of the code in the web app with
 <pre style="padding-left:5%;">
-let g = randomGraph(n,m); g.randomWeights(randomFraction);
+let g = randomGraph(n,d); g.randomWeights(randomFraction);
 </pre>
 The <code>randomWeights</code> function takes a random number generator
 as its first argument. In this case, the specified function
@@ -401,26 +409,26 @@ generates uniform random numbers in $[0,1]$.
 Running this on graphs of increasing size produces the output
 <pre style="padding-left:5%;">
 n=128 density=63.5 
-prim time=2ms steps/m=2.93 
+prim time=1ms steps/m=2.93 
 prim_2 time=1ms steps/m=2.33 
 
 n=256 density=127.5 
-prim time=25ms steps/m=2.88 
-prim_2 time=17ms steps/m=2.19 
+prim time=2ms steps/m=2.87 
+prim_2 time=2ms steps/m=2.20 
 
 n=512 density=255.5 
-prim time=59ms steps/m=2.88 
-prim_2 time=37ms steps/m=2.12
- 
+prim time=9ms steps/m=2.88 
+prim_2 time=8ms steps/m=2.11 
+
 n=1024 density=511.5 
-prim time=259ms steps/m=2.86 
-prim_2 time=217ms steps/m=2.07 
+prim time=81ms steps/m=2.86 
+prim_2 time=81ms steps/m=2.07 
 </pre>
 Notice that in this case, fixing the heap parameter at 2 produces
 fewer steps per edge and faster run times. This reflects the fact
 that with random edge weights, the number of <i>changekey</i> operations
 is much smaller than in the worst-case, greatly reducing the
-number of siftup operations. Consequently, the running time is
+number of siftup operations. Consequently, the performance is
 largely determined by the overhead of the inner loop of Prim's
 algorithm, not the data structure operations.
 
@@ -447,10 +455,10 @@ implementation (abridged for clarity).
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function mstK(g) {
+export default function mstK(g,trace) {
     // first make a sorted list of the edges in g
     let edges = [];
-    for (let e = g.first(); e != 0; e = g.next(e)) edges.push(e);
+    for (let e = g.first(); e; e = g.next(e)) edges.push(e);
     edges.sort((e1, e2) => g.weight(e1) - g.weight(e2));
 
     // now examine edges in order, merging separate subtrees
@@ -463,7 +471,7 @@ export default function mstK(g) {
             treeEdges.push(e); subtrees.merge(cu, cv);
         }
     }
-    return treeEdges;
+    return [treeEdges, ..];
 }
 </textarea>
 <p>
@@ -472,8 +480,8 @@ then Kruskal's algorithm takes $O(m \log n)$ time.
 If the edges can be sorted using a linear-time algorithm such as
 radix sort, this drops to $O(m \alpha(m,n))$.
 The simplicity of Kruskal's algorithm makes it an attractive choice,
-but its performance is critically dependent on the quality of the
-function used to sort the edges.
+but its performance is critically dependent on the method used to
+sort the edges.
 
 <h2>The Cheriton-Tarjan algorithm</h2>
 
@@ -486,7 +494,7 @@ repeats the following step so long as it is possible to do so.
 <p style="padding-left:5%;">
 Remove the first tree $T_1$ from the queue. If there is an edge joining
 $T_1$ to some other tree, let $T_2$ be the tree with the lightest edge
-linking it to $T_1$; remove $T_2$ from the heap, combine the two trees
+linking it to $T_1$; remove $T_2$ from the queue, combine the two trees
 and add the combined tree to the end of the queue.
 <p>
 To make this efficient, the merge sets data structure is used to
@@ -507,7 +515,7 @@ A <i>Javascript</i> implementation of the algorithm appears below.
 <p>
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function mstCT(g) {
+export default function mstCT(g,trace) {
     let trees = new MergeSets(g.n); // one subset for each mst subtree
 
     // initialize collection of edge endpoint heaps
@@ -544,7 +552,7 @@ export default function mstCT(g) {
         h[trees.merge(tu, tv)] = epHeap.lazyMeld(h[tu], h[tv]);
         q.enq(trees.find(u));
     }
-    return treeEdges;
+    return [treeEdges, ..];
 }
 </textarea>
 <p>
@@ -634,8 +642,8 @@ Consequently, the trees on the heap during the $k$-th pass
 have at least $2^k$ vertices and the number of passes is $\leq \lg n$.
 Now, note that any two trees selected during the same pass are vertex-disjoint,
 since they are on the heap at the same time. This implies that the total size
-of the heaps that processed in a single pass is at most $2m + n-1$,
-so each each edge appears in at most two heaps and the number of dummy items
+of the heaps that are processed in a single pass is at most $2m + n-1$,
+so each edge appears in at most two heaps and the number of dummy items
 introduced by lazy melds is at most $n-1$.
 <p>
 To complete the analysis,
@@ -648,7 +656,7 @@ $O(k_i \max(1,\log(m_i/k_i))$ based on the
 <a href="../../dataStructures/heaps/heaps.html#heapify">earlier analysis
 of <i>heapify</i></a>.
 <p>
-A <i>findmin</i> is called <i>small</i> if $k_i \leq m_i/(\lg n)^2)-1$;
+A <i>findmin</i> is called <i>small</i> if $k_i \leq (m_i/(\lg n)^2)-1$;
 otherwise, it is called <i>large</i>.
 
 Excluding time spent on operations on the merge sets data structure,
@@ -689,42 +697,51 @@ structuures.
 The Cheriton-Tarjan algorithm has an edge at the lowest densities,
 but the advantage over Prim's algorithm is modest.
 <p>
-The results below compare Prim's algorithm (with $d$ matched to edge density)
-with Kruskal's algorithm and the Cheriton-Tarjan algorithm on low
-density random graphs.
+The results below compare Prim's algorithm
+with Kruskal's algorithm and the Cheriton-Tarjan algorithm.
+The first three sets of results show how the performance scales
+with density, and clearly demonstrates Prim's advantage as the density grows.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-n=4096 density=1 
-prim time=11ms steps/m=17.43 
-kruskal time=9ms steps/m=14.00 
-cheriton-tarjan time=23ms steps/m=8.02 
+n=10000 density=1 
+prim            time=  18ms steps/m=19.85 
+kruskal         time=   8ms steps/m=14.40 
+cheriton-tarjan time=  35ms steps/m= 7.99 
 
-n=4096 density=2 
-prim time=6ms steps/m=13.50 
-kruskal time=8ms steps/m=14.00 
-cheriton-tarjan time=16ms steps/m=8.77 
+n=10000 density=4 
+prim            time=  19ms steps/m=10.10 
+kruskal         time=  21ms steps/m=16.85 
+cheriton-tarjan time=  47ms steps/m= 8.04 
 
-n=4096 density=4 
-prim time=6ms steps/m=9.27 
-kruskal time=15ms steps/m=14.00 
-cheriton-tarjan time=20ms steps/m=8.05 
+n=10000 density=32 
+prim            time=  64ms steps/m= 4.97 
+kruskal         time= 168ms steps/m=19.97 
+cheriton-tarjan time= 362ms steps/m= 5.82 
 
-n=4096 density=8 
-prim time=10ms steps/m=6.81 
-kruskal time=32ms steps/m=14.00 
-cheriton-tarjan time=28ms steps/m=7.02 
+=======================================
 
-n=4096 density=12 
-prim time=14ms steps/m=5.78 
-kruskal time=48ms steps/m=14.00 
-cheriton-tarjan time=37ms steps/m=6.58 
+n=10000 density=1 
+prim            time=  17ms steps/m=19.86 
+kruskal         time=  10ms steps/m=14.40 
+cheriton-tarjan time=  39ms steps/m= 7.94 
 
-n=4096 density=16 
-prim time=18ms steps/m=5.41 
-kruskal time=67ms steps/m=14.00 
-cheriton-tarjan time=53ms steps/m=6.30 
+n=100000 density=1 
+prim            time= 109ms steps/m=25.32 
+kruskal         time=  63ms steps/m=17.70 
+cheriton-tarjan time= 197ms steps/m= 8.06 
+
+n=1000000 density=1 
+prim            time=1620ms steps/m=30.90 
+kruskal         time= 717ms steps/m=21.02 
+cheriton-tarjan time=3204ms steps/m= 8.02 
 </textarea> <p>
-In all but the very lowest density, Prim's algorithm out-performs the others.
+The second set of results show how the performance scales
+with graph size for the lowest density graphs.
+Here, Kruskal's advantage over Prim shows up clearly.
+It's also clear that the asymptotic advantage of the Cheriton and Tarjan
+algorithm will eventually make itself felt as its number of steps
+per edge is essentially flat, while for the others, this metric
+is increasing with $n$.
 
 <h2>References</h2>
 <dl>
