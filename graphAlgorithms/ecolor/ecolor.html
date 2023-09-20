@@ -54,9 +54,14 @@ needed to color any simple graph is either $\Delta$ or $\Delta+1$,
 where $\Delta$ is the maximum vertex degree.
 Edge coloring is NP-complete for general graphs, but for
 bipartite graphs, the number of colors needed is exactly $\Delta$.
+<p>
+For bipartite graphs, one can color the edges by repeatedly 
+constructing a maximum degree matching, assigning a new color to all
+its edges and then removing the matching edges before proceeding
+to the next iteration. This yields an $O(\Delta m n^{1/2})$ algorithm.
 
 <h3>Path Recoloring Method</h3>
-For the special case of bipartite graphs, there is
+For bipartite graphs, there is
 a method to color the edges that is simple and typically quite fast.
 For each vertex, $u$ it maintains a set of <i>available colors</i>,
 $\avail(u)$ consisting of all colors not yet assigned to any edge
@@ -215,7 +220,7 @@ Notice that the number of recoloring steps is much smaller than the
 number of edges. In the first line of output for example, there are 1241
 recoloring steps, while the number of edges is 10,000.
 Also notice that the average path length for that case is 34, while
-the longest possible path length is 999.
+the largest possible path length is 999.
 <p>
 In the first group of results, the vertex degree scales up
 (along with the number of edges) while in the second group,
@@ -252,7 +257,8 @@ in $H$ using the next unused color and return.
 <p style="padding-left:5%">
 If $\Delta_H$ is odd, let $M$ be a matching that matches all
 vertices of degree $\Delta_H$ in $H$; color the edges in $M$ using
-the next unused color.
+the next unused color and remove the matching edges from $H$
+(reducing $\Delta_H$ by 1).
 <p style="padding-left:5%">
 Divide $H$ into two subgraphs $H_1$ and $H_2$ both having maximum degree
 $\Delta_H/2$. Recursively color each of these subgraphs and return.
@@ -470,7 +476,7 @@ over the active vertices, rather than all the vertices in the working copy,
 which turns out to be necessary to achieve the target time bound.
 <p>
 There is one last detail to take note of. Whenever a maximum degree matching
-must be computed, a separte graph object is created.
+must be computed, a separate graph object is created.
 This is defined on just the active vertices of the working graph,
 to prevent its vertex count from significantly exceeding its edge count.
 <p>
@@ -537,8 +543,9 @@ but the first sets $\Delta$ to one less than a power of 2,
 while the second group sets it to a power of 2.
 The first group maximizes the number of max degree matching
 computations, while the second minimizes it.
-In both cases, the running time is substantially larger than
-for the path recoloring method.
+In both cases, the running times are substantially larger than
+for the path recoloring method, inspite of the superior worst-case
+performance of Gabow's algorithm.
 
 <h3>Remarks</h3>
 Other algorithms for bipartite edge matching have been developed over

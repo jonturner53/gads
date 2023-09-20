@@ -1,0 +1,826 @@
+<html>
+<head>
+<title>Variations on Edge Coloring</title>
+<link type="text/css" rel="stylesheet" href="../../main.css">
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41SPK9725S"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-41SPK9725S');
+</script>
+</head>
+<body bgcolor=ffffff>
+\(
+\newcommand{\color}{\textit{color}}
+\newcommand{\avail}{\textit{avail}}
+\newcommand{\np}{\textit{NP}}
+
+\newcommand{\Proc}{\textbf{procedure}}
+\newcommand{\Func}{\textbf{function}}
+\newcommand{\flip}{\textit{flip}}
+\newcommand{\bmax}{b_{\textit{max}}}
+
+\newcommand{\proof}{\noindent\textit{proof}}
+\)
+
+<h1>Variations on Edge Coloring<sup>&copy;</sup></h1>
+
+<h2>Bounded Edge Coloring</h2>
+
+The <i>bounded edge coloring problem</i> is a generalization of the
+standard edge coloring problem, in which each edge $e$
+has a <i>lower bound</i> $b(e)$ on its edge color.
+The objective is to find an edge coloring that respects the lower
+bounds and that minimizes the largest color assigned to any edge.
+If a graph can be colored with colors $\leq C$, it is <i>C-colorable</i> and
+$C^\ast(G)$ is defined as the smallest $C$ for which a graph 
+$G$ is $C$-colorable.
+An example is shown below, where
+the first number labelling each edge is its bound, while the second is
+a valid color.
+<p>
+<div  style="text-align:center;">
+<img width="23%" src="figs/example1.png"><br>
+</div>
+<p>
+The problem is motivated by a scheduling problem in crossbar switches.
+In this application, the graph's vertices represent the inputs and
+outputs of a crossbar switch, while the edges represent packets to
+be transferred from inputs to outputs.
+The edge bounds represent the arrival times of the packets
+and the colors represent the times at which packets are scheduled for 
+transfer.
+Since an input can receive at most one packet at each time step,
+the bounds on the edges incident to an input must be distinct.
+This property is called the <i>unique input bounds condition</i>.
+The example below shows a bipartite graph that satisfies the condition.
+The tabular representation at right shows the inputs along the
+rows and the outputs in the columns.
+<p>
+<div  style="text-align:center;">
+<img width="45%" src="figs/example2.png"><br>
+</div>
+<p>
+The problem was shown to by $\np$-complete in [Turner15b], even when
+restricted to bipartite graphs that satisfy the unique
+input bounds condition. Consequently, it makes sense to focus
+on approximate solutions.
+<p>
+The crossbar scheduling problem has been studied extensively in the
+online context, using several distinct performance criteria.
+For so-called <i>input queued</i> switches,
+the focus has been on ensuring bounded waiting times in systems
+subjected to random input traffic.
+Many scheduling algorithms have been shown to meet this 
+objective [Leonardi01,Mckeown99a, Mckeown99b].
+More compelling, worst-case results have been shown for
+<i>combined input and output queued</i>
+switches, in which the crossbar is capable of transferring packets
+somewhat faster than they can arrive at the inputs, or be transmitted
+from the outputs.
+Some scheduling algorithms can match the performance of an
+idealized <i>output-queued</i>
+switch when the crossbar is capable of processing packets
+twice as fast as the can arrive at the inputs
+[Attiya06,Chuang-99,Krishna-99].
+
+<h3>Lower Bounds</h3>
+This section introduces several methods to compute lower bounds on $C^\ast$.
+First, a few notations.
+For any vertex $u$ in a graph $G$, let $\delta_G(u)$ denote the number of edges incident to $u$
+(the vertex degree) and let $\Delta(G)=\max_u \delta_G(u)$.
+If $G$ is an instance of the bounded edge coloring problem,
+$G_k$ denotes the subgraph defined by the edges with bounds $\leq k$ and
+$G^k$ denotes the graph defined by the remaining edges.
+<p>
+The first lower bound is referred to as the <i>degree bound</i>.
+Observe that if a vertex $u$ has $d$ edges with bounds
+$\gt c$, then some edge
+incident to $u$ must be assigned a color $\geq c+d$.
+Consequently, $C^\ast(G) \geq k+\Delta(G^k)$.
+The degree bound for $G$ is denoted $D(G)$ and defined by
+$D(G)=\max_{k\lt \bmax} k+\Delta(G^k)$,
+where $\bmax$ is the largest color bound.
+The graph in the previous example has $D=5$ and can be colored using colors
+$1,\ldots ,5$. 
+Some graphs require more than $D$ colors, as shown below
+using the tabular format for bipartite graphs.
+This graph has $D=4$ but requires five colors.
+<p>
+<div  style="text-align:center;">
+<img width="45%" src="figs/example3.png"><br>
+</div>
+<p>
+<p>
+The graph in this example is actually a special case of a class of
+graphs that require substantially more than $D$ colors.
+The graph $B_n$ has inputs $u_1,\ldots,u_n$ and
+outputs $v_1,\ldots,v_{2n-1}$.
+For $1\leq i\leq n$, $1\leq j \leq i$, there is an
+edge $(u_i,v_j)$ with bound $j$, and for each
+$1\leq i < n$, $i< j \leq n$, there is an edge $(u_i,v_{n+i})$
+with bound $j$. The figure below shows the case of $B_7$, along with
+a coloring using nine colors. Note that in general, $D(B_n)=n$.
+<p>
+<div  style="text-align:center;">
+<img width="85%" src="figs/example4.png"><br>
+</div>
+<p>
+A second lower bound can be obtained by computing a sequence of matchings.
+Observe that for any $k$, the edges of $G$ that are colored $k$ must
+form a matching in $G_k$.
+So, if $M_k$ is a maximimum matching in $G_k$,
+$E_k$ is the set of edges in $G_k$,
+$U_1 = |M_1|$ and $U_k = \min (U_{k-1} + |M_k|, |E_k|)$,
+then $U_k$ is an upper bound on the number of edges
+that can be colored using colors $\leq k$.
+If $U_k$ is smaller than the number of edges in $G$,
+then $G$ requires colors larger than $k$.
+The <i>matching bound</i> $M(G)$ is defined as the smallest $k$
+for which $U_k$ is at least equal to the number of edges in $G$.
+For the graph $B_4$ the sequence of matching sizes is $1, 3, 4, 4, 4$
+and the sequence of edge counts for $G_k$ is $4, 8, 12, 16, 16$;
+consequently, $M=5$.
+For the graph $B_7$, the two sequences are
+$1,3,5,7,7,7,7,7,7$ and $7, 14,\ldots, 49$, so $M=9$.
+It's not difficult to show that
+in general, the matching bound for $B_n$ is $\lceil 5n/4 \rceil$.
+Note that both the degree bound and the matching bound
+can be applied to any graph and any set of edge bounds.
+<p>
+The third lower bound is based on a property of valid colorings.
+Let $G=(V,E)$ be a graph that can be colored using colors $\leq C$.
+For $k\leq C$, let $H$ be the subgraph of $G$ induced by edges
+with colors $\leq k$  and let $J$ be the subgraph induced by
+the remaining edges.
+Note that $H$ is a subgraph of $G_k$, $D(H) \leq k$
+and $\Delta(J) \leq C-k$.
+So, for any $k\leq C$, it is possible to split $G$ into
+subgraphs $H$ and $J$ that have these properties.
+If a graph $G$ cannot be split in this way for some
+$k\leq C$, then $C^\ast(G) > C$.
+<p>
+For bipartite graphs, one can find a suitable subgraph pair for given
+values of $C$ and $k$ by solving a network flow problem.
+Let $F$ be a <i>flow graph</i> that includes
+a <i>source vertex</i> $s$, a <i>sink vertex</i> $t$ and a chain of vertices
+for each vertex in $G_k$.
+Specifically, for each input $u$ in $G_k$,
+$F$ contains a chain consisting of vertices $u_i$
+for each $i\leq k$
+and edges $(u_i,u_{i+1})$ with <i>capacity</i> $k-i$.
+There is also an edge from $s$ to $u_1$ with capacity $k$.
+For each output $v$ in $G_k$,
+$F$ contains a chain consisting of vertices $v_i$ for
+each $i\leq k$ and edges $(v_{i+1},v_{i})$
+with <i>capacity</i> $k-i$.
+There is also an edge from $v_1$ to $t$ with capacity $k$.
+For each edge $e=(u,v)$ in $G_k$ with bound $i$,
+$F$ contains an edge $(u_i,v_i)$ of capacity 1.
+This last set of edges is called the <i>core edges</i>.
+To complete the construction,
+<i>minimum flow requirements</i> are added to the source and sink edges.
+In particular, for input $u$ of $G$, the edge $(s,u_1)$
+is assigned a minimum flow of $\min \{0,\delta_G(u)-(C - k)\}$.
+Similarly, for output $v$ of $G$,
+the edge $(v_1,t)$ is assigned a minimum flow of
+$\min \{0,\delta_G(v)-(C - k)\}$.
+<p>
+Note that a valid integer flow defines a subset of the core edges with positive
+flow and a subset with zero flow.
+The first subset, defines a subgraph of $G_k$ with a degree bound $\leq k$.
+If the flow also satifies the minimum
+flow requirements, the second subset defines a subgraph with
+maximum degree $\leq C-k$. These two subgraphs satisfy the
+requirements for the pair $H$ and $J$.
+<p>
+The following figure shows the graph $B_4$ and the corresponding
+flow graph $F$ for $k=2$ and $C=5$.
+<p>
+<div  style="text-align:center;">
+<img width="66%" src="figs/flowBound.png"><br>
+</div>
+<p>
+There is an integer flow for $F$ that
+uses the edges that are emphasized in <b>bold</b> and satisfies
+all the minimum flow requirements. The edges of $B_4$ that correspond to the
+bold core edges are also emphasized in bold. 
+These edges define the graph $H$, while the remaining
+edges define $J$. Note that $D(H)=2$ and $\Delta(J)=3$.
+Also observe that if $C$ were reduced to 4, the lower bounds
+on the source edges of $F$ would become 2, making it
+impossible to satify the lower bounds.
+<p>
+The <i>flow bound</i> for $G$ is denoted by $F(G)$ and is defined as the
+smallest value of $C$ for which graph $F$ has a flow that satisfies
+the minimum flow requirements, for all values of $k\in[1,\bmax]$.
+The flow bound for $B_8$ is 11, while the matching bound is 10.
+This gap increases for larger graphs. For example, $B_{64}$ has a
+matching bound of 80 and a flow bound of 83, while
+$B_{256}$ has a matching bound of 320 and a flow bound of 331.
+<p>
+There is a general method for coloring graphs $B_n$
+using colors $1,\ldots,n+\lceil (n-1)/3 \rceil$.
+So, for $B_{64}$ the largest color is 85,
+for $B_{256}$ the largest color is 341.
+The method is illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="60%" src="figs/colorB.png"><br>
+</div>
+<p>
+The top part of the figure shows the coloring given earlier for $B_7$,
+with several regions of the table highlighted. Note that each of the
+four highlighted regions uses a distinct set of colors and each color used is
+repeated along a diagonal within the region. The edges incident to
+the outputs $H,\ldots,M$ are assigned colors equal to their bounds.
+The bottom part of the figure shows how the colors of the edges incident to the
+first $n$ outputs are assigned in the general case, using a parameter $x=\lceil (n-1)/3 \rceil$.
+Again, the table defining the edges is divided into four regions and
+disjoint sets of colors are assigned to those regions.
+Within each region, colors are used repeatedly
+along diagonals.
+The edges incident to the last $n-1$ outputs are assigned colors
+equal to their bounds. The choice of $x$ ensures that the assignment of colors
+to edges yields a legal coloring of the graph that respects all the edge bounds.
+
+<h3>Finding near-optimal colorings</h3>
+
+This section introduces several approximate algorithms for the bounded
+edge coloring problem.
+Let $G=(V,E)$ be a graph with edge bounds $b(e)$ and let $C^\ast (G)$ be
+the largest color value used by an optimal solution.
+Let's start with a very simple method that produces solutions with a
+maximum color $\leq  2 C^*$.
+Using any standard bipartite edge coloring algorithm, the edges can
+be colored using colors $\bmax,\ldots,\bmax+\Delta -1$ and since
+$C^\ast\geq \max\{\bmax,\Delta\}$,
+the largest color used by this solution is $<2C^*$.
+<p>
+One can get a better approximation by first splitting $G$ into two subgraphs
+and coloring the subgraphs separately.
+As discussed in the last section, a $C$-colorable graph
+can be divided into two subgraphs $H$ and $J$
+with $H$ a subgraph of $G_k$, $D(H)\leq k$ and $\Delta(J)\leq C - k$.
+For $k\leq \bmax/2$ any such division of $G$
+into subgraphs $H$ and $J$ can be used to color $G$ using colors
+$\{ k,\ldots,2k-1\} \cup \{ \bmax,\ldots, \bmax + (C-k) -1\}$
+using any standard bipartite coloring algorithm to color $H$ and $J$.
+Since, the largest color is $\leq \bmax + (C-k) - 1$,
+choosing $k=\lfloor \bmax/2 \rfloor$ yields a solution using
+colors $\leq \bmax/2 + (C-1)< (3/2) C$.
+This also works if $H$ only satisfies the
+weaker condition that $\Delta(H)\leq k$.
+<p>
+One can find the required split of $G$ into $H$ and $J$ using a simpler
+variant of the procedure in the last section.
+Specifically, it suffices to compute a
+$b$-matching on $G$, where for each vertex $u$, the degree range
+for $u$ is $[\max(0,\delta(u)-(C-k)),k]$.
+The edges in the $b$-matching define $H$ and the remainder define $J$.
+One can then use binary search to find the
+smallest value of $C$ for which $G$ can be split when
+$k=\lfloor \bmax/2 \rfloor$.
+This procedure is called the <i>splitting method</i>.
+A <i>Javascript</i> implementation appears below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function becolorSplit(g) {
+    let subsets = findSplit(g);
+    if (!subsets) throw exception
+
+    let bmax = 0;
+    for (let e = g.first(); e; e = g.next(e))
+        bmax = Math.max(bmax, g.bound(e));
+    let k = ~~(bmax/2);
+    let gk = new Graph(g.n,g.edgeRange);
+    for (let e = g.first(); e; e = g.next(e)) {
+        if (g.bound(e) <= k) gk.join(g.left(e),g.right(e),e);
+    }
+
+    let d = new Int32Array(g.n+1);
+    for (let u = 1; u <= g.n; u++) d[u] = g.degree(u);
+    let dmin = new Int32Array(g.n+1);
+    let dmax = new Int32Array(g.n+1).fill(k);
+    let [lo,hi] = [Math.max(degreeBound(g),matchBound(g))-1,
+                   bmax+g.maxDegree()-1];
+    if (hi <= lo) hi = lo+1;
+    let H; let C;
+    while (lo < hi) {
+        // search for largest C for which G cannot be split into H and J
+        // cannot split on C=lo, can split on C=hi
+        C = ~~((lo + hi + 1)/2);
+        for (let u = 1; u <= gk.n; u++)
+            dmin[u] = Math.max(0, d[u] - (C-k));
+        [H] = bimatchF(gk, subsets, dmin, dmax);
+            // H is a Graph object with edges defining subset of g
+        for (let u = 1; u <= H.n; u++) {
+            if (H.degree(u) < dmin[u]) {
+                lo = C; break;
+            } else if (u == H.n) {
+                hi = C-1; break;
+            }
+        }
+    }
+    C = lo+1;  // smallest C for which G can be split
+    // compute H and J for final value of C
+    for (let u = 1; u <= gk.n; u++)
+        dmin[u] = Math.max(0, d[u] - (C-k));
+    [H] = bimatchF(gk, subsets, dmin, dmax);
+    let J = new Graph(g.n, g.edgeRange);
+    for (let e = g.first(); e; e = g.next(e)) {
+        if (!H.validEdge(e)) J.join(g.left(e),g.right(e),e);
+    }
+
+    // color H and J and transfer results to color for g
+    let color = new Int32Array(g.edgeRange+1);
+    let [colorH] = ecolorG(H);
+    for (let e = H.first(); e; e = H.next(e)) 
+        color[e] = (k-1) + colorH[e];
+    let [colorJ] = ecolorG(J);
+    for (let e = J.first(); e; e = J.next(e)) 
+        color[e] = (bmax-1) + colorJ[e];
+
+    return [color];
+}
+</textarea><p>
+This can be demonstrated with this script.
+<p> <pre style="padding-left:5%">
+let g = hardCase(7); 
+let [color,ts] = becolorSplit(g,1);
+log(ts); log('Cmax=' + Math.max(...color));
+</pre> <p>
+This yields the result below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+{
+a[h:1/7 o:2/5. o:3/4. o:4/11 o:5/8 o:6/12 o:7/9]
+b[h:1/3. i:2/10 p:3/4. p:4/8 p:5/11 p:6/9 p:7/12]
+c[h:1/5. i:2/7 j:3/3. q:4/11 q:5/8 q:6/12 q:7/9]
+d[h:1/4. i:2/9 j:3/5. k:4/10 r:5/11 r:6/8 r:7/12]
+e[h:1/12 i:2/3. j:3/4. k:4/7 l:5/9 s:6/11 s:7/8]
+f[h:1/9 i:2/5. j:3/7 k:4/12 l:5/11 m:6/8 t:7/10]
+g[h:1/10 i:2/4. j:3/12 k:4/9 l:5/8 m:6/11 n:7/7]
+h[a:1/7 b:1/3. c:1/5. d:1/4. e:1/12 f:1/9 g:1/10]
+i[b:2/10 c:2/7 d:2/9 e:2/3. f:2/5. g:2/4.]
+j[c:3/3. d:3/5. e:3/4. f:3/7 g:3/12]
+k[d:4/10 e:4/7 f:4/12 g:4/9]
+l[e:5/9 f:5/11 g:5/8]
+m[f:6/8 g:6/11]
+n[g:7/7]
+o[a:2/5. a:3/4. a:4/11 a:5/8 a:6/12 a:7/9]
+p[b:3/4. b:4/8 b:5/11 b:6/9 b:7/12]
+q[c:4/11 c:5/8 c:6/12 c:7/9]
+r[d:5/11 d:6/8 d:7/12]
+s[e:6/11 e:7/8]
+t[f:7/10]
+} 
+
+Cmax=12
+</textarea><p>
+The trace string shows the graph $B_7$ with edge bounds
+and the colors assigned by the split algorithm.
+A period is included for each edge in the subgraph $H$.
+The statistics object shows the largest color assigned
+by the algorithm and the three lower bounds (degree, match, flow).
+<p>
+Next are two algorithms that color the graph by
+constructing a series of disjoint matchings in $G_1, G_2, \ldots$
+coloring the edges in each matching with colors $1,2,\ldots$ and
+stopping when all edges in $G$ have been colored.
+The first constructs matchings in the uncolored subgraphs of $G_k$,
+that have maximum degree in the subgraph and maximum size.
+The second constructs priority matchings in the uncolored subgraphs of $G_k$
+with highest priority assigned to the vertices of maximum degree in the
+uncolored subgraph of $G$ (<i>not</i> $G_k$).
+The first is called the <i>maximum degree matching</i> algorithm,
+while the second is called the <i>priority matching</i> algorithm.
+A <i>Javascript</i> implementation of the first algorithm appears below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function becolorMdmatch(g) {
+    let color = new Int32Array(g.edgeRange+1);
+    let gc = new Graph(g.n,g.edgeRange);
+        // subgraph of uncolored edges with bounds <= c
+    let c;
+    let count = 0;  // number of edges colored so far
+    for (c = 1; count < g.m; c++) {
+        // add edges with bound of c to gc
+        for (let e = g.first(); e; e = g.next(e)) {
+            if (c >= g.bound(e) && c < g.bound(e) + 1)
+                gc.join(g.left(e), g.right(e), e);
+        }
+        // find max degree matching in gc, extended to max size
+        let [match,,mstats] = mdmatchG(gc);
+        steps += mstats.steps;
+        [match,,mstats] = bimatchHK(gc,match)
+        steps += mstats.steps;
+        if (trace) ts += `${c}: ${match.toString()}\n`;
+        for (let e = match.first(); e; e = match.next(e)) {
+            color[e] = c; gc.delete(e); count++;
+        }
+        steps += g.n + g.m;
+    }
+    return [color];
+}
+</textarea><p>
+The priority matching algorithm appears below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function becolorPmatch(g) {
+    // compute degrees in g and assign initial priorities
+    let d = new Int32Array(g.n+1);
+    for (let u = 1; u <= g.n; u++) d[u] = g.degree(u);
+    let maxd = Math.max(...d);
+    let prio = new Int32Array(g.n+1);
+    for (let u = 1; u <= g.n; u++)
+        prio[u] = (d[u] == maxd ? 2 : 1);
+
+    let color = new Int32Array(g.edgeRange+1);
+    let gc = new Graph(g.n,g.edgeRange);
+        // subgraph of uncolored edges with bounds <= c
+    let c;
+    let count = 0;  // number of edges colored so far
+    for (c = 1; count < g.m; c++) {
+        // add edges with bound of c to gc
+        for (let e = g.first(); e; e = g.next(e)) {
+            if (c >= g.bound(e) && c < g.bound(e) + 1)
+                gc.join(g.left(e), g.right(e), e);
+        }
+        // find matching in gc that colors all vertices with max
+        // degree in uncolored subgraph; extend to max size matching
+        let [match,,mstats] = pbimatchHKT(gc,prio);
+        for (let e = match.first(); e; e = match.next(e)) {
+            color[e] = c; gc.delete(e); count++;
+            d[g.left(e)]--; d[g.right(e)]--;
+        }
+        // update priorities
+        maxd = Math.max(...d);
+        for (let u = 1; u <= g.n; u++) prio[u] = (d[u] == maxd ? 2 : 1);
+    }
+    return [color];
+}
+</textarea><p>
+Adjusting the previous script yields the following output for
+the maximum degree matching algorithm.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+{
+a[h:1 o:2 o:3 o:4 o:5 o:6 o:7]
+b[h:1 i:2 p:3 p:4 p:5 p:6 p:7]
+c[h:1 i:2 j:3 q:4 q:5 q:6 q:7]
+d[h:1 i:2 j:3 k:4 r:5 r:6 r:7]
+e[h:1 i:2 j:3 k:4 l:5 s:6 s:7]
+f[h:1 i:2 j:3 k:4 l:5 m:6 t:7]
+g[h:1 i:2 j:3 k:4 l:5 m:6 n:7]
+h[a:1 b:1 c:1 d:1 e:1 f:1 g:1]
+i[b:2 c:2 d:2 e:2 f:2 g:2]
+j[c:3 d:3 e:3 f:3 g:3]
+k[d:4 e:4 f:4 g:4]
+l[e:5 f:5 g:5]
+m[f:6 g:6]
+n[g:7]
+o[a:2 a:3 a:4 a:5 a:6 a:7]
+p[b:3 b:4 b:5 b:6 b:7]
+q[c:4 c:5 c:6 c:7]
+r[d:5 d:6 d:7]
+s[e:6 e:7]
+t[f:7]
+}
+
+1: [ah]
+2: [bh ci ao]
+3: [ch dj ao bp ei]
+4: [gi ek ao bp cq fj dh]
+5: [fh gj ao bi cq dk el]
+6: [fi gh ao bp cj dr es]
+7: [fk gl ao bp cq di eh]
+8: [fl gk bp cq dr ej]
+9: [fm gn dr es]
+10: [ft gm]
+
+{
+a[h:1/1 o:2/2 o:3/3 o:4/4 o:5/5 o:6/6 o:7/7]
+b[h:1/2 i:2/5 p:3/3 p:4/4 p:5/6 p:6/7 p:7/8]
+c[h:1/3 i:2/2 j:3/6 q:4/4 q:5/5 q:6/7 q:7/8]
+d[h:1/4 i:2/7 j:3/3 k:4/5 r:5/6 r:6/8 r:7/9]
+e[h:1/7 i:2/3 j:3/8 k:4/4 l:5/5 s:6/6 s:7/9]
+f[h:1/5 i:2/6 j:3/4 k:4/7 l:5/8 m:6/9 t:7/10]
+g[h:1/6 i:2/4 j:3/5 k:4/8 l:5/7 m:6/10 n:7/9]
+h[a:1/1 b:1/2 c:1/3 d:1/4 e:1/7 f:1/5 g:1/6]
+i[b:2/5 c:2/2 d:2/7 e:2/3 f:2/6 g:2/4]
+j[c:3/6 d:3/3 e:3/8 f:3/4 g:3/5]
+k[d:4/5 e:4/4 f:4/7 g:4/8]
+l[e:5/5 f:5/8 g:5/7]
+m[f:6/9 g:6/10]
+n[g:7/9]
+o[a:2/2 a:3/3 a:4/4 a:5/5 a:6/6 a:7/7]
+p[b:3/3 b:4/4 b:5/6 b:6/7 b:7/8]
+q[c:4/4 c:5/5 c:6/7 c:7/8]
+r[d:5/6 d:6/8 d:7/9]
+s[e:6/6 e:7/9]
+t[f:7/10]
+}
+ 
+Cmax=10
+</textarea><p>
+<p>
+In this case, the trace string shows the matching computed
+for each color, as it's computed.
+The trace string produced by the priority matching algorithm is similar.
+<p>
+Note that the priority matching algorithm can be implemented with just
+two priority classes, as shown here.
+Alternatively, one can let the vertex priority equal the degree
+in the uncolored subgraph. This occasionally out-performs the
+simpler version.
+Also note that both matching algorithms can be implemented to work
+on general graphs, not just bipartite graphs.
+<p>
+No worst-case bound is known for the two matching
+algorithms, but experiments demonstrate that the priority matching
+algorithm can produce solutions that closely track the best lower bounds.
+
+<h3>Experimental Evaluation</h3>
+The following script can be used to evaluate the algorithms'
+performance on graphs $B_n$.
+<p> <pre style="padding-left:5%">
+let n = 8; let g = hardCase(n);
+let [color,ts,stats] = becolorSplit(g);
+log(`B_${n} split  Cmax=${stats.Cmax} flowBound=${flowBound(g)}`);
+</pre>
+Sampe results are shown below.
+<p> <pre style="padding-left:5%">
+B_8  split   Cmax= 13 flowBound=11 
+B_16 split   Cmax= 27 flowBound=21 
+B_32 split   Cmax= 55 flowBound=42 
+B_64 split   Cmax=111 flowBound=83 
+
+B_8  mdmatch Cmax= 12 flowBound=11 
+B_16 mdmatch Cmax= 24 flowBound=21 
+B_32 mdmatch Cmax= 48 flowBound=42 
+B_64 mdmatch Cmax= 96 flowBound=83
+
+B_8  pmatch  Cmax= 11 flowBound=11
+B_16 pmatch  Cmax= 22 flowBound=21 
+B_32 pmatch  Cmax= 42 flowBound=42 
+B_64 pmatch  Cmax= 84 flowBound=83
+</pre>
+The max degree matching algorithm produces coloring $(3/2)n$ colors.
+The priority matching algorithm closely tracks
+the flow lower bound and for the larger cases,
+its largest color is less than $n+\lceil (n-1)/3 \rceil$.
+The following script can be used to evaluate the algorithms'
+performance on random graphs.
+<p> <pre style="padding-left:5%">
+let n = 64; let d = 4;
+let g = randomCase(n,d);
+let [color,ts,stats] = becolorSplit(g);
+log(`random(${n},${d}) split   Cmax=${stats.Cmax} ` + 
+   `matchBound=${matchBound(g)} flowBound=${flowBound(g)}`);
+</pre> <p>
+Sample output appears below.
+<p> <pre style="padding-left:5%">
+random(64, 4) split   Cmax= 7 matchBound= 5 flowBound= 6 
+random(64, 8) split   Cmax=15 matchBound= 9 flowBound=11 
+random(64,16) split   Cmax=28 matchBound=17 flowBound=22 
+random(64,32) split   Cmax=53 matchBound=33 flowBound=40 
+
+random(64, 4) mdmatch Cmax= 6 matchBound= 5 flowBound= 6 
+random(64, 8) mdmatch Cmax=12 matchBound= 9 flowBound=12 
+random(64,16) mdmatch Cmax=21 matchBound=17 flowBound=21 
+random(64,32) mdmatch Cmax=40 matchBound=33 flowBound=40 
+
+random(64, 4) pmatch  Cmax= 6 matchBound= 5 flowBound= 6 
+random(64, 8) pmatch  Cmax=11 matchBound= 9 flowBound=11 
+random(64,16) pmatch  Cmax=22 matchBound=17 flowBound=22 
+random(64,32) pmatch  Cmax=40 matchBound=33 flowBound=40 
+</pre>
+Note that in this case, the results for both matching algorithms
+are identical to the flow lower bound in all cases.
+<p>
+In the crossbar scheduling context, one is often interested in
+how the system performs when the crossbar is able to process
+packets at a faster rate than they arrive. The ratio of the
+crossbar processing rate to the maximum packet arrival rate
+is called the <i>speed advantage</i> or <i>speedup</i>,
+and is typically chosen to enable the system to keep up with the
+arriving traffic under all conditions.
+<p>
+In a system with a speedup larger than 1, packet arrivals occur
+at non-integer time instants. So for example, with a speedup of 1.5,
+packets could arrive at times $1, 2.5, 4, 5.5,\ldots$.
+Since the system can only process them at integer time instants,
+these non-integer arrival times can be rounded up to $1,3,4,6,\ldots$.
+So one can emulate a system with a speedup by constraining the
+edge bounds so that they correspond to the times when arriving packets
+can be processed.
+The following script can be used to examine the effect of
+speedups $>1$.
+
+<p> <pre style="padding-left:5%">
+let n = 64; let speedup = 1.5;
+let g = hardCase(n, speedup);
+let [color,ts,stats] = becolorMdmatch(g);
+log(`B_${n} speedup=${speedup} mdmatch Cmax=${stats.Cmax} ` +
+    `degreeBound=${degreeBound(g)} flowBound=${flowBound(g)}`);
+</pre>
+Results for $B_n$ appear below.
+<p> <pre style="padding-left:5%">
+B_64 speedup=1   mdmatch Cmax= 96 degreeBound= 64 flowBound= 83 
+B_64 speedup=1.2 mdmatch Cmax= 99 degreeBound= 77 flowBound= 88 
+B_64 speedup=1.4 mdmatch Cmax=108 degreeBound= 90 flowBound= 92 
+B_64 speedup=1.6 mdmatch Cmax=115 degreeBound=102 flowBound=102 
+B_64 speedup=1.7 mdmatch Cmax=118 degreeBound=109 flowBound=109 
+B_64 speedup=1.8 mdmatch Cmax=121 degreeBound=115 flowBound=115 
+B_64 speedup=2   mdmatch Cmax=127 degreeBound=127 flowBound=127 
+
+B_64 speedup=1   pmatch  Cmax= 84 degreeBound= 64 flowBound= 83 
+B_64 speedup=1.2 pmatch  Cmax= 89 degreeBound= 77 flowBound= 88 
+B_64 speedup=1.4 pmatch  Cmax= 93 degreeBound= 90 flowBound= 92 
+B_64 speedup=1.6 pmatch  Cmax=103 degreeBound=102 flowBound=102 
+B_64 speedup=1.7 pmatch  Cmax=109 degreeBound=109 flowBound=109 
+B_64 speedup=1.8 pmatch  Cmax=115 degreeBound=115 flowBound=115 
+B_64 speedup=2   pmatch  Cmax=127 degreeBound=127 flowBound=127 
+</pre>
+Observe that as the speedup increases, the gap between the largest
+color used and the lower bounds drops to zero, with the priority
+matching algorithm closing the gap for speedups of 1.7 or more.
+
+<h2>Edge Group Coloring (work in progress)</h2>
+
+An instance of the <i>edge group coloring</i> problem is an
+undirected graph and a partition of its edges into groups,
+where the edges forming each group all share
+a common endpoint, called the <i>hub</i> of the group.
+The number of edges in a group is called its <i>fanout</i>.
+A coloring is a function, from the edges to the positive integers,
+that assigns different values to pairs of edges that share a common
+endpoint and belong to different edge groups.
+The objective is to find a coloring that uses the
+smallest possible number of distinct colors.
+An example is shown in below.
+<p>
+<div  style="text-align:center;">
+<img width="25%" src="figs/egcExample1.png"><br>
+</div>
+<p>
+Edge groups are shown by using arcs joining the edges belonging to
+the a common group.
+So in this example, edges $\{c,x\}$ and $\{c,z\}$ belong to the same
+group at $c$. The numbers on the edges represent a valid coloring.
+<p>
+Edge group coloring was defined in [Turner15c] as an abstraction of
+the multicast crossbar scheduling problem and the multicast route selection
+problem for three-stage switching networks.
+In these contexts, the graphs of interest are bipartite and have
+edge groups with hubs that are &ldquo;inputs&rdquo; as illustrated
+in the example below.
+<p>
+<div  style="text-align:center;">
+<img width="60%" src="figs/egcExample2.png"><br>
+</div>
+<p>
+In the tabular representation at right, the edge groups are shown as
+connected circles, representing the edges in the group. The numbers
+labeling the edges are their colors.
+<p>
+The problem is $NP$-complete, but there are several algorithms
+that can produce practically useful approximate solutions.
+There are also some simple bounds that can be helpful.
+The maximum vertex degree $\Delta$ of a graph $G$ provides an upper bound
+on the number of colors needed to color it and there is also a simple
+lower bound.
+Let $\Delta_o$ be the maximum vertex degree at the outputs of $G$,
+and let $D$ be the maximum number of groups present at an input.
+Then any coloring must use at least $\max \{D, \Delta_o\}$ colors.
+and the ratio of the upper bound to this lower bound is at most $\Delta/D$.
+
+<h3>Layering Method</h3>
+
+Let $G$ be a bipartite graph for which the edges have been divided into
+groups with hubs at the inputs.
+Let $L$ be a subset of the groups, with no two groups in $L$ sharing a hub,
+and let $G_L$ be the subgraph of $G$ defined by the edges in $L$.
+Then, any coloring of $G_L$ is constrained only by the outputs.
+Consequently, one can color $G_L$ with $\Delta_o(G_L)$ colors.
+This leads to a general approach to coloring a graph.
+In the first step, the edge groups are partititioned so that each
+subset contains groups with distinct hubs.
+Each of these subsets is referred to as a <i>layer</i> and the
+maximum output degree of the subgraph defined by a layer is referred
+to as its <i>thickness</i>.
+<p>
+The subgraphs defined by the layers can colored separately,
+using distinct color sets.
+Combining these colorings yields a coloring for $G$ where the number
+of colors is the sum of the layer thicknesses.
+As an example, consider the graph and edge groups defined as shown below.
+<p> <pre style="padding-left:5%">
+a[(f i l) (g k) (e)]
+b[(i l) (h j) (g k)]
+c[(f h j) (e) (g h)]
+d[(f i) (e j) (k l)]
+</pre>
+Here, each line shows an input, with its adjacent outputs,
+divided into groups. The simplest way to divide the groups into
+layers is to simply assign the $i$-th group at each input to the
+$i$-th layer, as shown below.
+<p> <pre style="padding-left:5%">
+[(f i l) (i l) (f h j) (f i)]
+[(g k) (h j) (e) (e j)]
+[(e) (g k) (g h) (k l)]
+</pre>
+These layers have thicknesses 3, 2 and 2 so can be colored with 7 colors.
+The alternate layer division shown below can be used to obtain a 5-coloring.
+<p> <pre style="padding-left:5%">
+[(f i l) (g k) (f h j) (e j)]
+[(g k) (h j) (e) (f i)]
+[(e) (i l) (g h) (k l)]
+</pre>
+
+<h3>Palette Assignment Method</h3>
+
+<h3>Small Palette Method</h3>
+
+<h2>References</h2>
+<dl>
+<dt> [Attiya-06]
+<dd> &ldquo;Packet-Mode Emulation of Output-Queued Switches,&rdquo;
+    by H Attiya, D. Hay and I. Keslassy.
+    In <i>Proc. of ACM SPAA</i>, 2006.
+
+<dt> [Chuang-99]
+<dd> &ldquo;Matching output queueing with a combined input output
+    queued switch,&rdquo;
+    by S.-T. Chuang, A. Goel, N. McKeown, B. Prabhakar.
+    In <i>IEEE J. on Selected Areas in Communications</i>, 12/1999.
+
+<dt> [Krishna-99]
+<dd> &ldquo;On the speedup required for work-conserving crossbar
+    switches,&rdquo;
+    by P. Krishna, N. Patel, A. Charny and R. Simcoe.
+    In <i>IEEE J. Selected Areas of Communications</i>, 6/1999.
+
+<dt> [Leonardi-01]
+<dd> &ldquo;On the stability of input-queued switches with speed-up,&rdquo;
+    by E. Leonardi, M. Mellia, F. Neri, and M.A. Marsan.
+    In <i>IEEE/ACM Transactions on Networking</i>,
+    Vol. 9, No. 1, pp. 104--118, 2/2001.
+
+<dt> Mckeown-99a]
+<dd> &ldquo;$i$SLIP: a scheduling algorithm for input-queued switches,&rdquo;
+    by N. McKeown.
+    In <i>IEEE Trans. on Networking</i>, 4/1999.
+
+<dd> <dt> [Mckeown-99b]
+<dd> &ldquo;Achieving 100\% Throughput in an Input-Queued Switch,&rdquo;
+    McKeown, N., A. Mekkittikul, V. Anantharam, and J. Walrand.
+    In <i>IEEE Trans. on Communications</i>, Vol. 47, No. 8, 8/1999.
+
+<dt> [Turner15a]
+<dd> &ldquo;Maximum priority matchings,&rdquo; by Jonathan Turner.
+     Washington University Computer Science Technical Report,
+     WUCSE-2015-06, 11/2015.
+     Also available in Computing Research Repository (CoRR)
+     arXiv:1512.08555 [cs.DS].
+
+<dt> [Turner15b]
+<dd> &ldquo;The Bounded Edge Coloring Problem and Offline Crossbar
+     Scheduling,&rdquo; by Jonathan Turner.
+     Washington University Computer Science Technical Report,
+     WUCSE-2015-06, 11/2015.
+     Also available in Computing Research Repository (CoRR)
+     arXiv:1512.08555 [cs.DS].
+
+<dt> [Turner15c]
+<dd> &ldquo;The Edge Group Coloring Problem with Applications to
+	Multicast Switching,&rdquo; by Jonathan Turner.
+     Washington University Computer Science Technical Report,
+     WUCSE-2015-02, 8/2015.
+     Also available in Computing Research Repository (CoRR)
+     arXiv:arXiv:1512.08995 [cs.DS].
+</dl>
+
+<hr> <h4>&copy; Jonathan Turner - 2023</h4>
+<script src="../../googleAnalytics.js"></script>
+</body>
+</html>

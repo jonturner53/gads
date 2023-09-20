@@ -91,9 +91,9 @@ The vertices in each cycle contribute equally to the priority
 count vectors of both $M$ and $M'$. The vertices that are
 internal to each path also contribute equally to both priority counts.
 So the difference in the priority count vectors
-is determined by the path endpoints in $H$. If $k$ is the highest
-priority among all the path endpoints, then $M'$ must match more
-of the priority $k$ endpoints than $M$. This implies there must be
+is determined by the path endpoints in $H$.
+If $k$ is the largest integer for which $c_M(k) \neq c_{M'}(k)$,
+there must be
 at least one path $P$ in $H$ where $M'$ matches more priority $k$
 endpoints than $M$. Consequently, the weight of the edges in $P$
 that are matched by $M'$ is larger than the weight of the edges
@@ -101,10 +101,10 @@ matched by $M$. This means that the weight of $M$ can be increased
 by exchanging its matching edges in $P$ with those in $M'$,
 contradicting the fact that $M$ has maximum weight.
 <p>
-A Javascript implementation of Okumura's algorithm is shown below.
+A <i>Javascript</i> implementation of Okumura's algorithm is shown below.
 Note that the program checks to see if the graph is bipartite and
 if so uses the Hungarian algorithm to compute the weighted matching.
-Otherwise, it uses Edmond's algorithm.
+Otherwise, it uses Edmonds' algorithm.
 <p> <textarea rows="15" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 export default function priorityMatchO(g0, priority) {
@@ -154,7 +154,7 @@ Okumura's algorithm performs on a general graph.
 The second shows how it performs on a bipartite 
 graph of the same size.
 The third shows how it performs on a bipartite graph when the program is
-modified to use Edmonds's algorithm in all cases.
+modified to always use Edmonds' algorithm.
 <pre style="padding-left:5%">
 o/g  n=500 m=5000 pmax=499 steps=22648837 1298ms
 o/b  n=500 m=5000 pmax=499 steps= 1928640   56ms
@@ -169,12 +169,12 @@ matched endpoint.
 This observation was also reported in [Turner15a] and used as the
 basis for priority matching algorithms that do not require the
 solution of a weighted matching problem.
-Specifically, Turner showed how to extend Edmond's algorithm for
+Specifically, Turner showed how to extend Edmonds' algorithm for
 unweighted matching to compute priority matchings.
-Like Edmond's algorithm, Turner's algorithm
+Like Edmonds' algorithm, Turner's algorithm
 performs a series of path searches by building
 alternating path trees.
-Unlike Edmond's algorithm, it terminates a path search with
+Unlike Edmonds' algorithm, it terminates a path search with
 either an augmenting path or a priority improving path.
 It also builds the trees one at a time in decreasing
 order of the priority of their roots.
@@ -219,8 +219,8 @@ Apply the appropriate case from the list below.
      through $e$. Augment the matching using this path and start
      a new path search.
 </ul>
-A <i>Javascript</i> implementation shown below is based on Gabow's
-implementation of Edmond's algorithm.
+The <i>Javascript</i> implementation shown below is based on Gabow's
+implementation of Edmonds' algorithm.
 <p> <textarea rows="15" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 let g;            // shared copy of graph
@@ -853,7 +853,7 @@ while in the relaxed case they are not.
 The following script can be used to compare the performance of all
 the algorithms on bipartite graphs.
 <pre style="padding-left:5%">
-let n = 1000; let d = 3; let pmax = 15;
+let n = 1000; let d = 3; let pmax = 5;
 let g = randomBigraph(n,d);
 let prio = new Int32Array(g.n+1); randomFill(prio, p => randomInteger(0,pmax));
 let t; let stats;
@@ -869,23 +869,23 @@ log(`hkt/r n=${g.n} m=${g.m} pmax=${pmax} passes=${stats.passes} ` +
     `paths=${stats.paths} steps=${stats.steps} ${t}ms`);
 </pre>
 In the sample results shown below, the <i>passes</i> field refers to
-the number of iterations performed by the  Hopcorft-Karp-Turner algorithm
+the number of iterations performed by the  Hopcroft-Karp-Turner algorithm
 and paths refers to the number of paths found.
 <pre style="padding-left:5%">
-o/h   n=2000 m=3000 pmax=5                        steps= 9110432 232ms 
-egt   n=2000 m=3000 pmax=5                        steps= 1846363 222ms 
-hkt/s n=2000 m=3000 pmax=5   passes=5   paths=172 steps=   98594   6ms 
-hkt/r n=2000 m=3000 pmax=5   passes=4   paths=169 steps=   89746  10ms 
+o/h   n=2000 m=3000 pmax= 5                     steps=9302599 157ms 
+egt   n=2000 m=3000 pmax= 5                     steps= 389868  26ms 
+hkt/s n=2000 m=3000 pmax= 5 passes=5 paths=188  steps=  96759   2ms 
+hkt/r n=2000 m=3000 pmax= 5 passes=4 paths=176  steps=  76797   6ms 
 
-o/h   n=2000 m=3000 pmax=20                       steps=10526568 251ms 
-egt   n=2000 m=3000 pmax=20                       steps= 2045797 244ms 
-hkt/s n=2000 m=3000 pmax=20  passes=20  paths=256 steps=  279379  12ms 
-hkt/r n=2000 m=3000 pmax=20  passes= 5  paths=265 steps=  136071   6ms 
+o/h   n=2000 m=3000 pmax=20                     steps=10597633 171ms 
+egt   n=2000 m=3000 pmax=20                     steps=  591504  52ms 
+hkt/s n=2000 m=3000 pmax=20 passes=20 paths=263 steps=  269521   5ms 
+hkt/r n=2000 m=3000 pmax=20 passes=7 paths=267  steps=  159793   7ms 
 
-o/h   n=2000 m=3000 pmax=100                      steps=11320779 268ms 
-egt   n=2000 m=3000 pmax=100                      steps= 2163126 240ms 
-hkt/s n=2000 m=3000 pmax=100 passes=100 paths=288 steps=  609148  32ms 
-hkt/r n=2000 m=3000 pmax=100 passes=  8 paths=295 steps=  183612   8ms 
+o/h   n=2000 m=3000 pmax=50                     steps=10833824 177ms 
+egt   n=2000 m=3000 pmax=50                     steps=  619931  48ms 
+hkt/s n=2000 m=3000 pmax=50 passes=50 paths=299 steps=  466552   9ms 
+hkt/r n=2000 m=3000 pmax=50 passes=7 paths=288  steps=  175626   4ms 
 </pre>
 The first two algorithms are roughly comparable for bipartite graphs.
 but the last two perform much better. When the number of priority classes
@@ -1084,11 +1084,11 @@ log(`hkt ${g.n} ${g.m} size=${stats.size} steps=${stats.steps} ${t}ms`);
 </pre>
 Some sample output appears below.
 <pre style="padding-left:5%">
-g   10000  22999 size=3931 steps= 235409 18ms 
-hkt 10000  22999 size=3687 steps=  94617 13ms 
+g   10000  22999 size=3927 steps= 235711 20ms 
+hkt 10000  22999 size=3677 steps= 105535  6ms 
 
-g   10000 497066 size=3870 steps=2166918 313ms 
-hkt 10000 497066 size=3221 steps= 552919 418ms 
+g   10000 994234 size=3697 steps=4053375 273ms 
+hkt 10000 994234 size=2999 steps=1049241 301ms 
 </pre>
 The HKT algorithm performs better at smaller edge densities, but
 Gabow's alogrithm does better as the density grows.
