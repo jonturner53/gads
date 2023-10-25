@@ -183,7 +183,7 @@ body	{
 	width:	auto;
 	font-size:160%;
 	}
-code, pre {
+code, textarea, pre {
 	font-family: "Courier", Courier;
 	font-size:100%;
 }
