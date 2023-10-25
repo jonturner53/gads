@@ -567,7 +567,7 @@ let n = 8; let g = hardCase(n);
 let [color,ts,stats] = becolorSplit(g);
 log(`B_${n} split  Cmax=${stats.Cmax} flowBound=${flowBound(g)}`);
 </pre>
-Sampe results are shown below.
+Sample results are shown below.
 <p> <pre style="padding-left:5%">
 B_8  split   Cmax= 13 flowBound=11 
 B_16 split   Cmax= 27 flowBound=21 
@@ -685,8 +685,8 @@ An example is shown in below.
 <p>
 Edge groups are shown by using arcs joining the edges belonging to
 the a common group.
-So in this example, edges $\{c,x\}$ and $\{c,z\}$ belong to the same
-group at $c$. The numbers on the edges represent a valid coloring.
+So in this example, edges $\{b,e\}$, $\{c,e\}$ and $\{d,e\}$ belong to the same
+group at $e$. The numbers on the edges represent a valid coloring.
 <p>
 Edge group coloring was defined in [Turner15c] as an abstraction of
 the multicast crossbar scheduling problem and the multicast route selection
@@ -703,7 +703,8 @@ In the tabular representation at right, the edge groups are shown as
 connected circles, representing the edges in the group. The numbers
 labeling the edges are their colors.
 <p>
-The problem is $NP$-complete, but there are several algorithms
+The problem is $NP$-complete even for bipartite graphs,
+but there are several algorithms
 that can produce practically useful approximate solutions.
 There are also some simple bounds that can be helpful.
 The maximum vertex degree $\Delta$ of a graph $G$ provides an upper bound
@@ -728,8 +729,7 @@ subset contains groups with distinct hubs.
 Each of these subsets is referred to as a <i>layer</i> and the
 maximum output degree of the subgraph defined by a layer is referred
 to as its <i>thickness</i>.
-<p>
-The subgraphs defined by the layers can colored separately,
+The subgraphs defined by the layers can be colored separately,
 using distinct color sets.
 Combining these colorings yields a coloring for $G$ where the number
 of colors is the sum of the layer thicknesses.
@@ -741,23 +741,353 @@ c[(f h j) (e) (g h)]
 d[(f i) (e j) (k l)]
 </pre>
 Here, each line shows an input, with its adjacent outputs,
-divided into groups. The simplest way to divide the groups into
+divided into groups. The simplest way to partition the groups into
 layers is to simply assign the $i$-th group at each input to the
 $i$-th layer, as shown below.
 <p> <pre style="padding-left:5%">
-[(f i l) (i l) (f h j) (f i)]
-[(g k) (h j) (e) (e j)]
-[(e) (g k) (g h) (k l)]
+[a(f i l) b(i l) c(f h j) d(f i)]
+[a(g k) b(h j) c(e) d(e j)]
+[a(e) b(g k) c(g h) d(k l)]
 </pre>
-These layers have thicknesses 3, 2 and 2 so can be colored with 7 colors.
-The alternate layer division shown below can be used to obtain a 5-coloring.
+Each line shows the groups in a layer.
+These layers have thicknesses $[3, 2, 2]$, so can be colored with 7 colors.
+The alternate layer division shown below has layer thicknesses $[1, 2, 2]$,
+so can be colored with 5 colors.
 <p> <pre style="padding-left:5%">
-[(f i l) (g k) (f h j) (e j)]
-[(g k) (h j) (e) (f i)]
-[(e) (i l) (g h) (k l)]
+[a(g k) b(h j) c(e) d(f i)] 
+[a(f i l) b(g k) c(g h) d(e j)] 
+[a(e) b(i l) c(f h j) d(k l)]
 </pre>
+Better colorings can often be obtained by relaxing the constraint that
+edges in different layers use disjoint color sets.
+One method colors a layer by letting color $c=1$ and repeating
+the following step until all edges in the layer are colored.
+<p style="padding-left:5%">
+For each group $g$ in the current layer with at least one uncolored edge,
+use $c$ to color every uncolored edge in $g$ for which $c$ is a viable color.
+Increment $c$.
+<p>
+When this procedure is applied to the second division into layers,
+it produces the 4-coloring shown below.
+<p> <pre style="padding-left:5%">
+1[a(g k) b(h j) c(e) d(f i)]
+2[a(f i l) b(g k) c(. h) d(e j)]
+3[c(g .) a(e) b(i l) d(k .)]
+4[c(f h j) d(. l)]
+</pre>
+Here, each line shows the edge groups (and partial groups) that
+are assigned the same color. Groups that are assigned more than
+one color are shown on multiple lines,
+using periods to indicate edges assigned
+colors on other lines.
+<p>
+In general, it is advantageous to start with a division into
+layers that are as &ldquo;thin&rdquo; as possible.
+One natural heuristic first creates a partial layering, by assigning
+the $D$ groups at some input to different layers, then extending
+the partial layering by assigning each group in a way that avoids increasing
+the thickness of thie layer its assigned to whenever possible.
+The <i>Javascript</i> program shown below uses this approach to construct
+the layers and the &ldquo;relaxed&rdquo; coloring method described above.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let eg;        // shared reference to EdgeGroups object
+let egl;       // shared reference to EdgeGroupLayers object
 
-<h3>Palette Assignment Method</h3>
+export default function egcLayer(eg0, strict=false, trace=0) {
+    eg = eg0;
+
+    let D = 0;
+    for (let u = 1; u <= eg.n_i; u++)
+        D = Math.max(D,eg.groupCount(u));
+
+    egl = new EdgeGroupLayers(eg,D);
+    doLayers(D);
+
+    let thickness = new Int32Array(D+1);
+    for (let l = 1; l <= egl.n_l; l++)
+        thickness[l] = egl.layerThickness(l);
+    let totalThickness = thickness.reduce((sum, v) => sum + v, 0);
+    let maxThickness = Math.max(...thickness);
+
+    let egc = color(thickness, strict);
+
+    return egc;
+}
+
+function doLayers(D) {
+    let ocount = new Array(D+1);
+    let u = 1; while (eg.groupCount(u) < D) u++;
+    let l = 1;
+    for (let g = eg.firstGroupAt(u); g; g = eg.nextGroupAt(u,g)) {
+        egl.add(g,l);
+        ocount[l] = new Int32Array(eg.graph.n+1);
+        for (let e = eg.firstInGroup(g); e; e = eg.nextInGroup(g,e))
+            ocount[l][eg.output(e)]++;
+        ocount[l][0] = Math.max(...ocount[l]);  // layer thickness
+        l++;
+    }
+
+    eg.sortAllGroups();
+    for (let g = eg.firstGroup(); g; g = eg.nextGroup(g)) {
+        if (egl.layer(g)) continue;
+        let bestThin = 0; let thinConflicts = 0;
+        let bestThick = 0; let thickConflicts = 0;
+        
+        for (let l = 1; l <= D; l++) {
+            // if l contains a group with same hub as g, go on to next layer
+            let skip = 0; let u = eg.hub(g);
+            for (let gl = egl.firstInLayer(l); gl; gl = egl.nextInLayer(l,gl)) {
+                if (eg.hub(gl) == u) { skip = 1; break; }
+            }
+            if (skip) continue;
+
+            // count output conflicts of g with groups in l and determine
+            // if g conflicts a "thick" output
+            let conflicts = 0; let gthick = 0;
+            for (let e = eg.firstInGroup(g); e; e = eg.nextInGroup(g,e)) {
+                let v = eg.output(e);
+                if (ocount[l][v] > 0) {
+                    conflicts++;
+                    if (ocount[l][v] == ocount[l][0])
+                        gthick = 1;
+                }
+            }
+            // update bestThick or bestThin as appropriate
+            if (gthick) {
+                if (bestThick == 0 || conflicts < thickConflicts) {
+                    bestThick = l; thickConflicts = conflicts;
+                }
+            } else {
+                if (bestThin == 0 || conflicts < thinConflicts) {
+                    bestThin = l; thinConflicts = conflicts;
+                }
+            }
+        }
+        let best = (bestThin ? bestThin : bestThick);
+        if (best == 0) break;
+        egl.add(g, best);
+        for (let e = eg.firstInGroup(g); e; e = eg.nextInGroup(g,e)) {
+            let v = eg.output(e);
+            ocount[best][v]++;
+            if (ocount[best][v] > ocount[best][0]) ocount[best][0]++;
+        }
+    }
+}
+
+/** Color the edges by layer.
+ *  @param thickness is array of thickness values by layer
+ *  @param strict is a flag which enforces disjoint color sets for each layer
+ *  @return an EdgeGroupColors object
+ */
+function color(thickness, strict) {
+    // create object to record colors in
+    let totalThickness = thickness.reduce((sum,val)=>sum+val, 0);
+    let egc = new EdgeGroupColors(eg, totalThickness);
+
+    // for each layer, color edges with smallest available color
+    let lastColor = 0;  // used for strict case
+    for (let l = 1; l <= egl.n_l; l++) {
+        let fc = strict ? lastColor+1 : 1;
+        for (let c = fc; c <= lastColor + thickness[l]; c++) {
+            for (let g = egl.firstInLayer(l); g; g = egl.nextInLayer(l,g)) {
+                for (let e = eg.firstInGroup(g); e; e = eg.nextInGroup(g,e)) {
+                    if (!egc.color(e) && egc.avail(c,e))
+                        egc.color(e,c);
+                }
+            }
+        }
+        lastColor += thickness[l];
+    }
+    return egc;
+}
+</textarea><p>
+The implementation uses three data structures.
+The <code>EdgeGroups</code> data structure maintains the structure of
+the edge groups and includes the following methods.
+<ul>
+<li> <code>group(e)</code> returns the group that contains edge $e$.
+<li> <code>input(e)</code> returns the endpoint of $e$ in the input set.
+<li> <code>output(e)</code> returns the endpoint of $e$ in the output set.
+<li> <code>hub(g)</code> returns the input at the hub of group $g$.
+<li> <code>fanout(g)</code> returns the number of outputs in group $g$.
+<li> <code>groupCount(u)</code> returns the number of groups at input $u$.
+<li> <code>firstGroup()</code> returns the first group in the list of groups.
+<li> <code>nextGroup(g)</code> returns the next group in the list following $g$.
+<li> <code>firstGroupAt(u)</code> returns the first group in the list of groups
+	at input $u$.
+<li> <code>nextGroupAt(u,g)</code> returns the next group in the list at u
+    following $g$.
+<li> <code>firstInGroup(g)</code> returns the first edge in group $g$.
+<li> <code>nextInGroup(g,e)</code> returns the next edge in $g$ following $e$.
+<li> <code>add(e,g)</code> adds an unassigned edge $e$ to a group $g$.
+<li> <code>delete(e)</code> from its group.
+</ul>
+The <code>EdgeGroupLayers</code> data structure maintains the structure of
+the layers and includes the following methods.
+<ul>
+<li> <code>layer(g)</code> returns the layer containing group $g$.
+<li> <code>firstInLayer(l)</code> returns the first group in layer $l$.
+<li> <code>nextInLayer(l,g)</code> returns the first group in layer $l$
+    following $g$.
+<li> <code>add(g,l)</code> adds group $g$ to layer $l$.
+<li> <code>delete(g)</code> deletes group $g$ from its assigned layer.
+</ul>
+The <code>EdgeGroupColors</code> data structure maintains the edge group
+coloring and includes the following methods.
+<ul>
+<li> <code>usage(c,u)</code> returns the number of times color $c$ is used
+    at input $u$.
+<li> <code>avail(c,e)</code> returns true if $c$ is a color that can be used
+    for edge $e$.
+<li> <code>color(e,c)</code> returns the color of edge $e$ and if the second
+    argument is present, it first assigns color $c$ to $e$.
+</ul>
+The <code>doLayers</code> method starts by finding an input with $D$ groups,
+and assigns these groups to distinct layers, giving a partial layering.
+It then assigns the remaining groups to layers in decreasing order of their
+fanout.
+An output $v$ is said to be <i>bound</i> in a layer $l$ if one or more
+of $l$'s groups contains $v$.
+An output $v$ is said to be <i>thick</i> in $l$ if the number
+of groups in $l$ that include $v$ is the largest for any output.
+Each group $g$ is assigned to a layer using the following procedure.
+<p style="padding-left:5%">
+If $g$ has one or more thick outputs in every layer,
+select a layer $l$ that minimizes the number of outputs in $g$ that
+are bound in $l$.
+If there is are layers for which $g$ has no thick outputs,
+select one such layer $l$ that minimizes the number of outputs in $g$ that
+are bound in $l$.
+<p>
+The following script can be used to demonstrate <code>egcLayer</code>.
+<p> <pre style="padding-left:5%">
+let eg = new EdgeGroups();
+eg.fromString('{a[(e k o p) (f g j m) (l)] b[(e n o p) (h k) (m i l)] ' +
+              'c[(f) (h k g j m) (i l n)] d[(e i o p) (f g h) (j n)]}');
+let [egc,ts] = egcLayer(eg,0,1);
+log(ts);
+</pre> <p>
+Here is the resulting output.
+<p> <pre style="padding-left:5%">
+graph: {
+a[(e k o p) (f g j m) (l)]
+b[(e n o p) (h k) (m i l)]
+c[(f) (h k g j m) (i l n)]
+d[(e i o p) (f g h) (j n)]
+}
+
+layers:
+{
+[a(e k o p) b(m i l) d(f g h) c(f)]
+[a(f g j m) b(e n o p) c(i l n) d(j n)]
+[a(l) c(h k g j m) d(e i o p) b(h k)]
+} [2,3,2]
+
+colors: {
+1[a(e k o p) b(m i l) d(f g h) c(. . n)]
+2[c(f) a(. g j m) b(e n o p) d(. i . .)]
+3[a(f . . .) c(i l .) d(j n) b(h k)]
+4[a(l) c(h k g j m) d(e . o p)]
+}
+</pre> <p>
+The layers are shown on separate lines and are followed
+by the layer thicknesses.
+The colors assigned to the groups are shown using the format
+introduced earlier. In this case, three of the groups required
+two colors each.
+<p>
+The following script can be used to investigate the performance
+of the algorithm.
+<p> <pre style="padding-left:5%">
+let n_i = 40; let n_o = 8*n_i; let D = n_i/2; let d_o = D;
+let Cmin = Math.max(D,d_o); let X = Math.ceil(1.1*Cmin);
+
+let eg = egcRandomCase(n_i, D, n_o, d_o, X); 
+let t = Date.now(); let [egc,,stats] = egcLayer(eg); t = Date.now() - t;
+log(`${n_i} ${D} ${n_o} ${d_o} ${X} :: ` +
+    `${stats.thickness.toFixed(2)} ${stats.Cmax} ` +
+    `${(stats.Cmax/Cmin).toFixed(2)} ${t}ms`);
+</pre> <p>
+The function call <code>egcRandomCase(n_i, D, n_o, d_o, X)</code>
+starts by generating a random regular bipartite graph,
+with <code>n_i</code> inputs and <code>n_o</code> outputs.
+The outputs have degree <code>d_o</code> and
+the inputs have degree <code>d_o*(n_o/n_i)</code>.
+Then, for each output, it assigns distinct random colors between 1 and
+<code>X</code> to the incident edges.
+At each input it then forms groups from all the
+edges assigned the same color.
+For inputs that have more than <code>D</code> groups, it merges pairs
+of groups until the number of groups per input does not exceed <code>D</code>.
+It then discards the random coloring.
+<p>
+Note that this ensures that there is a proper edge group coloring with
+<code>X</code> colors and that every proper coloring must have at least
+<code>Cmin=min(D,d_o)</code> colors.
+The sample runs below show the effect of increasing the asymmetry between
+inputs and outputs.
+The three results provided are the average layer thickness,
+the number of colors used <code>Cmax</code>, and the
+ratio of <code>Cmax</code> to the lower bound <code>Cmin</code>.
+Note that as the asymmetry increases, the number of colors grows,
+as does the performance ratio.
+<p> <pre style="padding-left:5%">
+40 20   40 20 22 :: 1.94 21 1.05  3ms 
+40 20   80 20 22 :: 2.00 26 1.30  9ms 
+40 20  160 20 22 :: 2.30 32 1.60  5ms 
+40 20  320 20 22 :: 2.95 39 1.95 12ms 
+40 20  640 20 22 :: 3.10 46 2.30 21ms 
+40 20 1280 20 22 :: 3.80 52 2.60 37ms
+</pre> <p>
+Each doubling of the asymmetry leads to an incremental increase in the
+performance ratio, suggesting that the performance ratio is roughly
+logarithmic in the asymmetry.
+The next set of results shows how the performance ratio
+varies with the ratio of <code>D</code> to <code>d_o</code>.
+<p> <pre style="padding-left:5%">
+40  5 320 20 22 :: 8.20 28 1.40  7ms 
+40 10 320 20 22 :: 5.00 33 1.65  9ms 
+40 15 320 20 22 :: 3.60 36 1.80 13ms
+40 20 320 20 22 :: 2.85 40 2.00 18ms
+40 20 320 15 22 :: 2.25 32 1.60  9ms 
+40 20 320 10 22 :: 1.70 25 1.25  3ms 
+40 20 320  5 22 :: 1.05 21 1.05  5ms
+</pre> <p>
+Observe that the number of colors (and hence, the performance ratio)
+is maximized when <code>D=d_o</code>.
+When $D$ is reduced, relative to $d_o$, the edge colors are
+less constrained, reducing the number required.
+When $d_o$ is reduced relative to $D$, the number of edges
+per group drops, again reducing the number of colors needed.
+<p>
+The next set of results shows the effect of the graph density.
+<p> <pre style="padding-left:5%">
+40  2 320  2  3 :: 2.00  4 2.00  0ms 
+40  4 320  4  5 :: 3.25  9 2.25  2ms 
+40  8 320  8  9 :: 3.38 17 2.13  3ms 
+40 12 320 12 14 :: 3.00 23 1.92  5ms 
+40 16 320 16 18 :: 3.13 32 2.00 10ms 
+40 20 320 20 22 :: 3.05 39 1.95 13ms
+</pre> <p>
+Here, the number of colors used grows directly with the
+density and the lower bound, so the performance ratio changes
+little.
+<p>
+The final set of set of results shows how the performance
+is affected by the choice of $X$. 
+<p> <pre style="padding-left:5%">
+40 20 320 20 22 :: 2.95 40 2.00 14ms 
+40 20 320 20 26 :: 2.90 39 1.95 12ms 
+40 20 320 20 30 :: 2.70 38 1.90 13ms 
+40 20 320 20 34 :: 2.65 38 1.90 12ms 
+40 20 320 20 38 :: 2.75 38 1.90  6ms 
+</pre> <p>
+Here too, there is no apparent relationship between the
+number of colors used by <code>egcLayer</code> and the number
+used to generate the graph.
+
+<h3>Fixed Palette Method</h3>
 
 <h3>Small Palette Method</h3>
 
@@ -813,7 +1143,7 @@ The alternate layer division shown below can be used to obtain a 5-coloring.
 
 <dt> [Turner15c]
 <dd> &ldquo;The Edge Group Coloring Problem with Applications to
-	Multicast Switching,&rdquo; by Jonathan Turner.
+    Multicast Switching,&rdquo; by Jonathan Turner.
      Washington University Computer Science Technical Report,
      WUCSE-2015-02, 8/2015.
      Also available in Computing Research Repository (CoRR)

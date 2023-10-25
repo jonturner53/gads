@@ -181,11 +181,11 @@ body	{
 	border-bottom:	0;
 	border-right:	0;
 	width:	auto;
-	font-family: "Times New Roman", Times, serif;
 	font-size:160%;
 	}
 code, pre {
-	font-size:115%;
+	font-family: "Courier", Courier;
+	font-size:100%;
 }
 
 /* Customize headers */

@@ -501,15 +501,15 @@ vertex. For each vertex $u$ in the orignal graph, define $\distance(u)$
 to be the length of the shortest path from $s$ to $u$ in this augmented graph.
 Then for each edge $(u,v)$ in the original graph, let
 $$
-\length(u,v) = \length(u,v) +
+\length'(u,v) = \length(u,v) +
 \distance(u) - \distance(v)
 $$
 Note that if there a shortest path tree rooted at every vertex,
-the shortest path tree theorem implies that $\length(u,v)>0$.
+the shortest path tree theorem implies that $\length'(u,v)>0$.
 For any path $p$ from $u$ to $v$, one can show (by induction on the path length)
 that
 $$
-\length(p) = \length(p) +
+\length'(p) = \length(p) +
 \distance(u) - \distance(v)
 $$
 Since the lengths of all $u$-$v$ paths are shifted by the same amount,
