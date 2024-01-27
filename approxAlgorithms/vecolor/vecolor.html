@@ -366,7 +366,7 @@ This can be demonstrated with this script.
 <p> <pre style="padding-left:5%">
 let g = hardCase(7); 
 let [color,ts] = becolorSplit(g,1);
-log(ts); log('Cmax=' + Math.max(...color));
+log(ts); log('C=' + Math.max(...color));
 </pre> <p>
 This yields the result below.
 <p> <textarea rows="20" cols="80" readonly
@@ -394,7 +394,7 @@ s[e:6/11 e:7/8]
 t[f:7/10]
 } 
 
-Cmax=12
+C=12
 </textarea><p>
 The trace string shows the graph $B_7$ with edge bounds
 and the colors assigned by the split algorithm.
@@ -429,15 +429,11 @@ export default function becolorMdmatch(g) {
                 gc.join(g.left(e), g.right(e), e);
         }
         // find max degree matching in gc, extended to max size
-        let [match,,mstats] = mdmatchG(gc);
-        steps += mstats.steps;
-        [match,,mstats] = bimatchHK(gc,match)
-        steps += mstats.steps;
-        if (trace) ts += `${c}: ${match.toString()}\n`;
+        let [match] = mdmatchG(gc);
+        [match] = bimatchHK(gc,match)
         for (let e = match.first(); e; e = match.next(e)) {
             color[e] = c; gc.delete(e); count++;
         }
-        steps += g.n + g.m;
     }
     return [color];
 }
@@ -540,7 +536,7 @@ s[e:6/6 e:7/9]
 t[f:7/10]
 }
  
-Cmax=10
+C=10
 </textarea><p>
 <p>
 In this case, the trace string shows the matching computed
@@ -565,24 +561,24 @@ performance on graphs $B_n$.
 <p> <pre style="padding-left:5%">
 let n = 8; let g = hardCase(n);
 let [color,ts,stats] = becolorSplit(g);
-log(`B_${n} split  Cmax=${stats.Cmax} flowBound=${flowBound(g)}`);
+log(`B_${n} split  C=${stats.C} flowBound=${flowBound(g)}`);
 </pre>
 Sample results are shown below.
 <p> <pre style="padding-left:5%">
-B_8  split   Cmax= 13 flowBound=11 
-B_16 split   Cmax= 27 flowBound=21 
-B_32 split   Cmax= 55 flowBound=42 
-B_64 split   Cmax=111 flowBound=83 
+B_8  split   C= 13 flowBound=11 
+B_16 split   C= 27 flowBound=21 
+B_32 split   C= 55 flowBound=42 
+B_64 split   C=111 flowBound=83 
 
-B_8  mdmatch Cmax= 12 flowBound=11 
-B_16 mdmatch Cmax= 24 flowBound=21 
-B_32 mdmatch Cmax= 48 flowBound=42 
-B_64 mdmatch Cmax= 96 flowBound=83
+B_8  mdmatch C= 12 flowBound=11 
+B_16 mdmatch C= 24 flowBound=21 
+B_32 mdmatch C= 48 flowBound=42 
+B_64 mdmatch C= 96 flowBound=83
 
-B_8  pmatch  Cmax= 11 flowBound=11
-B_16 pmatch  Cmax= 22 flowBound=21 
-B_32 pmatch  Cmax= 42 flowBound=42 
-B_64 pmatch  Cmax= 84 flowBound=83
+B_8  pmatch  C= 11 flowBound=11
+B_16 pmatch  C= 22 flowBound=21 
+B_32 pmatch  C= 42 flowBound=42 
+B_64 pmatch  C= 84 flowBound=83
 </pre>
 The max degree matching algorithm produces coloring $(3/2)n$ colors.
 The priority matching algorithm closely tracks
@@ -594,25 +590,25 @@ performance on random graphs.
 let n = 64; let d = 4;
 let g = randomCase(n,d);
 let [color,ts,stats] = becolorSplit(g);
-log(`random(${n},${d}) split   Cmax=${stats.Cmax} ` + 
+log(`random(${n},${d}) split   C=${stats.C} ` + 
    `matchBound=${matchBound(g)} flowBound=${flowBound(g)}`);
 </pre> <p>
 Sample output appears below.
 <p> <pre style="padding-left:5%">
-random(64, 4) split   Cmax= 7 matchBound= 5 flowBound= 6 
-random(64, 8) split   Cmax=15 matchBound= 9 flowBound=11 
-random(64,16) split   Cmax=28 matchBound=17 flowBound=22 
-random(64,32) split   Cmax=53 matchBound=33 flowBound=40 
+random(64, 4) split   C= 7 matchBound= 5 flowBound= 6 
+random(64, 8) split   C=15 matchBound= 9 flowBound=11 
+random(64,16) split   C=28 matchBound=17 flowBound=22 
+random(64,32) split   C=53 matchBound=33 flowBound=40 
 
-random(64, 4) mdmatch Cmax= 6 matchBound= 5 flowBound= 6 
-random(64, 8) mdmatch Cmax=12 matchBound= 9 flowBound=12 
-random(64,16) mdmatch Cmax=21 matchBound=17 flowBound=21 
-random(64,32) mdmatch Cmax=40 matchBound=33 flowBound=40 
+random(64, 4) mdmatch C= 6 matchBound= 5 flowBound= 6 
+random(64, 8) mdmatch C=12 matchBound= 9 flowBound=12 
+random(64,16) mdmatch C=21 matchBound=17 flowBound=21 
+random(64,32) mdmatch C=40 matchBound=33 flowBound=40 
 
-random(64, 4) pmatch  Cmax= 6 matchBound= 5 flowBound= 6 
-random(64, 8) pmatch  Cmax=11 matchBound= 9 flowBound=11 
-random(64,16) pmatch  Cmax=22 matchBound=17 flowBound=22 
-random(64,32) pmatch  Cmax=40 matchBound=33 flowBound=40 
+random(64, 4) pmatch  C= 6 matchBound= 5 flowBound= 6 
+random(64, 8) pmatch  C=11 matchBound= 9 flowBound=11 
+random(64,16) pmatch  C=22 matchBound=17 flowBound=22 
+random(64,32) pmatch  C=40 matchBound=33 flowBound=40 
 </pre>
 Note that in this case, the results for both matching algorithms
 are identical to the flow lower bound in all cases.
@@ -640,32 +636,32 @@ speedups $>1$.
 let n = 64; let speedup = 1.5;
 let g = hardCase(n, speedup);
 let [color,ts,stats] = becolorMdmatch(g);
-log(`B_${n} speedup=${speedup} mdmatch Cmax=${stats.Cmax} ` +
+log(`B_${n} speedup=${speedup} mdmatch C=${stats.C} ` +
     `degreeBound=${degreeBound(g)} flowBound=${flowBound(g)}`);
 </pre>
 Results for $B_n$ appear below.
 <p> <pre style="padding-left:5%">
-B_64 speedup=1   mdmatch Cmax= 96 degreeBound= 64 flowBound= 83 
-B_64 speedup=1.2 mdmatch Cmax= 99 degreeBound= 77 flowBound= 88 
-B_64 speedup=1.4 mdmatch Cmax=108 degreeBound= 90 flowBound= 92 
-B_64 speedup=1.6 mdmatch Cmax=115 degreeBound=102 flowBound=102 
-B_64 speedup=1.7 mdmatch Cmax=118 degreeBound=109 flowBound=109 
-B_64 speedup=1.8 mdmatch Cmax=121 degreeBound=115 flowBound=115 
-B_64 speedup=2   mdmatch Cmax=127 degreeBound=127 flowBound=127 
+B_64 speedup=1   mdmatch C= 96 degreeBound= 64 flowBound= 83 
+B_64 speedup=1.2 mdmatch C= 99 degreeBound= 77 flowBound= 88 
+B_64 speedup=1.4 mdmatch C=108 degreeBound= 90 flowBound= 92 
+B_64 speedup=1.6 mdmatch C=115 degreeBound=102 flowBound=102 
+B_64 speedup=1.7 mdmatch C=118 degreeBound=109 flowBound=109 
+B_64 speedup=1.8 mdmatch C=121 degreeBound=115 flowBound=115 
+B_64 speedup=2   mdmatch C=127 degreeBound=127 flowBound=127 
 
-B_64 speedup=1   pmatch  Cmax= 84 degreeBound= 64 flowBound= 83 
-B_64 speedup=1.2 pmatch  Cmax= 89 degreeBound= 77 flowBound= 88 
-B_64 speedup=1.4 pmatch  Cmax= 93 degreeBound= 90 flowBound= 92 
-B_64 speedup=1.6 pmatch  Cmax=103 degreeBound=102 flowBound=102 
-B_64 speedup=1.7 pmatch  Cmax=109 degreeBound=109 flowBound=109 
-B_64 speedup=1.8 pmatch  Cmax=115 degreeBound=115 flowBound=115 
-B_64 speedup=2   pmatch  Cmax=127 degreeBound=127 flowBound=127 
+B_64 speedup=1   pmatch  C= 84 degreeBound= 64 flowBound= 83 
+B_64 speedup=1.2 pmatch  C= 89 degreeBound= 77 flowBound= 88 
+B_64 speedup=1.4 pmatch  C= 93 degreeBound= 90 flowBound= 92 
+B_64 speedup=1.6 pmatch  C=103 degreeBound=102 flowBound=102 
+B_64 speedup=1.7 pmatch  C=109 degreeBound=109 flowBound=109 
+B_64 speedup=1.8 pmatch  C=115 degreeBound=115 flowBound=115 
+B_64 speedup=2   pmatch  C=127 degreeBound=127 flowBound=127 
 </pre>
 Observe that as the speedup increases, the gap between the largest
 color used and the lower bounds drops to zero, with the priority
 matching algorithm closing the gap for speedups of 1.7 or more.
 
-<h2>Edge Group Coloring (work in progress)</h2>
+<h2>Edge Group Coloring</h2>
 
 An instance of the <i>edge group coloring</i> problem is an
 undirected graph and a partition of its edges into groups,
@@ -677,20 +673,22 @@ that assigns different values to pairs of edges that share a common
 endpoint and belong to different edge groups.
 The objective is to find a coloring that uses the
 smallest possible number of distinct colors.
-An example is shown in below.
+An example is shown below.
 <p>
 <div  style="text-align:center;">
 <img width="25%" src="figs/egcExample1.png"><br>
 </div>
 <p>
 Edge groups are shown by using arcs joining the edges belonging to
-the a common group.
-So in this example, edges $\{b,e\}$, $\{c,e\}$ and $\{d,e\}$ belong to the same
-group at $e$. The numbers on the edges represent a valid coloring.
+a common group.
+So in this example, edges $\{b,e\}$, $\{c,e\}$ and $\{d,e\}$ form a group of
+size 3 with hub $e$.
+The numbers on the edges represent a valid coloring.
 <p>
 Edge group coloring was defined in [Turner15c] as an abstraction of
-the multicast crossbar scheduling problem and the multicast route selection
-problem for three-stage switching networks.
+the multicast crossbar scheduling problem [PMA97] and the
+problem of constructing efficient
+&ldquo;generalized connnectors&rdquo; [KKP85,YM91].
 In these contexts, the graphs of interest are bipartite and have
 edge groups with hubs that are &ldquo;inputs&rdquo; as illustrated
 in the example below.
@@ -702,18 +700,21 @@ in the example below.
 In the tabular representation at right, the edge groups are shown as
 connected circles, representing the edges in the group. The numbers
 labeling the edges are their colors.
+It's worth noting that Kirkpatrick, Klawe and Pippenger [KKP85] formulated
+the problem of constructing generalized connnectors
+as a hypergraph coloring problem, which is equivalent to the slightly
+simpler formulation used here.
 <p>
 The problem is $NP$-complete even for bipartite graphs,
-but there are several algorithms
-that can produce practically useful approximate solutions.
+but there are several approaches
+that can produce practically useful approximation algorithms.
 There are also some simple bounds that can be helpful.
 The maximum vertex degree $\Delta$ of a graph $G$ provides an upper bound
 on the number of colors needed to color it and there is also a simple
 lower bound.
 Let $\Delta_o$ be the maximum vertex degree at the outputs of $G$,
-and let $D$ be the maximum number of groups present at an input.
-Then any coloring must use at least $\max \{D, \Delta_o\}$ colors.
-and the ratio of the upper bound to this lower bound is at most $\Delta/D$.
+and let $\Gamma_i$ be the maximum number of groups present at an input.
+Then any coloring must use at least $\max \{\Gamma_i, \Delta_o\}$ colors.
 
 <h3>Layering Method</h3>
 
@@ -723,7 +724,9 @@ Let $L$ be a subset of the groups, with no two groups in $L$ sharing a hub,
 and let $G_L$ be the subgraph of $G$ defined by the edges in $L$.
 Then, any coloring of $G_L$ is constrained only by the outputs.
 Consequently, one can color $G_L$ with $\Delta_o(G_L)$ colors.
-This leads to a general approach to coloring a graph.
+This leads to a general approach to coloring a graph,
+first described in [Turner15c].
+<p>
 In the first step, the edge groups are partititioned so that each
 subset contains groups with distinct hubs.
 Each of these subsets is referred to as a <i>layer</i> and the
@@ -733,6 +736,7 @@ The subgraphs defined by the layers can be colored separately,
 using distinct color sets.
 Combining these colorings yields a coloring for $G$ where the number
 of colors is the sum of the layer thicknesses.
+<p>
 As an example, consider the graph and edge groups defined as shown below.
 <p> <pre style="padding-left:5%">
 a[(f i l) (g k) (e)]
@@ -752,7 +756,7 @@ $i$-th layer, as shown below.
 Each line shows the groups in a layer.
 These layers have thicknesses $[3, 2, 2]$, so can be colored with 7 colors.
 The alternate layer division shown below has layer thicknesses $[1, 2, 2]$,
-so can be colored with 5 colors.
+so can be colored with five colors.
 <p> <pre style="padding-left:5%">
 [a(g k) b(h j) c(e) d(f i)] 
 [a(f i l) b(g k) c(g h) d(e j)] 
@@ -760,10 +764,10 @@ so can be colored with 5 colors.
 </pre>
 Better colorings can often be obtained by relaxing the constraint that
 edges in different layers use disjoint color sets.
-One method colors a layer by letting color $c=1$ and repeating
-the following step until all edges in the layer are colored.
+One method colors each layer $l$ by letting color $c=1$ and repeating
+the following step until all edges in $l$ are colored.
 <p style="padding-left:5%">
-For each group $g$ in the current layer with at least one uncolored edge,
+For each group $g$ in $l$ with at least one uncolored edge,
 use $c$ to color every uncolored edge in $g$ for which $c$ is a viable color.
 Increment $c$.
 <p>
@@ -784,40 +788,46 @@ colors on other lines.
 In general, it is advantageous to start with a division into
 layers that are as &ldquo;thin&rdquo; as possible.
 One natural heuristic first creates a partial layering, by assigning
-the $D$ groups at some input to different layers, then extending
+the $\Gamma_i$ groups at some input to different layers, then extending
 the partial layering by assigning each group in a way that avoids increasing
-the thickness of thie layer its assigned to whenever possible.
+the thickness of the layer it's assigned to whenever possible.
 The <i>Javascript</i> program shown below uses this approach to construct
-the layers and the &ldquo;relaxed&rdquo; coloring method described above.
+the layers and optionally uses the &ldquo;relaxed&rdquo; coloring method
+described above.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 let eg;        // shared reference to EdgeGroups object
-let egl;       // shared reference to EdgeGroupLayers object
+let egl;    // shared reference to EdgeGroupLayers object
 
-export default function egcLayer(eg0, strict=false, trace=0) {
+export default function egcT1(eg0, strict=false) {
     eg = eg0;
 
-    let D = 0;
-    for (let u = 1; u <= eg.n_i; u++)
-        D = Math.max(D,eg.groupCount(u));
+    let Gamma_i = maxGroupCount(eg);
+    let Delta_o = maxOutDegree(eg);
+    let Cmin = lowerBound(Gamma_i, Delta_o);
 
-    egl = new EdgeGroupLayers(eg,D);
-    doLayers(D);
+    egl = new EdgeGroupLayers(eg,Gamma_i);
+    buildLayers(Gamma_i);
 
-    let thickness = new Int32Array(D+1);
+    let thickness = new Int32Array(Gamma_i+1);
     for (let l = 1; l <= egl.n_l; l++)
         thickness[l] = egl.layerThickness(l);
     let totalThickness = thickness.reduce((sum, v) => sum + v, 0);
     let maxThickness = Math.max(...thickness);
 
     let egc = color(thickness, strict);
+    let C = egc.maxColor();
 
-    return egc;
+    return [egc ..];
 }
 
-function doLayers(D) {
-    let ocount = new Array(D+1);
-    let u = 1; while (eg.groupCount(u) < D) u++;
+/** Assign groups to layers, while trying to minimize the maximum
+ *  layer thickness.
+ *  @param Gamma_i is the maximum groupCount of any vertex.
+ */
+function buildLayers(Gamma_i) {
+    let ocount = new Array(Gamma_i+1);
+    let u = 1; while (eg.groupCount(u) < Gamma_i) u++;
     let l = 1;
     for (let g = eg.firstGroupAt(u); g; g = eg.nextGroupAt(u,g)) {
         egl.add(g,l);
@@ -834,7 +844,7 @@ function doLayers(D) {
         let bestThin = 0; let thinConflicts = 0;
         let bestThick = 0; let thickConflicts = 0;
         
-        for (let l = 1; l <= D; l++) {
+        for (let l = 1; l <= Gamma_i; l++) {
             // if l contains a group with same hub as g, go on to next layer
             let skip = 0; let u = eg.hub(g);
             for (let gl = egl.firstInLayer(l); gl; gl = egl.nextInLayer(l,gl)) {
@@ -843,7 +853,7 @@ function doLayers(D) {
             if (skip) continue;
 
             // count output conflicts of g with groups in l and determine
-            // if g conflicts a "thick" output
+            // if g conflicts with a "thick" output
             let conflicts = 0; let gthick = 0;
             for (let e = eg.firstInGroup(g); e; e = eg.nextInGroup(g,e)) {
                 let v = eg.output(e);
@@ -902,6 +912,10 @@ function color(thickness, strict) {
     return egc;
 }
 </textarea><p>
+The <code>strict</code> argument to <code>egcT1</code> is used to
+force the layers to use disjoint color sets. By default, the color sets
+are allowed to overlap.
+<p>
 The implementation uses three data structures.
 The <code>EdgeGroups</code> data structure maintains the structure of
 the edge groups and includes the following methods.
@@ -915,7 +929,7 @@ the edge groups and includes the following methods.
 <li> <code>firstGroup()</code> returns the first group in the list of groups.
 <li> <code>nextGroup(g)</code> returns the next group in the list following $g$.
 <li> <code>firstGroupAt(u)</code> returns the first group in the list of groups
-	at input $u$.
+    at input $u$.
 <li> <code>nextGroupAt(u,g)</code> returns the next group in the list at u
     following $g$.
 <li> <code>firstInGroup(g)</code> returns the first edge in group $g$.
@@ -936,36 +950,37 @@ the layers and includes the following methods.
 The <code>EdgeGroupColors</code> data structure maintains the edge group
 coloring and includes the following methods.
 <ul>
-<li> <code>usage(c,u)</code> returns the number of times color $c$ is used
-    at input $u$.
+<li> <code>usage(c,v)</code> returns the number of times color $c$ is used
+    at vertex $v$.
 <li> <code>avail(c,e)</code> returns true if $c$ is a color that can be used
     for edge $e$.
 <li> <code>color(e,c)</code> returns the color of edge $e$ and if the second
     argument is present, it first assigns color $c$ to $e$.
 </ul>
-The <code>doLayers</code> method starts by finding an input with $D$ groups,
-and assigns these groups to distinct layers, giving a partial layering.
+The <code>buildLayers</code> method starts by finding an input with
+$\Gamma_i$ groups, and assigns these groups to distinct layers,
+giving a partial layering.
 It then assigns the remaining groups to layers in decreasing order of their
-fanout.
+fanouts.
 An output $v$ is said to be <i>bound</i> in a layer $l$ if one or more
 of $l$'s groups contains $v$.
 An output $v$ is said to be <i>thick</i> in $l$ if the number
 of groups in $l$ that include $v$ is the largest for any output.
+A layer $l$ is thick with respect to a group $g$ not in $l$ if
+$g$ includes a thick output in $l$;
+otherwise, $l$ is <i>thin</i> with respect to $g$.
 Each group $g$ is assigned to a layer using the following procedure.
 <p style="padding-left:5%">
-If $g$ has one or more thick outputs in every layer,
-select a layer $l$ that minimizes the number of outputs in $g$ that
-are bound in $l$.
-If there is are layers for which $g$ has no thick outputs,
-select one such layer $l$ that minimizes the number of outputs in $g$ that
-are bound in $l$.
+If every layer is thick with respect to $g$, then $g$ is assigned to
+a layer with the smallest thickness.
+Otherwise, it is assigned to a thin layer with the smallest thickness.
 <p>
-The following script can be used to demonstrate <code>egcLayer</code>.
+The following script can be used to demonstrate <code>egcT1</code>.
 <p> <pre style="padding-left:5%">
 let eg = new EdgeGroups();
 eg.fromString('{a[(e k o p) (f g j m) (l)] b[(e n o p) (h k) (m i l)] ' +
               'c[(f) (h k g j m) (i l n)] d[(e i o p) (f g h) (j n)]}');
-let [egc,ts] = egcLayer(eg,0,1);
+let [egc,ts] = egcT1(eg,0,1);
 log(ts);
 </pre> <p>
 Here is the resulting output.
@@ -982,7 +997,8 @@ layers:
 [a(e k o p) b(m i l) d(f g h) c(f)]
 [a(f g j m) b(e n o p) c(i l n) d(j n)]
 [a(l) c(h k g j m) d(e i o p) b(h k)]
-} [2,3,2]
+}
+[2,3,2]
 
 colors: {
 1[a(e k o p) b(m i l) d(f g h) c(. . n)]
@@ -1000,131 +1016,771 @@ two colors each.
 The following script can be used to investigate the performance
 of the algorithm.
 <p> <pre style="padding-left:5%">
-let n_i = 40; let n_o = 8*n_i; let D = n_i/2; let d_o = D;
-let Cmin = Math.max(D,d_o); let X = Math.ceil(1.1*Cmin);
+let n_i = 40; let n_o = 8*n_i; let Gamma_i = 20; let Delta_o = Gamma_i;
+let Cmin = Math.max(Gamma_i,Delta_o); let X = 22;
 
-let eg = egcRandomCase(n_i, D, n_o, d_o, X); 
-let t = Date.now(); let [egc,,stats] = egcLayer(eg); t = Date.now() - t;
-log(`${n_i} ${D} ${n_o} ${d_o} ${X} :: ` +
-    `${stats.thickness.toFixed(2)} ${stats.Cmax} ` +
-    `${(stats.Cmax/Cmin).toFixed(2)} ${t}ms`);
+let eg = egcRandomCase(n_i, Gamma_i, n_o, Delta_o, X);
+let t = Date.now(); let [egc,,stats] = egcT1(eg); t = Date.now() - t;
+log(`io=(${n_i},${n_o}) GD=(${Gamma_i},${Delta_o}) X=${X} :: ` +
+    `C=${stats.C} R=${stats.R} T=${stats.thickness} ${t}ms`);
 </pre> <p>
-The function call <code>egcRandomCase(n_i, D, n_o, d_o, X)</code>
+The function call <code>egcRandomCase(n_i, Gamma_i, n_o, Delta_o, X)</code>
 starts by generating a random regular bipartite graph,
 with <code>n_i</code> inputs and <code>n_o</code> outputs.
-The outputs have degree <code>d_o</code> and
-the inputs have degree <code>d_o*(n_o/n_i)</code>.
-Then, for each output, it assigns distinct random colors between 1 and
+The outputs have degree <code>Delta_o</code>.
+For each output, it assigns distinct random colors between 1 and
 <code>X</code> to the incident edges.
 At each input it then forms groups from all the
 edges assigned the same color.
-For inputs that have more than <code>D</code> groups, it merges pairs
-of groups until the number of groups per input does not exceed <code>D</code>.
+For inputs that have more than <code>Gamma_i</code> groups, it merges pairs
+of groups until the number of groups per input does not exceed <code>Gamma_i</code>.
 It then discards the random coloring.
 <p>
 Note that this ensures that there is a proper edge group coloring with
 <code>X</code> colors and that every proper coloring must have at least
-<code>Cmin=min(D,d_o)</code> colors.
+<code>Cmin=min(Gamma_i,Delta_o)</code> colors.
 The sample runs below show the effect of increasing the asymmetry between
 inputs and outputs.
-The three results provided are the average layer thickness,
-the number of colors used <code>Cmax</code>, and the
-ratio of <code>Cmax</code> to the lower bound <code>Cmin</code>.
-Note that as the asymmetry increases, the number of colors grows,
-as does the performance ratio.
 <p> <pre style="padding-left:5%">
-40 20   40 20 22 :: 1.94 21 1.05  3ms 
-40 20   80 20 22 :: 2.00 26 1.30  9ms 
-40 20  160 20 22 :: 2.30 32 1.60  5ms 
-40 20  320 20 22 :: 2.95 39 1.95 12ms 
-40 20  640 20 22 :: 3.10 46 2.30 21ms 
-40 20 1280 20 22 :: 3.80 52 2.60 37ms
+io=(40,  40) GD=(20,20) X=22 :: C=22 R=1.10 T=35  2ms 
+io=(40,  80) GD=(20,20) X=22 :: C=27 R=1.35 T=38  3ms 
+io=(40, 160) GD=(20,20) X=22 :: C=32 R=1.60 T=48 10ms 
+io=(40, 320) GD=(20,20) X=22 :: C=39 R=1.95 T=59 11ms 
+io=(40, 640) GD=(20,20) X=22 :: C=46 R=2.30 T=68 25ms 
+io=(40,1280) GD=(20,20) X=22 :: C=51 R=2.55 T=78 48ms 
 </pre> <p>
-Each doubling of the asymmetry leads to an incremental increase in the
-performance ratio, suggesting that the performance ratio is roughly
+Here, the pair <code>io</code> is the number of inputs and outputs,
+<code>GD</code> is the pair <code>(Gamma_i,Delta_o)</code>
+and $X$ is the upper bound on the number of colors required.
+<code>C</code> is the number of colors used by the algorithm,
+<code>R</code> is the performance ratio and $T$ the total thickness
+of the layers.
+Each doubling of the input/output asymmetry leads to an incremental increase
+in the performance ratio, suggesting that the performance ratio is roughly
 logarithmic in the asymmetry.
 The next set of results shows how the performance ratio
-varies with the ratio of <code>D</code> to <code>d_o</code>.
+varies with the ratio of $\Gamma_i$ to $\Delta_o$.
 <p> <pre style="padding-left:5%">
-40  5 320 20 22 :: 8.20 28 1.40  7ms 
-40 10 320 20 22 :: 5.00 33 1.65  9ms 
-40 15 320 20 22 :: 3.60 36 1.80 13ms
-40 20 320 20 22 :: 2.85 40 2.00 18ms
-40 20 320 15 22 :: 2.25 32 1.60  9ms 
-40 20 320 10 22 :: 1.70 25 1.25  3ms 
-40 20 320  5 22 :: 1.05 21 1.05  5ms
+io=(40,320) GD=( 5,20) X=22 :: C=27 R=1.35 T=41 7ms 
+io=(40,320) GD=(10,20) X=22 :: C=33 R=1.65 T=48 9ms 
+io=(40,320) GD=(15,20) X=22 :: C=36 R=1.80 T=57 9ms 
+io=(40,320) GD=(20,20) X=22 :: C=39 R=1.95 T=59 10ms 
+io=(40,320) GD=(20,15) X=22 :: C=32 R=1.60 T=45 8ms 
+io=(40,320) GD=(20,10) X=22 :: C=24 R=1.20 T=33 6ms 
+io=(40,320) GD=(20, 5) X=22 :: C=20 R=1.00 T=20 7ms 
 </pre> <p>
 Observe that the number of colors (and hence, the performance ratio)
-is maximized when <code>D=d_o</code>.
-When $D$ is reduced, relative to $d_o$, the edge colors are
+is maximized when $\Gamma_i=\Delta_o$.
+When $\Gamma_i$ is reduced, relative to $\Delta_o$, the edge colors are
 less constrained, reducing the number required.
-When $d_o$ is reduced relative to $D$, the number of edges
+When $\Delta_o$ is reduced relative to $\Gamma_i$, the number of edges
 per group drops, again reducing the number of colors needed.
 <p>
 The next set of results shows the effect of the graph density.
 <p> <pre style="padding-left:5%">
-40  2 320  2  3 :: 2.00  4 2.00  0ms 
-40  4 320  4  5 :: 3.25  9 2.25  2ms 
-40  8 320  8  9 :: 3.38 17 2.13  3ms 
-40 12 320 12 14 :: 3.00 23 1.92  5ms 
-40 16 320 16 18 :: 3.13 32 2.00 10ms 
-40 20 320 20 22 :: 3.05 39 1.95 13ms
+io=(40,320) GD=( 2, 2) X= 3 :: C= 4 R=2.00 T= 4  1ms 
+io=(40,320) GD=( 4, 4) X= 5 :: C= 9 R=2.25 T=12  3ms 
+io=(40,320) GD=( 8, 8) X= 9 :: C=17 R=2.13 T=24  2ms 
+io=(40,320) GD=(12,12) X=14 :: C=24 R=2.00 T=36  8ms 
+io=(40,320) GD=(16,16) X=18 :: C=32 R=2.00 T=46 10ms 
+io=(40,320) GD=(20,20) X=22 :: C=39 R=1.95 T=59  9ms 
 </pre> <p>
 Here, the number of colors used grows directly with the
 density and the lower bound, so the performance ratio changes
-little.
+very little.
 <p>
 The final set of set of results shows how the performance
 is affected by the choice of $X$. 
 <p> <pre style="padding-left:5%">
-40 20 320 20 22 :: 2.95 40 2.00 14ms 
-40 20 320 20 26 :: 2.90 39 1.95 12ms 
-40 20 320 20 30 :: 2.70 38 1.90 13ms 
-40 20 320 20 34 :: 2.65 38 1.90 12ms 
-40 20 320 20 38 :: 2.75 38 1.90  6ms 
+io=(40,320) GD=(20,20) X=20 :: C=39 R=1.95 T=61  8ms 
+io=(40,320) GD=(20,20) X=22 :: C=40 R=2.00 T=60  9ms 
+io=(40,320) GD=(20,20) X=26 :: C=39 R=1.95 T=56  9ms 
+io=(40,320) GD=(20,20) X=30 :: C=39 R=1.95 T=57  7ms 
+io=(40,320) GD=(20,20) X=34 :: C=38 R=1.90 T=51  8ms 
+io=(40,320) GD=(20,20) X=38 :: C=39 R=1.95 T=53  7ms 
+io=(40,320) GD=(20,20) X=42 :: C=38 R=1.90 T=57 13ms
 </pre> <p>
 Here too, there is no apparent relationship between the
 number of colors used by <code>egcLayer</code> and the number
 used to generate the graph.
+<p>
+One can construct different variants of the layer method,
+by using different methods for constructing the layers or coloring the edges.
+This variant performs reasonably well, is simple and fast.
 
-<h3>Fixed Palette Method</h3>
+<h3>Color Palette Method</h3>
+The colors used for the edges within a group can be viewed as the
+<i>palette</i> of that group.
+The palettes defined by a proper $C$-coloring have the
+following properties.
+<ul>
+<li> For each input $u$, the groups that have $u$ as their hub have
+    disjoint palettes.
+<li> For each output $v$, one can define a bipartite <i>palette graph</i> $P(v)$
+    with edges $(g,c)$ where $g$ is a group with an edge at $v$ and $c$ is
+    a color in $g$'s palette. $P(v)$ has a matching that matches all of its
+    inputs. The edges in this matching can be used to color the edges at $v$.
+</ul>
+Kirkpatrick, Klawe and Pippenger [KKP85] identified these properties and
+used them to show that any graph can be colored using at most
+$$(\Gamma_i − 1)\lfloor\log_2(2*n_o)\rfloor + 2\Delta_o$$ colors.
+Specifically, they showed that for every graph with at least this many colors,
+there is a valid collection of palettes for which every $P(v)$ has a
+matching that includes all its inputs.
+They did not show how to compute such a collection of palettes, just that
+at least one such collection must exist.
+<p>
+[Turner15c] showed that for large enough $C$ a random collection of palettes
+has the required matchings with probability $>1/2$.
+The required condition is that $C \geq C^\ast = k \max(\Gamma_i, \Delta_o)$ and
+$k$ is an integer that is at least
+$$2 (\ln 2\Delta_o n_o/ \ln \ln 2\Delta_o n_o)^{1/2}$$
+By trying multiple random palette sets, one can make the probability of finding
+a valid set of palettes arbitrarily close to 1.
+Note that this condition applies to any graph and the probability is dependent
+only on the random palettes selected.
+<p>
+The <i>Javascript</i> program below uses binary search on $C$ to find
+a set of palettes that has the required matchings. For a particular value
+of $C$, it assigns the $C$ colors randomly to the groups at each input,
+with the largest groups potentially getting one more color than the smallest.
+Up to ten random sets of palettes are computed for each value of $C$.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let eg;     // shared reference to EdgeGroups object
+let egc;    // shared reference to EdgeGroupColors object
 
-<h3>Small Palette Method</h3>
+export default function egcKKP1(eg0) {
+    eg = eg0;
+
+    let Gamma_i = maxGroupCount(eg);
+    let Delta_o = maxOutDegree(eg);
+    let Cmin = lowerBound(Gamma_i, Delta_o);
+
+    for (let u = 1; u <= eg.n_i; u++) eg.sortGroups(u);
+
+    // identify viable range of values for binary search.
+    let lo = Cmin; let hi = lo; let best;
+    while(1) {
+        egc = findRandomPalette(hi);
+        if (egc) { best = egc; break; }
+        lo = hi+1; hi *= 2;
+    }
+    // now proceed with binary search
+    let C;
+    while (lo < hi) {
+        C = ~~((lo + hi)/2);
+        egc = findRandomPalette(C);
+        if (egc) { best = egc; hi = C; }
+        else lo = C+1;
+    }
+    C = hi;
+    
+    return [best ..];
+}
+
+/** Construct random palettes for all groups and check for validity.
+ *  @param C is the number of colors available
+ *  @return an EdgeGroupColors object with edges colored using randomly
+ *  generated palettes or null if no valid set of palettes was found
+ */
+function findRandomPalette(C) {
+    let colors = randomPermutation(C);
+    let limit = 10;
+    let egc = new EdgeGroupColors(eg,C);
+    for (let i = 1; i <= limit; i++) {
+        egc.clear();
+        for (let u = 1; u <= eg.n_i; u++) {
+            let g = eg.firstGroupAt(u);
+            for (let ci = 1; ci <= C; ci++) {
+                egc.bind(colors[ci],g);
+                g = eg.nextGroupAt(u,g);
+                if (!g) g = eg.firstGroupAt(u);
+            }
+            scramble(colors);
+        }
+        if (egc.colorFromPalettes()) return egc;
+    }
+    return null;
+}
+</textarea><p>
+
+Here is the trace output for an example. Note that the
+palettes are shown with each group, followed by the coloring
+obtained by computing matchings for all the palette graphs.
+<p> <pre style="padding-left:5%">
+graph with palettes {
+a[(e k o p){4 2} (f g j m){1 5} (l){3}]
+b[(e n o p){1 2} (m i l){3 4} (h k){5}]
+c[(h k g j m){3 1} (i l n){2 4} (f){5}]
+d[(e i o p){2 5} (f g h){3 4} (j n){1}]
+}
+
+colors: {
+1[b(e . o p) a(f g . m) d(j n)]
+2[d(e . o p) c(i l .) b(. n . .)]
+3[d(f . .) c(h k g j m) b(. i .) a(l)]
+4[a(e k o p) d(. g h) b(m . l) c(. . n)]
+5[c(f) b(h k) d(. i . .) a(. . j .)]
+}
+</pre><p>
+
+The results below show how the algorithm performs as the ratio of
+outputs to inputs grows.
+<p> <pre style="padding-left:5%">
+io=(40,  40) GD=(20,20) X=22 :: C=31 R=1.55  39ms 
+io=(40,  80) GD=(20,20) X=22 :: C=38 R=1.90  40ms 
+io=(40, 160) GD=(20,20) X=22 :: C=43 R=2.15 115ms 
+io=(40, 320) GD=(20,20) X=22 :: C=43 R=2.15 157ms 
+io=(40, 640) GD=(20,20) X=22 :: C=45 R=2.25 334ms 
+io=(40,1280) GD=(20,20) X=22 :: C=46 R=2.30 857ms 
+</pre><p>
+Note that for the largest examples, the random threshold implies a
+requirement of five colors per group, while the number used by the
+algorithm on random graphs is less than half that.
+<p>
+One can also compute a collection of palettes in a more systematic way.
+One way to do this is to iterate through the outputs, and for each output $v$
+expand the palettes of the groups containing $v$ as needed to ensure
+that all the edges at $v$ can be colored.
+<p>
+When processing an output $v$, this algorithm first constructs the palette
+graph $P(v)$ (based on colors assigned to palettes in previous iterations)
+and attempts to find a matching that includes all of its inputs.
+If this is not successful, it constructs a <i>palette expansion graph</i>
+$X(v)$ and computes a minimum cost flow to guide the expansion of the
+palettes at $v$'s neighboring inputs.
+$X(v)$ has a vertex for every group with an edge at $v$
+and a vertex for every color.
+It also has an edge from its source to each group $g$
+and an edge from each color to the sink.
+In addition, there is an edge $(g,c)$ joining each group $g$ to each
+color $c$ that is not used by some other group at $g$'s hub.
+The cost of the edge is 0 if $c$ is already in $g$'s palette;
+otherwise the cost is the current size of $g$'s palette.
+All edges have a capacity 1.
+<p>
+The algorithm computes a minimum cost, maximum flow on $X(v)$ and
+for each edge $(g,c)$ with positive flow, it adds $c$ to $g$'s palette if
+it is not already in it. If some group has no outgoing edge with positive
+flow, the attempt at coloring the graph fails.
+The edge costs avoid adding colors to the palettes of groups that
+don't need more, and preferentially expands the palettes of groups with
+smaller palettes.
+A <i>Javascript</i> implementation appars below. Note that like the
+random version, it uses binary search to find the smallest value of $C$
+for which the algorithm suceeds.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let eg;          // shared reference to EdgeGroups object
+let egc;         // shared reference to EdgeGroupColors object
+
+let Delta_o;     // max degree of an output
+
+export default function egcKKP2(eg0) {
+    eg = eg0;
+
+    Delta_o = maxOutDegree(eg);
+    let Gamma_i = maxGroupCount(eg);
+    let Cmin = lowerBound(Gamma_i, Delta_o);
+
+    // identify viable range of values for binary search.
+    let lo = Cmin; let hi = lo;
+    while(1) {
+        egc = new EdgeGroupColors(eg, hi);
+        if (buildPalettes(hi)) break;
+        lo = hi+1; hi *= 2;
+    }
+    // now proceed with binary search
+    let C;
+    while (lo < hi) {
+        C = ~~((lo + hi)/2);
+        if (buildPalettes(C)) hi = C;
+        else lo = C+1;
+    }
+    C = hi;
+    buildPalettes(C);
+    egc.colorFromPalettes();
+
+    return [egc ..];
+}
+
+/** Build collection of color palettes.
+ *  @param C is the number of colors to use in the palettes
+ *  @return true if the computed palettes are sufficient to color all
+ *  the edges; the computed palettes are returned in egc.
+ */
+function buildPalettes(C) {
+    egc.clear;
+
+    // define a palette graph
+    let pg = new Graph(eg.n_g+C, Delta_o*C);
+    let io = new ListPair(eg.n_g + C);
+    for (let g = 1; g <= eg.n_g; g++) io.swap(g);
+
+    // define a palette expansion graph
+    let xg = new Flograph(eg.n_g+C+2, Delta_o*C + Delta_o + C);
+    xg.setSource(xg.n-1); xg.setSink(xg.n);
+
+    egc.clear();
+    
+    let clist = new List(C);
+    for (let v = eg.n_i+1; v <= eg.n_i + eg.n_o; v++) {
+        // first, check to see if v's edges can be colored with current palettes
+        let dv = eg.graph.degree(v);
+        pg.clear();
+        for (let e = eg.graph.firstAt(v); e; e = eg.graph.nextAt(v,e)) {
+            let g = eg.group(e); let u = eg.hub(g);
+            for (let c = egc.firstColor(g); c; c = egc.nextColor(g,c)) {
+                pg.join(g, eg.n_g+c);
+            }
+        }
+        let [match] = bimatchHK(pg,0,io);
+        if (match.size() == dv) continue;
+
+        // Try to expand palette's for the groups with edges at v, without
+        // increasing the total number of colors.
+        // Do this by solving a mincost flow problem.
+        xg.clear();
+        for (let e = eg.graph.firstAt(v); e; e = eg.graph.nextAt(v,e)) {
+            let g = eg.group(e); let u = eg.hub(g);
+            let psize = egc.paletteSize(g);
+            let xe = xg.join(xg.source,g); xg.cap(xe,1);
+            for (let c = 1; c <= C; c++) {
+                if (egc.owner(c,u) && egc.owner(c,u) != g) continue;
+                let cv = eg.n_g+c;
+                xe = xg.join(g, cv); xg.cap(xe, 1);
+                xg.cost(xe, egc.owner(c,u) == g ? 0 : psize);
+                if (!xg.firstOut(cv)) {
+                    xe = xg.join(cv,xg.sink); xg.cap(xe, 1);
+                }
+            }
+        }
+        mcflowJEK(xg);
+        if (xg.totalFlow() != dv) return false;
+        for (let e = xg.firstOut(xg.source); e; e = xg.nextOut(xg.source,e)) {
+            let g = xg.mate(xg.source,e); let u = eg.hub(g);
+            for (let xe = xg.firstOut(g); xe; xe = xg.nextOut(g,xe)) {
+                let c = xg.mate(g,xe) - eg.n_g;
+                if (xg.f(xe) == 1 && !egc.owner(c,u)) {
+                    egc.bind(c,g);
+                }
+            }
+        }
+    }
+    return true;
+}
+</textarea> <p>
+Here is an example of the palettes and coloring produced by
+this algorithm.
+<p> <pre style="padding-left:5%">
+graph with palletes {
+a[(e k o p){4} (f g j m){3} (l){1}]
+b[(e n o p){3} (h k){1} (m i l){4}]
+c[(f){4} (h k g j m){1 3} (i l n){2}]
+d[(e i o p){1} (f g h){2} (j n){4}]
+}
+
+colors: {
+1[d(e i o p) c(. . g j m) b(h k) a(l)]
+2[d(f g h) c(i l n)]
+3[b(e n o p) a(f g j m) c(h k . . .)]
+4[a(e k o p) c(f) b(m i l) d(j n)]
+}
+</pre> <p>
+
+The results below demonstrates how it performs on random graphs.
+Here, the first number after the double colon is a worst-case
+upper bound on the number of colors required.
+<p> <pre style="padding-left:5%">
+io=(40,  40) GD=(20,20) X=22 :: C=20 R=1.00   86ms 
+io=(40,  80) GD=(20,20) X=22 :: C=26 R=1.30  656ms 
+io=(40, 160) GD=(20,20) X=22 :: C=35 R=1.75 1101ms 
+io=(40, 320) GD=(20,20) X=22 :: C=39 R=1.95 1491ms 
+io=(40, 640) GD=(20,20) X=22 :: C=42 R=2.10 3289ms 
+io=(40,1280) GD=(20,20) X=22 :: C=44 R=2.20 3590ms 
+</pre> <p>
+In general, this version performs better than the random palette
+version, although the relative advantage gets smaller as the graphs
+get larger.
+
+<h3>Constrained Greedy Method</h3>
+Yang and Masson [YM91] devised a greedy strategy for coloring
+each group in turn. When assigning colors to a group, it selects
+each color to maximize the number of previously uncolored edges
+that can be colored. They show, that this strategy is guaranteed
+to succeed if the number of colors used by each group is constrained to
+be no larger than an integer $k$ and the total number of colors is at least
+$$ (\Gamma_i −1)k+(\Delta_o −1) n_o^{1/k} +1 $$
+The value of $k$ can be chosen to minimize the number of colors and
+they show that when $\Gamma_i = \Delta_o$, the best value of $k$ is
+approximately $2 \ln n_o/ \ln \ln n_o$.
+<p>
+The <i>Javascript</i> implementation shown below first sorts the groups
+in decreasing order of size and uses binary search to find the smallest
+color for which the greedy method yields a complete coloring.
+It also relaxes the constraint on the number of colors used per group,
+when previously colored groups leave more colors available for use.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let eg;        // shared reference to EdgeGroups object
+let egc;    // shared reference to EdgeGroupColors object
+
+let colorCount;          // colorCount[u] is number of colors in use at u
+let coloredGroupCount;   // coloredGroupCount[u] # of colored groups at u
+
+export default function egcYM(eg0) {
+    eg = eg0; eg.sortAllGroups();
+
+    let Gamma_i = maxGroupCount(eg);
+    let Delta_o = maxOutDegree(eg);
+    let Cmin = lowerBound(Gamma_i, Delta_o);
+
+    // identify viable range of values for binary search.
+    let lo = Cmin; let hi = lo;
+    while(1) {
+        egc = new EdgeGroupColors(eg, hi);
+        colorCount = new Int32Array(hi+1);
+        coloredGroupCount = new Int32Array(hi+1);
+        if (colorAllGroups(hi)) break;
+        lo = hi+1; hi *= 2;
+    }
+    // now proceed with binary search
+    let C;
+    while (lo < hi) {
+        C = ~~((lo + hi)/2);
+        if (colorAllGroups(C)) hi = C;
+        else lo = C+1;
+    }
+    C = hi;
+
+    colorAllGroups(C);
+
+    return [egc ..];
+}
+
+function colorAllGroups(C) {
+    egc.clear(); colorCount.fill(0); coloredGroupCount.fill(0);
+    for (let g = eg.firstGroup(); g; g = eg.nextGroup(g))
+        if (!colorGroup(g, C)) return false;
+    return true;
+}
+
+/** Assign colors to one group.
+ *  @param g is group number
+ *  @param C is the largest color
+ *  @return true on success
+ */
+function colorGroup(g, C) {
+    // set limit on # of colors per group
+    let u = eg.hub(g);
+    let limit = Math.ceil((C - colorCount[u]) /
+                          (eg.groupCount(u) - coloredGroupCount[u]));
+    let colored = 0; // number of edges colored so far
+    let k = 0; // number of colors used so far
+
+    while (k < limit && colored < eg.fanout(g)) {
+        // first find best color for the remaining uncolored edges
+        let bestColor = 0; let bestCount = 0;
+        for (let c = 1; c <= C; c++) {
+            let count = 0;
+            for (let e = eg.firstInGroup(g); e; e = eg.nextInGroup(g,e)) {
+                if (egc.color(e) == 0 && egc.avail(c,e)) count++;
+            }
+            if (count > bestCount) {
+                bestColor = c; bestCount = count;
+            }
+            // stop early if c can color all remaining edges
+            if (colored + bestCount == eg.fanout(g)) break;
+        }
+        if (!bestColor) return false;
+        for (let e = eg.firstInGroup(g); e; e = eg.nextInGroup(g,e)) {
+            if (egc.color(e) == 0 && egc.avail(bestColor,e)) {
+                egc.color(e,bestColor); colored++;
+            }
+        }
+        k++;
+    }
+    if (colored != eg.fanout(g)) return false;
+    colorCount[u] += k; coloredGroupCount[u]++;
+    return true;
+}
+</textarea> <p>
+Here is the result produced on an example.
+<p> <pre style="padding-left:5%">
+graph with palletes {
+a[(e k o p){2} (f g j m){3} (l){1}]
+b[(e n o p){1} (h k){3} (m i l){2}]
+c[(f){5} (h k g j m){1} (i l n){4}]
+d[(e i o p){3} (f g h){2} (j n){5}]
+}
+
+colors: {
+1[c(h k g j m) b(e n o p) a(l)]
+2[a(e k o p) b(m i l) d(f g h)]
+3[a(f g j m) d(e i o p) b(h k)]
+4[c(i l n)]
+5[d(j n) c(f)]
+}
+</pre> <p>
+The results below demonstrate its performance on random
+graphs, which is similar to the previous algorithm.
+<p> <pre style="padding-left:5%">
+io=(40,  40) GD=(20,20) X=22 :: C=26 R=1.30   5ms 
+io=(40,  80) GD=(20,20) X=22 :: C=27 R=1.35   9ms 
+io=(40, 160) GD=(20,20) X=22 :: C=30 R=1.50  12ms 
+io=(40, 320) GD=(20,20) X=22 :: C=34 R=1.70  32ms 
+io=(40, 640) GD=(20,20) X=22 :: C=41 R=2.05 116ms 
+io=(40,1280) GD=(20,20) X=22 :: C=45 R=2.25 247ms 
+</pre> <p>
+
+<h3>Hybrid Algorithm</h3>
+
+Our final algorithm combines elements of the YM and KKP algorithms.
+For each value of $C$ considered during the binary search,
+it first attempts to find a coloring using the YM
+algorithm. If this fails, it attempts to expand the palettes
+defined by the failed attempt, using the method from the KKP algorithm.
+This approach was motivated by the observation that the YM algorithm
+usually leaves many colors at each input unassigned, creating an
+opportunity for improved performance.
+<p>
+Here is a <i>Javascript</i> implementation.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let eg;        // shared reference to EdgeGroups object
+let egc;    // shared reference to EdgeGroupColors object
+
+let colorCount;          // colorCount[u] is number of colors in use at u
+let coloredGroupCount;   // coloredGroupCount[u] # of colored groups at u
+
+export default function egcT2(eg0) {
+    eg = eg0; eg.sortAllGroups();
+
+    let Gamma_i = maxGroupCount(eg);
+    let Delta_o = maxOutDegree(eg);
+    let Cmin = lowerBound(Gamma_i, Delta_o);
+
+    // identify viable range of values for binary search.
+    let lo = Cmin; let hi = lo;
+    while(1) {
+        egc = new EdgeGroupColors(eg, hi);
+        colorCount = new Int32Array(hi+1);
+        coloredGroupCount = new Int32Array(hi+1);
+        if (colorAllGroups(hi) || expandPalettes(hi, Delta_o))
+            break;
+        lo = hi+1; hi *= 2;
+    }
+    // now proceed with binary search
+    let C;
+    while (lo < hi) {
+        C = ~~((lo + hi)/2);
+        if (colorAllGroups(C) || expandPalettes(C, Delta_o))
+            hi = C;
+        else
+            lo = C+1;
+    }
+    C = hi;
+
+    colorAllGroups(C) || expandPalettes(C, Delta_o);
+
+    return [egc ..];
+}
+
+function colorAllGroups(C) {
+    egc.clear(); colorCount.fill(0); coloredGroupCount.fill(0);
+    let success = true;
+    for (let g = eg.firstGroup(); g; g = eg.nextGroup(g)) {
+        if (!colorGroup(g, C)) success = false;
+    }
+    return success;
+}
+
+/** Assign colors to one group.
+ *  @param g is group number
+ *  @param C is the largest color
+ *  @return the number of uncolored edges
+ */
+function colorGroup(g, C) {
+    // set limit on # of colors per group
+    let u = eg.hub(g);
+    let limit = Math.ceil((C - colorCount[u]) /
+                          (eg.groupCount(u) - coloredGroupCount[u]));
+    let colored = 0; // number of edges colored so far
+    let k = 0; // number of colors used so far
+
+    while (k < limit && colored < eg.fanout(g)) {
+        // first find best color for the remaining uncolored edges
+        let bestColor = 0; let bestCount = 0;
+        for (let c = 1; c <= C; c++) {
+            let count = 0;
+            for (let e = eg.firstInGroup(g); e; e = eg.nextInGroup(g,e)) {
+                if (egc.color(e) == 0 && egc.avail(c,e)) count++;
+            }
+            if (count > bestCount) {
+                bestColor = c; bestCount = count;
+            }
+            // stop early if c can color all remaining edges
+            if (colored + bestCount == eg.fanout(g)) break;
+        }
+        if (!bestColor) break;
+        for (let e = eg.firstInGroup(g); e; e = eg.nextInGroup(g,e)) {
+            if (egc.color(e) == 0 && egc.avail(bestColor,e)) {
+                egc.color(e,bestColor); colored++;
+            }
+        }
+        k++;
+    }
+    if (colored != eg.fanout(g)) return false;
+    colorCount[u] += k; coloredGroupCount[u]++;
+    return true;
+}
+
+function expandPalettes(C, Delta_o) {
+    // define a palette graph
+    let pg = new Graph(eg.n_g+C, Delta_o*C);
+    let io = new ListPair(eg.n_g + C);
+    for (let g = 1; g <= eg.n_g; g++) io.swap(g);
+
+    // define a palette expansion graph
+    let xg = new Flograph(eg.n_g+C+2, Delta_o*C + Delta_o + C);
+    xg.setSource(xg.n-1); xg.setSink(xg.n);
+
+    for (let v = eg.n_i+1; v <= eg.n_i + eg.n_o; v++) {
+        let dv = eg.graph.degree(v);
+        // first, check to see if v's edges can be colored with current palettes
+        pg.clear();
+        for (let e = eg.graph.firstAt(v); e; e = eg.graph.nextAt(v,e)) {
+            egc.color(e,0);        // removes color but does not affect palette
+            let g = eg.group(e); let u = eg.hub(g);
+            for (let c = egc.firstColor(g); c; c = egc.nextColor(g,c)) {
+                pg.join(g, eg.n_g+c);
+            }
+        }
+        let [match] = bimatchHK(pg,0,io);
+        if (match.size() == dv) continue;
+
+        // Expand palette's for the groups with edges at v as needed.
+        // Do this by solving a mincost flow problem.
+        xg.clear(); let uncolored = 0;
+        for (let e = eg.graph.firstAt(v); e; e = eg.graph.nextAt(v,e)) {
+            if (!egc.color(e)) uncolored++;
+            let g = eg.group(e); let u = eg.hub(g);
+            let psize = egc.paletteSize(g);
+            let xe = xg.join(xg.source,g); xg.cap(xe,1);
+            for (let c = 1; c <= C; c++) {
+                if (egc.owner(c,u) && egc.owner(c,u) != g) continue;
+                let cv = eg.n_g+c;
+                xe = xg.join(g, cv); xg.cap(xe, 1);
+                xg.cost(xe, egc.owner(c,u) == g ? 0 : psize);
+                if (!xg.firstOut(cv)) {
+                    xe = xg.join(cv,xg.sink); xg.cap(xe, 1);
+                }
+            }
+        }
+        if (uncolored == 0) continue;
+        mcflowJEK(xg);
+        if (xg.totalFlow() != eg.graph.degree(v)) return false;
+        for (let e = xg.firstOut(xg.source); e; e = xg.nextOut(xg.source,e)) {
+            let g = xg.mate(xg.source,e); let u = eg.hub(g);
+            for (let xe = xg.firstOut(g); xe; xe = xg.nextOut(g,xe)) {
+                let c = xg.mate(g,xe) - eg.n_g;
+                if (xg.f(xe) == 1 && !egc.owner(c,u)) egc.bind(c,g);
+            }
+        }
+    }
+    egc.colorFromPalettes();
+    return true;
+}
+</textarea> <p>
+The trace output for example is shown below.
+Results for T2
+<p> <pre style="padding-left:5%">
+graph with palletes {
+a[(e k o p){2} (f g j m){3} (l){1}]
+b[(e n o p){1} (h k){3} (m i l){2}]
+c[(f){2} (h k g j m){1} (i l n){4 3}]
+d[(e i o p){3} (f g h){2 1} (j n){4}]
+}
+
+colors: {
+1[b(e n o p) d(f . .) c(h k g j m) a(l)]
+2[a(e k o p) c(f) d(. g h) b(m i l)]
+3[d(e i o p) a(f g j m) b(h k) c(. . n)]
+4[c(i l .) d(j n)]
+}
+</pre> <p>
+The results below illustrates how the new algorithm performs
+as the input/output asymmetry increases.
+<p> <pre style="padding-left:5%">
+io=(40,  40) GD=(20,20) X=22 :: C=20 R=1.00   83ms 
+io=(40,  80) GD=(20,20) X=22 :: C=23 R=1.15  108ms 
+io=(40, 160) GD=(20,20) X=22 :: C=26 R=1.30  161ms 
+io=(40, 320) GD=(20,20) X=22 :: C=32 R=1.60  195ms 
+io=(40, 640) GD=(20,20) X=22 :: C=37 R=1.85  390ms 
+io=(40,1280) GD=(20,20) X=22 :: C=42 R=2.10 1002ms 
+</pre> <p>
+Here is a comparison showing all the algorithms for an
+example with moderate asymmetry.
+
+<p> <pre style="padding-left:5%">
+T1   io=(40,320) GD=(20,20) X=22 :: C=40 R=2.00   14ms 
+KKP1 io=(40,320) GD=(20,20) X=22 :: C=44 R=2.20  247ms 
+KKP2 io=(40,320) GD=(20,20) X=22 :: C=39 R=1.95 1491ms 
+YM   io=(40,320) GD=(20,20) X=22 :: C=34 R=1.70   29ms 
+T2   io=(40,320) GD=(20,20) X=22 :: C=32 R=1.60  189ms 
+</pre> <p>
 
 <h2>References</h2>
 <dl>
-<dt> [Attiya-06]
+<dt> [Attiya06]
 <dd> &ldquo;Packet-Mode Emulation of Output-Queued Switches,&rdquo;
     by H Attiya, D. Hay and I. Keslassy.
     In <i>Proc. of ACM SPAA</i>, 2006.
 
-<dt> [Chuang-99]
+<dt> [Chuang99]
 <dd> &ldquo;Matching output queueing with a combined input output
     queued switch,&rdquo;
     by S.-T. Chuang, A. Goel, N. McKeown, B. Prabhakar.
     In <i>IEEE J. on Selected Areas in Communications</i>, 12/1999.
 
-<dt> [Krishna-99]
+<dt> [KKP85]
+    &ldquo;Some Graph-Colouring Theorems with Applications to
+    Generalized Connection Networks,&rdquo;
+    by David Kirkpatrick, Maria Klawe and Nick Pippenger.
+    In <i>SIAM Journal of Algorithms and Discrete Methods</i>, 10/1985.
+
+<dt> [Krishna99]
 <dd> &ldquo;On the speedup required for work-conserving crossbar
     switches,&rdquo;
     by P. Krishna, N. Patel, A. Charny and R. Simcoe.
-    In <i>IEEE J. Selected Areas of Communications</i>, 6/1999.
+    In <i>IEEE Journal on Selected Areas of Communications</i>, 6/1999.
 
-<dt> [Leonardi-01]
+<dt> [Leonardi01]
 <dd> &ldquo;On the stability of input-queued switches with speed-up,&rdquo;
     by E. Leonardi, M. Mellia, F. Neri, and M.A. Marsan.
     In <i>IEEE/ACM Transactions on Networking</i>,
     Vol. 9, No. 1, pp. 104--118, 2/2001.
 
-<dt> Mckeown-99a]
+<dt> [Mckeown99a]
 <dd> &ldquo;$i$SLIP: a scheduling algorithm for input-queued switches,&rdquo;
     by N. McKeown.
     In <i>IEEE Trans. on Networking</i>, 4/1999.
 
-<dd> <dt> [Mckeown-99b]
+<dt> [Mckeown99b]
 <dd> &ldquo;Achieving 100\% Throughput in an Input-Queued Switch,&rdquo;
     McKeown, N., A. Mekkittikul, V. Anantharam, and J. Walrand.
     In <i>IEEE Trans. on Communications</i>, Vol. 47, No. 8, 8/1999.
+
+<dt> [PMA97]
+<dd> &ldquo;Multicast scheduling for input-queued switches,&rdquo;
+    by B. Prabhakar, N. McKeown and R. Ahuja.
+    In <i>IEEE Journal on Selected Areas in Commuications</i>, 6/1997.
+
+<dt> [YM91]
+<dd> &ldquo;Nonblocking broadcast switching networks,&rdquo;
+    by Yuanyan Yang and Gerald Masson.
+    In <i>IEEE Transactions on Computers</i>, 9/1991.
 
 <dt> [Turner15a]
 <dd> &ldquo;Maximum priority matchings,&rdquo; by Jonathan Turner.
