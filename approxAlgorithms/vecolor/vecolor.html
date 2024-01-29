@@ -1390,8 +1390,6 @@ colors: {
 </pre> <p>
 
 The results below demonstrates how it performs on random graphs.
-Here, the first number after the double colon is a worst-case
-upper bound on the number of colors required.
 <p> <pre style="padding-left:5%">
 io=(40,  40) GD=(20,20) X=22 :: C=20 R=1.00   86ms 
 io=(40,  80) GD=(20,20) X=22 :: C=26 R=1.30  656ms 
@@ -1424,7 +1422,7 @@ when previously colored groups leave more colors available for use.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 let eg;        // shared reference to EdgeGroups object
-let egc;    // shared reference to EdgeGroupColors object
+let egc;       // shared reference to EdgeGroupColors object
 
 let colorCount;          // colorCount[u] is number of colors in use at u
 let coloredGroupCount;   // coloredGroupCount[u] # of colored groups at u
@@ -1523,8 +1521,7 @@ colors: {
 5[d(j n) c(f)]
 }
 </pre> <p>
-The results below demonstrate its performance on random
-graphs, which is similar to the previous algorithm.
+The results below demonstrate its performance on random graphs.
 <p> <pre style="padding-left:5%">
 io=(40,  40) GD=(20,20) X=22 :: C=26 R=1.30   5ms 
 io=(40,  80) GD=(20,20) X=22 :: C=27 R=1.35   9ms 
@@ -1549,7 +1546,7 @@ Here is a <i>Javascript</i> implementation.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 let eg;        // shared reference to EdgeGroups object
-let egc;    // shared reference to EdgeGroupColors object
+let egc;       // shared reference to EdgeGroupColors object
 
 let colorCount;          // colorCount[u] is number of colors in use at u
 let coloredGroupCount;   // coloredGroupCount[u] # of colored groups at u
@@ -1693,8 +1690,7 @@ function expandPalettes(C, Delta_o) {
     return true;
 }
 </textarea> <p>
-The trace output for example is shown below.
-Results for T2
+The trace output for an example is shown below.
 <p> <pre style="padding-left:5%">
 graph with palletes {
 a[(e k o p){2} (f g j m){3} (l){1}]
@@ -1710,8 +1706,8 @@ colors: {
 4[c(i l .) d(j n)]
 }
 </pre> <p>
-The results below illustrates how the new algorithm performs
-as the input/output asymmetry increases.
+The results below illustrate how the new algorithm performs
+on random graphs.
 <p> <pre style="padding-left:5%">
 io=(40,  40) GD=(20,20) X=22 :: C=20 R=1.00   83ms 
 io=(40,  80) GD=(20,20) X=22 :: C=23 R=1.15  108ms 
@@ -1721,7 +1717,7 @@ io=(40, 640) GD=(20,20) X=22 :: C=37 R=1.85  390ms
 io=(40,1280) GD=(20,20) X=22 :: C=42 R=2.10 1002ms 
 </pre> <p>
 Here is a comparison showing all the algorithms for an
-example with moderate asymmetry.
+example with moderate input/output asymmetry.
 
 <p> <pre style="padding-left:5%">
 T1   io=(40,320) GD=(20,20) X=22 :: C=40 R=2.00   14ms 
@@ -1745,7 +1741,7 @@ T2   io=(40,320) GD=(20,20) X=22 :: C=32 R=1.60  189ms
     In <i>IEEE J. on Selected Areas in Communications</i>, 12/1999.
 
 <dt> [KKP85]
-    &ldquo;Some Graph-Colouring Theorems with Applications to
+<dd> &ldquo;Some Graph-Colouring Theorems with Applications to
     Generalized Connection Networks,&rdquo;
     by David Kirkpatrick, Maria Klawe and Nick Pippenger.
     In <i>SIAM Journal of Algorithms and Discrete Methods</i>, 10/1985.
