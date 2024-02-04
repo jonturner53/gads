@@ -70,14 +70,17 @@ right endpoint (3) at vertex $b$, so the endpoint list at $a$ includes
 endpoint 2, while the list at $b$ includes 3.
 The <i>first_endpoint</i> array identifies the first endpoint
 in the endpoint list for each vertex.
+<p>
 This implementation supports efficient iteration through the entire edge set,
-or the edges incident to each vertex. Edges can be added,
-if the edges array is pre-dimensioned to allow for the maximum number of
+or the edges incident to each vertex. Edges can be added using the
+<code>join</code> method.
+It's generally most efficient to pre-dimension the
+<code>edges</code> array to allow for the maximum number of
 edges expected.
 The implementation also includes a <code>ListPair</code> object that
 keeps track of which edge numbers are in use and which are available
 to be allocated. This allows edges to be easily deleted as well.
-The implementation also supports dynamic expansion of the space,
+The implementation does supports dynamic expansion of the space,
 if that becomes necessary.
 
 The <code>Graph</code> class supports the following methods.
@@ -123,7 +126,7 @@ Methods <code>length</code> and <code>cost</code> are alternate names
 for <code>weight</code>.
 The <code>Graph</code> class also supports the common methods,
 <code>toString()</code> <code>fromString()</code> and
-<code>equals()</code>. The core of the <i>Javascript</i> implsmentation
+<code>equals()</code>. The core of the <i>Javascript</i> implementation
 is shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
@@ -143,9 +146,8 @@ export default class Graph extends Top {
      *  @param erange is the initial range for edge values (defaults to n)
      *  @param capacity is the initial vertex capacity (defaults to n)
      */
-    constructor(n=10, erange=n, capacity=n) {
+    constructor(n=10, erange=n) {
         super(n);
-        fassert(this.n > 0 && capacity >= this.n && erange > 0);
         this._firstEp = new Int32Array(capacity+1);
         this._left = new Int32Array(erange+1);
         this._right = new Int32Array(erange+1);
@@ -153,9 +155,6 @@ export default class Graph extends Top {
         this._epLists = new ListSet(2*(erange+1));
         this._weight = null;
     }
-
-    /** Get the vertex capacity. */
-    get capacity() { return this._firstEp.length-1; }
 
     /** Get the number of edges.
      *  @return the number of edges in the graph.
@@ -451,21 +450,21 @@ Finally, it adds the following methods.
 <li>    <code>sink</code> returns the sink vertex.
 <li>    <code>setSource(u)</code> makes vertex <code>u</code> the source.
 <li>    <code>setSink(u)</code> makes vertex <code>u</code> the sink.
-<li>    <code>f(e, u)</code> returns the flow leaving vertex <code>u</code>
+<li>    <code>f(e,u)</code> returns the flow leaving vertex <code>u</code>
         on edge <code>e</code>. May be negative.
         If <code>u</code> is omitted, it defaults to the tail of the edge.
 <li>    <code>cap(e,c=-1)</code> gets or sets the capacity of edge
         <code>e</code>; if c is non-negative, the capacity of <code>e</code>
         is set to <code>c</code>.
-<li>    <code>res(e, u)</code> returns the residual capacity of edge
+<li>    <code>res(e,u)</code> returns the residual capacity of edge
         <code>e</code> leaving vertex <code>u</code>.
-<li>    <code>flow(e, f=-1)</code> gets or sets the flow on edge
+<li>    <code>flow(e,f=-1)</code> gets or sets the flow on edge
         <code>e</code>, leaving the tail;
         if <code>f</code> is non-negative, the flow on
         <code>e</code> is set to <code>f</code>.
-<li>    <code>setCapacity(e, cap)</code> sets the capacity of edge
+<li>    <code>setCapacity(e,cap)</code> sets the capacity of edge
         <code>e</code> to <code>cap</code>.
-<li>    <code>addFlow(e, u, f)</code> adds <code>f</code> units of flow
+<li>    <code>addFlow(e,u,f)</code> adds <code>f</code> units of flow
         leaving vertex <code>u</code> on edge <code>e</code>.
 <li>    <code>clearFlow()</code> sets the flow on all edges to 0.
 <li>    <code>totalFlow()</code> returns the flow leaving the source vertex.
@@ -624,33 +623,36 @@ export default class Flograph extends Digraph {
 }
 </textarea>
 
-<a id=RandomGraphs><h2>Random Graphs</h2></a2>
+<a id=RandomGraphs><h2>Random Graphs</h2></a>
 The <code>RandomGraphs</code> module provides a collection of methods for
 generating simple (no self-loops or parallel edges) random graphs
 of all three types.
 It provides the following methods.
 <ul>
-<li> <code>randomGraph(n, m)</code> returns a <code>Graph</code> object with
+<li> <code>randomGraph(n,m)</code> returns a <code>Graph</code> object with
     <code>n</code> vertices and <code>m</code> random edges.
 <li> <code>randomTree(n)</code> returns a <code>Graph</code> object with
     <code>n</code> vertices that defines a random tree.
-<li> <code>randomConnectedGraph(n, m)</code> returns a <code>Graph</code>
+<li> <code>randomConnectedGraph(n,m)</code> returns a <code>Graph</code>
     object with <code>n</code> vertices and <code>m</code> edges
     that is guaranteed to be connected.
-<li> <code>randomRegularGraph(n, d)</code> returns a <code>Graph</code>
+<li> <code>randomRegularGraph(n,d)</code> returns a <code>Graph</code>
     object with <code>n</code> vertices and <code>d</code> edges
     incident to each vertex.
-<li> <code>randomBigraph(n1, n2, m)</code> returns a <code>Graph</code> object
-    that defines a bipartite graph with <code>n1+n2</code> vertices and
-    <code>m</code> random edges that defines a bipartite graph with
-    <code>n1</code> vertices in the &ldquo;left&rdquo; part and
-    <code>n2</code> in the &ldquo;right&rdquo; part.
-<li> <code>randomRegularBigraph(n1, d1, n2)</code> returns a <code>Graph</code>
-    object that defines a bipartite graph with <code>n1+n2</code> vertices
-    and <code>d1</code> vertices incident to each vertex in the left part.
-<li> <code>randomDigraph(n, m)</code> returns a <code>Digraph</code> object
+<li> <code>randomBigraph(ni,di,no=ni)</code> returns a <code>Graph</code> object
+    that defines a bipartite graph with <code>ni+no</code> vertices
+    where the first
+    <code>ni</code> vertices are referred to as &ldquo;inputs&rdquo; and
+	the remaining <code>no</code> as &ldquo;outputs&rdquo;.
+	The number of edges is the product of <code>ni</code> and <code>di</code>,
+	making <code>di</code> the average vertex degree for the inputs.
+<li> <code>randomRegularBigraph(ni,di,no=ni)</code> returns a <code>Graph</code>
+    object that defines a bipartite graph in which each input has
+	exactly <code>di</code> incident edges and the outputs have
+	<code>do=ni*di/no</code> edges.
+<li> <code>randomDigraph(n,m)</code> returns a <code>Digraph</code> object
     with <code>n</code> vertices and <code>m</code> random edges.
-<li> <code>randomFlograph(p, q, k, m)</code> returns a <code>Flograph</code>
+<li> <code>randomFlograph(p,q,k,m)</code> returns a <code>Flograph</code>
     object with <code>2+p*q</code> vertices and <code>m</code> random edges.
     The non-source/sink vertices are distributed among
     <code>p</code> <i>levels</i> with <code>q</code> vertices per level.
@@ -672,10 +674,11 @@ These are summarized below.
         edges in a graph, using the random number generator <code>f</code>.
         If the function <code>f</code> requires any arguments, they must
         be supplied as additional arguments to  <code>randomWeights()</code>.
-        For example, <code>randomWeights(randomInteger, 3, 7)</code>
+        For example, <code>randomWeights(randomInteger,3,7)</code>
         assigns random integer values in [3,7] to the edges of a Graph.
-        The <code>randomInteger</code> can be found in the <code>Random</code>
-        module. If edge weights have not been previously enables, they are
+        The <code>randomInteger</code> method can be found in the
+		<code>Random</code> module.
+		If edge weights have not been previously enabled, they are
         enabled as a side-effect.
 <li>    <code>randomLengths(f)</code> is an alias for
         <code>randomWeights()</code>, for use on Digraph objects.
@@ -694,11 +697,11 @@ The <code>Random</code> module contains several random number generators
 that can be used in conjunction with the <code>RandomGraph</code> module.
 <ul>
 <li>    <code>randomFraction()</code> returns a random value in [0,1].
-<li>    <code>randomInteger(lo, hi)</code> returns a random integer in
+<li>    <code>randomInteger(lo,hi)</code> returns a random integer in
         <code>[lo,hi]</code>.
 <li>    <code>randomExp(mu)</code> returns a random sample from an
         exponential distribution with mean <code>mu</code>.
-<li>    <code>randomPareto(mu, s)</code> returns a random sample from a
+<li>    <code>randomPareto(mu,s)</code> returns a random sample from a
         Pareto distribution with mean <code>mu</code> and shape parameter
         <code>s</code>.
 </ul>
