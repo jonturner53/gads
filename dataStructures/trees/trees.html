@@ -28,22 +28,58 @@
 </script>
 </head>
 <body bgcolor=ffffff>
+\(
+\newcommand{\Forest}{\textit{Forest}}
+\newcommand{\BinaryForest}{\texttt{BinaryForest}}
+\newcommand{\BalancedForest}{\texttt{BalancedForest}}
+\newcommand{\SplayForest}{\texttt{SplayForest}}
+\newcommand{\p}{\texttt{p}}
+\newcommand{\firstChild}{\texttt{firstChild}}
+\newcommand{\nextSibling}{\texttt{nextSibling}}
+\newcommand{\root}{\texttt{root}}
+\newcommand{\first}{\texttt{first}}
+\newcommand{\next}{\texttt{next}}
+\newcommand{\firstLeaf}{\texttt{firstLeaf}}
+\newcommand{\nextLeaf}{\texttt{nextLeaf}}
+\newcommand{\cut}{\texttt{cut}}
+\newcommand{\link}{\texttt{link}}
+\newcommand{\equals}{\texttt{equals}}
+\newcommand{\setEquals}{\texttt{setEquals}}
+\newcommand{\listEquals}{\texttt{listEquals}}
+\newcommand{\joinGroups}{\texttt{joinGroups}}
+\newcommand{\ungroup}{\texttt{ungroup}}
+\newcommand{\left}{\texttt{left}}
+\newcommand{\right}{\texttt{right}}
+\newcommand{\insertAfter}{\texttt{insertAfter}}
+\newcommand{\delete}{\texttt{delete}}
+\newcommand{\search}{\texttt{search}}
+\newcommand{\rotate}{\texttt{rotate}}
+\newcommand{\sibling}{\texttt{sibling}}
+\newcommand{\side}{\texttt{side}}
+\newcommand{\join}{\texttt{join}}
+\newcommand{\split}{\texttt{split}}
+\newcommand{\insertByKey}{\texttt{insertByKey}}
+\newcommand{\key}{\texttt{key}}
+\newcommand{\refresh}{\texttt{refresh}}
+\newcommand{\property}{\texttt{property}}
+\)
+
 <h1>Trees and Forests<sup>&copy;</sup></h1>
 An <i>undirected tree</i> is simply an undirected graph that is connected
 and has no cycles. A <i>forest</i> is an undirected graph in which
 each connected component is a tree.
 A vertex in a tree with just one edge is called a <i>leaf</i>.
 In a <i>directed tree</i>, edges are directed outward from a designated
-<i>root</i> vertex. If an directed tree contains an edge $(u,v)$,
+<i>root</i> vertex. If a directed tree contains an edge $(u,v)$,
 then $u$ is referred to as the <i>parent</i> of $v$.
-The subtree defined by a vertex $u$'s descendants is referred to
+The subtree defined by a vertex $u$ and its descendants is referred to
 as $u$'s subtree.
 While trees can be represented using the graph data structures already
 defined, it is often convenient to have a data structure that is
 designed for the special case of trees and forests.
 
 <a id=Forest><h2>Forest</h2></a>
-The <code>Forest</code> class defines a collection of directed trees
+The $\Forest$ class defines a collection of directed trees
 that partition a common vertex set.
 Each vertex has a defined <i>parent</i> and a <i>first child</i>.
 Vertices that share a common parent are called 
@@ -51,43 +87,44 @@ Vertices that share a common parent are called
 Each tree is identified by its root.
 The class includes the methods listed below.
 <ul>
-<li>    <code>p(u)</code> returns the parent of vertex <code>u</code>.
-<li>    <code>firstChild(u)</code> returns the first child of <code>u</code>.
-<li>    <code>nextSibling(u)</code> returns the next sibling of <code>u</code>.
-<li>    <code>root(u)</code> returns the root of the tree containg
-        <code>u</code>.
-<li>    <code>first(u)</code> returns the first vertex in the prefix ordering
-        of the vertices within <code>u</code>'s subtree.
-<li>    <code>next(u,r=0)</code> returns the next vertex after $u$ in the
-        prefix ordering of the vertices within <code>r</code>'s subtree
-        (or the entire tree if <code>r</code> is omitted).
-<li>    <code>firstLeaf(u)</code> returns the first leaf in the
-        prefix ordering of the vertices within <code>u</code>'s subtree.
-<li>    <code>nextLeaf(u,r=0)</code> returns the next leaf after $u$ in the
-        prefix ordering of the vertices within <code>r</code>'s subtree
-        (or the entire tree if <code>r</code> is omitted).
-<li>    <code>cut(u)</code> cuts the link between <code>u</code> and its
-        parent, making <code>u</code> the root of a separate tree.
-<li>    <code>link(u,v)</code> links the tree with root <code>u</code>
-        to the tree containing <code>v</code>, making <code>v</code>
-        the parent of <code>u</code>; <code>u</code> is added at the
-        end of the sibling list that contains <code>v</code>'s children.
-<li>    <code>setEquals(other)</code> is similar to <code>equals</code>
-        but considers two <code>Forest</code> objects equal if the trees
+<li>    $\p(u)$ returns the parent of vertex $u$.
+<li>    $\firstChild(u)$ returns the first child of $u$.
+<li>    $\nextSibling(u)$ returns the sibling of $u$ that comes next in
+		the sibling list containing $u$.
+<li>    $\root(u)$ returns the root of the tree containing $u$.
+<li>    $\first(u)$ returns the first vertex in the prefix ordering
+        of the vertices within $u$'s subtree.
+<li>    $\next(u,r)$ returns the next vertex after $u$ in the
+        prefix ordering of the vertices within $r$'s subtree
+        where $r$ is an ancestor of $u$
+        (or the entire tree if $r$ is omitted).
+<li>    $\firstLeaf(u)$ returns the first leaf in the
+        prefix ordering of the vertices within $u$'s subtree.
+<li>    $\nextLeaf(u,r)$ returns the next leaf after $u$ in the
+        prefix ordering of the vertices within $r$'s subtree
+        (or the entire tree if $r$ is omitted).
+<li>    $\cut(u)$ cuts the link between $u$ and its
+        parent, making $u$ the root of a separate tree.
+<li>    $\link(u,v)$ links the tree with root $u$
+        to the tree containing $v$, making $v$
+        the parent of $u$; $u$ is added at the
+        end of the sibling list that contains $v$'s children.
+<li>    $\setEquals(other)$ is similar to $\equals$
+        but considers two $\Forest$ objects equal if the trees
         define the same vertex sets.
-<li>    <code>listEquals(other)</code> is similar to <code>equals</code>
-        but considers two <code>Forest</code> objects equal if the trees
+<li>    $\listEquals(other)$ is similar to $\equals$
+        but considers two $\Forest$ objects equal if the trees
         define the same vertex sets and the order of the vertices within
-        each tree are identical.
-<li>    <code>joinGroups(g1,g2)</code> combines two <i>tree groups</i>,
+        the two trees are identical.
+<li>    $\joinGroups(g_1,g_2)$ combines two <i>tree groups</i>,
         into a single group.
-<li>    <code>ungroup(t,g)</code> removes tree <code>t</code> from the
-        group <code>g</code> containing it.
+<li>    $\ungroup(t,g)$ removes tree $t$ from the
+        group $g$ containing it.
 </ul>
-The <code>first</code> and <code>next</code> methods can be used to iterate
+The $\first$ and $\next$ methods can be used to iterate
 through all vertices in the tree. The time required to visit all vertices
 is $O(n)$ although individual steps may take more than constant time.
-The <code>firstLeaf</code> and <code>nextLeaf</code> methods can be used
+The $\firstLeaf$ and $\nextLeaf$ methods can be used
 to iterate through the leaf vertices in the tree.
 The last two methods allow subsets of trees to be grouped together.
 Trees in the same group are considered siblings of one another and
@@ -98,127 +135,70 @@ The core of the <i>Javascript</i> implementation is shown below.
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class Forest extends Top {
-    #sibs;    // lists of siblings
-    #p;       // #p[u] is parent of u or 0
-    #c;       // #c[u] is first child of u or 0
+    Sibs;         // lists of siblings (and tree roots)
+    P;            // P[u] is parent of u or 0
+    C;            // C[u] is first child of u or 0
 
-    /** Construct Forest with space for a specified # of nodes.
-     *  @param n is the number of nodes in the forest
-     *  @param cap is the initial capacity (defaults to n)
-     */
-    constructor(n=10, capacity=n) {
-        super(n);
-        this.#sibs= new ListSet(n,capacity);
-        this.#p = new Int32Array(capacity+1);
-        this.#c = new Int32Array(capacity+1);
-        this.steps = 0;
-    }
+    p(u) { return this.P[u]; }
 
-    /** Get the parent of a node.
-     *  @param u is a node in the forest
-     *  @return the u's parent or 0.
-     */
-    p(u) { return this.#p[u]; }
+    firstChild(u) { return this.C[u]; }
+    lastChild(u) { return this.Sibs.last(this.C[u]); }
 
-    /** Get the first child of a node.
-     *  @param u is a node in the forest
-     *  @return the u's first child or 0.
-     */
-    firstChild(u) { return this.#c[u]; }
+    nextSibling(u) { return this.Sibs.next(u); }
+    prevSibling(u) { return this.Sibs.prev(u); }
 
-    /** Get the root of a tree containing a node.
-     *  @param u is a node in some tree
-     *  @return the tree root
-     */
     root(u) {
-        while (this.p(u) != 0)  {
-            u = this.p(u); this.steps++;
-        }
+        while (this.P[u])  u = this.P[u];
         return u;
     }
 
-    /** Return the first node in the prefix ordering within a subtree. */
     first(u) { return u; }
-
-    /** Return the next descendant of a node in the prefix ordering.
-     *  @param u is a tree node
-     *  @param root is an ancestor of u; if root is included, iteration
-     *  stops at last node in subtree, otherwise, it continues through
-     *  all trees in same group as u
-     *  @return the next node in the subtree at root following u
-     */
     next(u,root=0) {
         if (this.firstChild(u)) return this.firstChild(u);
         do {
-            this.steps++;
             if (this.nextSibling(u)) return this.nextSibling(u);
-            u = this.p(u);
+            u = this.P[u];
         } while (u != root);
         return 0;
     }
 
-    /** Return the first leaf descendant of a node */
     firstLeaf(u) {
-        while (this.firstChild(u)) {
-            u = this.firstChild(u); this.steps++;
-        }
+        while (this.firstChild(u)) { u = this.firstChild(u); }
         return u;
     }
-
-    /** Return the next leaf in a tree or subtree.
-     *  @param u is a leaf node
-     *  @param root is an ancestor of u
-     *  @return the next leaf following u in the prefix ordering,
-     *  within the subtree defined by root
-     */
     nextLeaf(u,root=0) {
         while (u != root) {
-            this.steps++;
             if (this.nextSibling(u))
                 return this.firstLeaf(this.nextSibling(u));
-            u = this.p(u);
+            u = this.P[u];
         }
         return 0;
     }
-    
-    /** Link one tree to another.
-     *  @param u is the root of a tree that is the only one in its group;
-     *  (if necessary, the client must call ungroup before calling link)
-     *  @param v is a node in some other tree
-     */
-    link(u, v) {
-        fassert(u > 0 && this.p(u) == 0 && v > 0,
-                `Forest.link: bad arguments ${u} ${v}`);
-        if (u > this.n || v > this.n) {
-            this.expand(Math.max(u, v));
-        }
-        this.#c[v] = this.#sibs.join(this.firstChild(v), u);
-        this.#p[u] = v;
+    lastLeaf(u) {
+        while (this.lastChild(u)) { u = this.lastChild(u); }
+        return u;
     }
 
-    /** Remove a subtree.
-     *  @param u is a node in a tree; on return it is a tree root
-     */
     cut(u) {
-        if (this.p(u) == 0) return;
-        let p = this.#p[u]; let firstSib = this.firstChild(p);
-        this.#c[p] = this.#sibs.delete(u, firstSib);
-        this.#p[u] = 0;
+        if (this.P[u] == 0) return;
+        let p = this.P[u]; let firstSib = this.firstChild(p);
+        this.C[p] = this.Sibs.delete(u, firstSib);
+        this.P[u] = 0;
+    }
+    link(u, v) {
+        if (u > this.n || v > this.n) { this.expand(Math.max(u, v)); }
+        this.C[v] = this.Sibs.join(this.firstChild(v), u);
+        this.P[u] = v;
     }
 
-    /** Join two tree groups.
-     *  @param r1 is the root of the first tree in some group
-     *  @param r2 is the root of the first tree in some other group
-     *  @return the root of the first tree in the resulting group
-     */
-    joinGroups(r1,r2) { return this.#sibs.join(r1,r2); }
+    joinGroups(r1,r2) { return this.Sibs.join(r1,r2); }
+    ungroup(r,r0) { return this.Sibs.delete(r,r0); }
 
-    /** Remove a tree from a tree group.
-     *  @param r is the root of a tree to be removed from its group
-     *  @param r0 is the first root in r's tree group
-     *  @return the first root in the modified group
-     */
-    ungroup(r,r0) { return this.#sibs.delete(r,r0); }
+    rotate(f, c) {
+        this.Sibs.rotate(f, c); 
+        if (this.P[c]) this.C[this.P[c]] = c;
+        return c;
+    }
 }
 </textarea>
 
@@ -231,78 +211,77 @@ Binary trees (and forests) are often used to
 implement <i>search trees</i> and related data structures.
 In these applications, the left-to-right ordering of the vertices
 (more precisely, the <i>infix</i> ordering) plays an important role.
-The <code>BinaryForest</code> class includes the methods listed below.
+The $\BinaryForest$ class includes the methods listed below.
 More details follow the list.
 <ul>
-<li>    <code>p(u)</code> returns the parent of vertex <code>u</code>.
-<li>    <code>left(u)</code> returns the left child of vertex <code>u</code>.
-<li>    <code>right(u)</code> returns the right child of vertex <code>u</code>.
-<li>    <code>sibling(u)</code> returns the sibling of vertex <code>u</code>.
+<li>    $\p(u)$ returns the parent of vertex $u$.
+<li>    $\left(u)$ returns the left child of vertex $u$.
+<li>    $\right(u)$ returns the right child of vertex $u$.
+<li>    $\sibling(u)$ returns the sibling of vertex $u$.
         Several other convenience methods are provided for accessing nearby
         vertices; these are omitted for brevity.
-<li>    <code>first(u)</code> returns the first vertex in
-        <code>u</code>'s subtree.
-<li>    <code>next(u,t)</code> returns the next vertex following
-        <code>u</code> within <code>t</code>'s subtree (or the entire
-        tree containing <code>u</code> if <code>t</code> is omitted.
-<li>    <code>root(u)</code> returns the root of the tree containing
-        <code>u</code>.
-<li>    <code>cut(u)</code> cuts the link between <code>u</code> and its
-        parent, making <code>u</code> the root of a separate tree.
-<li>    <code>link(u,v,side)</code> links the tree with root <code>u</code>
-        to the tree containing <code>v</code>, making <code>v</code>
-        the parent of <code>u</code>; <code>u</code> is added as the left
-        child of <code>v</code> if <code>side=-1</code> and as the right
-        child of <code>side=+1</code>.
-<li>    <code>insertAfter(u,t,v)</code> inserts singleton
-        <code>u</code> into tree <code>t</code>,
-		 immediately after vertex <code>v</code>.
-<li>    <code>delete(u,t)</code> removes vertex
-        <code>u</code> from tree <code>t</code>.
-<li>    <code>join(t1,u,t2)</code> combines two trees
-        <code>t1</code> and <code>t2</code> at a singleton <code>u</code>.
-        In the resulting tree, the vertices in <code>t1</code> come before
-        <code>u</code> in the left-right ordering while the vertices
-        in <code>t2</code> come after.
-<li>    <code>split(u)</code> divides the tree containing
-        <code>u</code> into three parts; <code>t1</code> containing vertices
-        that come before <code>u</code>, <code>t2</code> containing vertices
-        that come after <code>u</code>, and <code>u</code>.
+<li>    $\first(u)$ returns the first vertex in
+        $u$'s subtree.
+<li>    $\next(u,t)$ returns the next vertex following
+        $u$ within $t$'s subtree (or the entire
+        tree containing $u$ if $t$ is omitted.
+<li>    $\root(u)$ returns the root of the tree containing
+        $u$.
+<li>    $\cut(u)$ cuts the link between $u$ and its
+        parent, making $u$ the root of a separate tree.
+<li>    $\link(u,v,side)$ links the tree with root $u$
+        to the tree containing $v$, making $v$
+        the parent of $u$; $u$ is added as the left
+        child of $v$ if $\side=-1$ and as the right
+        child of $\side=+1$.
+<li>    $\insertAfter(u,t,v)$ inserts singleton
+        $u$ into tree $t$,
+        immediately after vertex $v$ (in the infix ordering).
+<li>    $\delete(u,t)$ removes vertex
+        $u$ from tree $t$.
+<li>    $\join(t_1,u,t_2)$ combines two trees
+        $\t_1$ and $\t_2$ at a singleton $u$.
+        In the resulting tree, the vertices in $t_1$ come before
+        $u$ in the left-right ordering while the vertices
+        in $t_2$ come after.
+<li>    $\split(u)$ divides the tree containing
+        $u$ into three parts; $t_1$ containing vertices
+        that come before $u$, $t_2$ containing vertices
+        that come after $u$, and $u$.
         The two subtrees are returned.
-<li>    <code>insertByKey(u,t,key)</code> inserts singleton
-        <code>u</code> into tree <code>t</code>, based on the value of
-        <code>key[u]</code>, where <code>key</code> is an array mapping
+<li>    $\insertByKey(u,t,key)$ inserts singleton
+        $u$ into tree $t$, based on the value of
+        $\key[u]$, where $\key$ is an array mapping
         vertices to key values. The order of the keys is assumed to match
         the left-to-right order of the vertices in the tree.
-<li>    <code>search(k,t,key)</code> searches for a vertex with a specific
-        key value <code>k</code> in tree <code>t</code>. The array
-        <code>key</code> maps vertices to key values.
-<li>    <code>rotate(u)</code> performs a rotation operation, which can
+<li>    $\search(k,t,key)$ searches for a vertex with a specific
+        key value $k$ in tree $t$. The array
+        $\key$ maps vertices to key values.
+<li>    $\rotate(u)$ performs a rotation operation, which can
         be used to make a tree &ldquo;more balanced&ldquo; while
         preserving the left-to-right ordering of its vertices.
-        This reduces the maximum depth, leading to better performance.
-<li>    <code>property(t,p)</code> is used to get or set a numeric property
-        of a tree <code>t</code>.
-        If the optional argument <code>p</code> is present, it is
+<li>    $\property(t,p)$ is used to get or set a numeric property
+        of a tree $t$.
+        If the optional argument $p$ is present, it is
         saved as the tree's property. In any case, if a property has been
         defined for a tree, it is returned; otherwise 0 is returned.
 </ul>
 The data structure includes several operations for modifying trees in the
-forest. The <code>cut</code> and <code>link</code> operations are fairly
+forest. The $\cut$ and $\link$ operations are fairly
 straightforward. Others require more explanation. The figure below
-illustrates the operation <code>insertAfter(c,a,n)</code> operation.
+illustrates the operation $\insertAfter(c,a,n)$ operation.
 <p>
 <div  style="text-align:center;">
 <img width="65%" src="figs/insertAfter.png"><br>
 </div>
 <p>
-The inserted vertex <code>c</code> becomes the leftmost leaf in the
-right subtree of its specified predecessor <code>n</code>.
+The inserted vertex $c$ becomes the leftmost leaf in the
+right subtree of its specified predecessor $n$.
 <p>
-Deleting a vertex from a tree is easy if it has no children.
-Just cut the link to the parent. It is almost as easy if it has one
-child, since that child can simply take its parent's place in the tree.
-To delete an item with two children, its position in the tree is
+Deleting a vertex $v$ from a tree is easy if $v$ has no children.
+Just cut the link to its parent. It is almost as easy if $v$ has one
+child, since that child can simply take $v$'s place in the tree.
+If $v$ has two children, its position in the tree is
 first swapped with the &ldquo;rightmost vertex&rdquo; in its left subtree.
 This vertex is its immediate predecessor in the tree.
 At that point, it has at most one child, making the deletion easy.
@@ -312,15 +291,15 @@ This is illustrated below.
 <img width="65%" src="figs/btreeDelete.png"><br>
 </div>
 <p>
-The operation <code>join(t1,u,t2)</code> operation is easy. Simply make 
-<code>t1</code> the left child and <code>t2</code> the right child
-of <code>u</code>.
-The operation <code>split(u)</code> operation
-is similarly easy if <code>u</code> is a tree root.
+The operation $\join(t_1,u,t_2)$ operation is easy. Simply make 
+$t_1$ the left child and $t_2$ the right child
+of $u$.
+The operation $\split(u)$ operation
+is similarly easy if $u$ is a tree root.
 If not, the split is accomplished by starting
-at item <code>u</code> and proceeding up the tree, building two subtrees
-<code>L</code> and <code>R</code> where <code>L</code> contains
-the vertices to the left of <code>u</code> and <code>R</code> contains
+at item $u$ and proceeding up the tree, building two subtrees
+$L$ and $R$ where $L$ contains
+the vertices to the left of $u$ and $R$ contains
 the vertices to its right. This is illustrated below.
 <p>
 <div  style="text-align:center;">
@@ -328,12 +307,12 @@ the vertices to its right. This is illustrated below.
 </div>
 <p>
 Observe that the first step completes a split of the subtree of
-vertex <code>c</code>'s parent <code>b</code>. The next step
+vertex $c$'s parent $b$. The next step
 completes a split of the next subtree up the path to the root.
-The third completes the split for whole tree.
+The third completes the split for the whole tree.
 <p>
 Binary trees are often used to implement <i>search trees</i> in which
-each vertex <code>u</code> is assigned a value <code>key[u]</code> and
+each vertex $u$ is assigned a value $\key[u]$ and
 the left-to-right order of the search tree vertices matches the
 increasing order of the key values, as illustrated below.
 <p>
@@ -341,36 +320,36 @@ increasing order of the key values, as illustrated below.
 <img width="35%" src="figs/btreeKeys.png"><br>
 </div>
 <p>
-The operation <code>search(k,t,key)</code> uses the provided key values to
+The operation $\search(k,t,key)$ uses the provided key values to
 locate a vertex with the specified key. It starts at the root and
 at each step compares the key of the current vertex with that of 
-<code>u</code>. In the example above <code>search(5,c,key)</code>
-follows the path <code>[c,a,i,h,e]</code> from the root, at each
+$u$. In the example above $\search(5,c,key)$
+follows the path $\[c,a,i,h,e]$ from the root, at each
 step comparing the key of the current vertex to the target key value
 and selecting the left or subtree based on that comparison.
 <p>
-The operation <code>insertByKeys(u,t,key)</code> is intended for
+The operation $\insertByKey(u,t,key)$ is intended for
 use in this situation. It starts by using the provided keys to find
-a location where <code>u</code> can be inserted as a new leaf,
+a location where $u$ can be inserted as a new leaf,
 while ensuring that the order of the tree's vertices remains
 consistent with the key values.
-In the example above, if <code>key[m]=7</code> the operation
-<code>insertByKeys(m,c,key)</code> would search the tree looking
-for a viable location, eventually inserting <code>m</code> as the
-right child of <code>e</code>.
+In the example above, if $\key[m]=7$ the operation
+$\insertByKey(m,c,key)$ would search the tree looking
+for a viable location, eventually inserting $m$ as the
+right child of $e$.
 <p>
-The operation <code>rotate(x)</code> is illustrated below.
+The operation $\rotate(x)$ is illustrated below.
 <p>
 <div  style="text-align:center;">
 <img width="45%" src="figs/bstRotate.png"><br>
 </div>
 <p>
-Notice that the operation moves <code>x</code> one step closer
+Notice that the operation moves $x$ one step closer
 to the root and moves its parent one step further away.
 If applied in a systematic fashion, rotations can be used to
 reduce the maximum depth of a tree.
 In particular,
-the <code>BalancedForest</code> data structure (see next sub-section)
+the $\BalancedForest$ data structure (see next sub-section)
 uses rotations to ensure that the tree depth is never more than
 twice the log of the tree size.
 <p>
@@ -395,151 +374,41 @@ The core of the <i>Javascript</i> implementation appears below.
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class BinaryForest extends Top {
-    #left;      // #left[u] is left child of u
-    #right;     // #right[u] is right child of u
-    #p;         // #p[u] is parent of u
+    Left;         // Left[u] is left child of u
+    Right;        // Right[u] is right child of u
+    P;            // P[u] is parent of u
 
-    /** Constructor for BinaryForest object.
-     *  @param n is index range for object
-     *  @param capacity is maximum index range (defaults to n)
-     */
-    constructor(n=10, capacity=n) {
-        super(n);
-        this.#left = new Int32Array(capacity+1);
-        this.#right = new Int32Array(capacity+1);
-        this.#p = new Int32Array(capacity+1);
-    }
-
-    /* Get or set the left child of a node.
-     * @param u is a node
-     * @param v is an optional new left child for u
-     * @return the left child of u
-     */
-    left(u, v=-1) {
-        if (v >= 0) this.#left[u] = v;
-        return this.#left[u];
-    }
-
-    /* Get or set the right child of a node. */
-    right(u, v=-1) {
-        if (v >= 0) this.#right[u] = v;
-        return this.#right[u];
-    }
-
-    /* Get or set the parent of a node. */
     p(u, v=-1) {
-        if (v >= 0) this.#p[u] = v;
-        return this.isroot(u) ? 0 : this.#p[u];
+        if (v >= 0) this.P[u] = v;
+        return this.isroot(u) ? 0 : this.P[u];
+    }
+    left(u, v=-1) {
+        if (v >= 0) this.Left[u] = v;
+        return this.Left[u];
+    }
+    right(u, v=-1) {
+        if (v >= 0) this.Right[u] = v;
+        return this.Right[u];
     }
 
-    /* Get or set a property of a tree.
-     * @param t is a tree root
-     * @param p is an optional property to be assigned to the root;
-     * properties must be non-negative integers (Int32).
-     * @return the property of t
-     */
-    property(t, p=-1) {
-        fassert(this.isroot(t),
-                `BinaryForest.property: ${this.x2s(t)} ${this.#p[t]}`);
-        if (p >= 0) this.#p[t] = -p;
-        return -this.#p[t]
-    }
-
-    /* Determine if a node is a tree root, */
-    isroot(r) { return r && this.#p[r] <= 0; }
-
-    /* Get the sibling of a node. */
     sibling(u) {
         let p = this.p(u);
         return (u == this.left(p) ? this.right(p) : this.left(p));
     }
 
-    /** Get grandparent of a node. */
-    gp(x) { return this.p(this.p(x)); }
-
-    /** Get aunt of a node (parent's sibling) */
-    aunt(x) { return this.sibling(this.p(x)); }
-
-    /** Get nephew of a node (far child of sibling) */
-    nephew(x) {
-        return this.outerChild(this.sibling(x));
-    }
-
-    /** Get niece of a node (near child of sibling) */
-    niece(x) {
-        return this.innerChild(this.sibling(x));
-    }
-
-    /** Determine if node is an inner grandchild. */
-    innerGrandchild(x) {
-        let gp = this.gp(x);
-        return x != 0 && (x == this.left(this.right(gp)) ||
-                          x == this.right(this.left(gp))); 
-    }
-
-    /** Determine if node is an outer grandchild. */
-    outerGrandchild(x) {
-        let gp = this.gp(x);
-        return x != 0 && (x == this.left(this.left(gp)) ||
-                          x == this.right(this.right(gp))); 
-    }
-
-    /** Determine if node is a singleton. */
-    singleton(u) {
-        return this.isroot(u) && this.left(u) == 0 && this.right(u) == 0;
-    }
-
-    // Methods for tree iteration. Iterates through nodes in "infix" order,
-    // (that is, left-to-right). Note, iterating through a subtree of
-    // of k nodes takes time proportional to k, although individual
-    // steps may take more than constant time.
-
-    /** Get the leftmost node in a subtree. */
     first(u) {
-        while (this.left(u)) { u = this.left(u); this.steps++; }
+        while (this.left(u)) { u = this.left(u); }
         return u;
     }
-
-    /** Get the next node to the right within a subtree. */
     next(u,root=0) {
         if (this.right(u)) return this.first(this.right(u));
         let c = u; u = this.p(u);
         while (u != this.p(root) && c == this.right(u)) {
-            c = u; u = this.p(u); this.steps++;
+            c = u; u = this.p(u);
         }
         return u != this.p(root) ? u : 0;
     }
 
-    /** Get the rightmost node in a subtree. */
-    last(u) {
-        while (this.right(u)) { u = this.right(u); this.steps++; }
-        return u;
-    }
-
-    /** Get the next node to the left within a subtree. */
-    prev(u,root=0) {
-        if (this.left(u) != 0) {
-            for (u = this.left(u); this.right(u); u = this.right(u)) {
-                this.steps++;
-            }
-            return u;
-        }
-        let c = u; u = this.p(u);
-        while (u != this.p(root) && c == this.left(u)) {
-            c = u; u = this.p(u); this.steps++;
-        }
-        return u != this.p(root) ? u : 0;
-    }
-
-    /** Find the root of the tree containing u. */
-    root(u) {
-        while (!this.isroot(u)) {
-            u = this.p(u); this.steps++;
-        }
-        return u;
-    }
-
-    /** Remove a subtree.  */
     cut(u) {
         let pu = this.p(u);
         if (!this.isroot(u) && u == this.left(pu))  this.left(pu,0);
@@ -547,15 +416,7 @@ export default class BinaryForest extends Top {
         this.p(u,0);
         return u;
     }
-
-    /** Link one tree to another.
-     *  @param u is a tree root or 0
-     *  @param v is a node in a different tree
-     *  @param side specifies which child of v that u should become;
-     *  -1 means left, +1 means right and 0 means don't care
-     */
     link(u,v,side=0) {
-        fassert(v != 0);
         if (u) this.p(u,v);
         if (side < 0) {
             this.left(v,u);
@@ -573,17 +434,7 @@ export default class BinaryForest extends Top {
         }
     }
     
-    /** Insert a node immediately after another vertes in a tree.
-     *  @param u is a singleton
-     *  @param t is the root of a tree
-     *  @param v is a vertes in a tree which defines the point where u is
-     *  to be inserted; if zero, u is inserted before all nodes in tree
-     *  @param refresh(u) is an optional function that can be used to adjust
-     *  client data that is affected by the tree structure; it is called
-     *  just after u is inserted
-     *  @return the root of the resuling tree
-     */
-    insertAfter(u, t, v, refresh=0) {
+    insertAfter(u, t=this.root(v), v, refresh=0) {
         if (t == u) return u;
         if (!v)
             this.link(u, this.first(t), -1);
@@ -594,19 +445,10 @@ export default class BinaryForest extends Top {
         if (refresh) refresh(u);
         return this.root(t);
     }
-
-    /** Delete a node from a tree.
-     *  @param u is a non-singleton tree node.
-     *  @param t is the tree containing u
-     *  @param refresh(cu,pu) is an optional function which can be used
-     *  to adjust client data that is affected by the tree structure;
-     *  it is called just after u's removal and its arguments are u's former
-     *  child and parent
-     *  @return the resulting tree
-     */
-    delete(u, t=this.root(u), refresh=0) {
+    delete(u, t=0, refresh=0) {
         if (this.singleton(u)) return u;
         // find a node close to the root
+        if (!t) t = this.root(u);
         let tt = (u != t ? t : (this.left(u) ? this.left(u) : this.right(u)));
         if (this.left(u) && this.right(u))
             this.swap(u, this.prev(u)); 
@@ -625,16 +467,12 @@ export default class BinaryForest extends Top {
         return tt;
     }
 
-    /** Swap the positions of two nodes in same tree.
-     *  @param u is a node in the tree
-     *  @param v is another node in the same tree
-     */
+	/** Swap the positions of two tree nodes. */
     swap(u, v) {
-        this.steps++;
         // save pointer fields for nodes u and v
         let lu = this.left(u); let ru = this.right(u);
         let lv = this.left(v); let rv = this.right(v);
-        let pu = this.#p[u]; let pv = this.#p[v];
+        let pu = this.P[u]; let pv = this.P[v];
             // special handling of parent field to deal with tree property
     
         // fixup fields in u's neighbors
@@ -653,45 +491,24 @@ export default class BinaryForest extends Top {
         }
     
         // update fields in nodes u and v
-        this.left(u, lv); this.right(u, rv); this.#p[u] = pv;
-        this.left(v, lu); this.right(v, ru); this.#p[v] = pu;
+        this.left(u, lv); this.right(u, rv); this.P[u] = pv;
+        this.left(v, lu); this.right(v, ru); this.P[v] = pu;
     
         // final fixup for the case that u was originally the parent of v
              if (v == lu) { this.left(v, u); this.p(u, v); }
         else if (v == ru) { this.right(v, u); this.p(u, v); }
     }
 
-    /** Join two trees (or subtrees) at a node.
-     *  @param t1 is a tree
-     *  @param u is a node
-     *  @param t2 is a second tree
-     *  @param refresh(u) is an optional function that can be used to adjust
-     *  client data that is affected by the tree structure; it is called
-     *  at the conclusion of the operation.
-     *  @return root of new tree making t1 the left subtree of u
-     *  and t2 the right subtree
-     */
     join(t1, u, t2, refresh=0) {
         this.link(t1,u,-1); this.link(t2,u,+1); this.p(u,0);
         if (refresh) refresh(u);
         return u;
     }
-
-    /** Split a tree on a node.
-     *  @param u is a node in a tree
-     *  @param refresh(u) is an optional function that can be used to adjust
-     *  client data that is affected by the tree structure; it is called
-     *  at the conclusion of the split.
-     *  @return a pair [t1,t2] where t1 has the nodes that were to the
-     *  the left of u and t2 has the nodes that were to the right of u
-     */
     split(u, refresh=0) {
-        fassert(this.valid(u));
+        ea && assert(this.valid(u));
         let v = u; let p = this.p(v);
-        let [l,r] = [this.left(u), this.right(u)];
-        this.left(u,0); this.right(u,0); this.p(u,0);
+        let [l,r] = [this.left(v), this.right(v)];
         while (p > 0) {
-            this.steps++;
             let gp = this.p(p); this.p(p,0); // isolate p's subtree
             if (v == this.left(p)) {
                 r = this.join(r,p,this.right(p),refresh);
@@ -701,107 +518,65 @@ export default class BinaryForest extends Top {
             v = p; p = gp;
         }
         this.p(l,0); this.p(r,0);
+        this.left(u,0); this.right(u,0); this.p(u,0);
         if (refresh) refresh(u);
         return [l,r];
     }
 
-    /** Insert a node based on a key value.
-     *  @param u is a singleton node
-     *  @param key is an array mapping nodes to key values;
-     *  the trees are assumed to be ordered by the keys
-     *  @param t is the root of some tree.
-     *  @param refresh(u) is an optional function that can be used to adjust
-     *  client data that is affected by the tree structure; it is called
-     *  just after u is inserted
-     *  @return the root of the modified tree
-     */
-    insertByKey(u, t, key, refresh=0) {
+    insertByKey(u, t, key, compare=((a,b)=>a-b), refresh=0) {
         if (!t || t == u) return u;
         let v = t; let pv = 0;
         while (v != 0) {
-            pv = v; this.steps++;
-            if (key[u] <= key[v]) v = this.left(v);
-            else                  v = this.right(v);
+            pv = v;
+            if (compare(key[u],key[v]) <= 0)
+                v = this.left(v);
+            else
+                v = this.right(v);
         }
-        this.link(u, pv, key[u] <= key[pv] ? -1 : +1);
+        this.link(u, pv, compare(key[u],key[pv]) <= 0 ? -1 : +1);
         if (refresh) refresh(u);
         return this.root(t);
     }
 
-    /** Search for an item with a specified key
-     *  @param k is a specific key value to be located
-     *  @param t is the root of the tree (or subtree) to be searched
-     *  @param key is an array mapping each node to a key value;
-     *  the tree nodes are assumed to be ordered according to key
-     *  @return node u where key[u]==k or 0 if there is no such node
-     */
-    search(k, t, key) {
+    search(k, t, key, compare=((a,b)=>a-b)) {
         let u = t;
-        while (u != 0 && key[u] != k) {
-            this.steps++;
-            if (k < key[u]) u = this.left(u);
-            else            u = this.right(u);
+        while (u != 0 && compare(key[u],k) != 0) {
+            if (compare(k,key[u]) < 0)
+                u = this.left(u);
+            else
+                u = this.right(u);
         }
         return u;
     }
         
-    /** Append one tree after another
-     *  @param u is the root of tree
-     *  @param v is the root of a second tree
-     *  @return subtree formed by combining the two with the nodes
-     *  in v's subtree to the right of the nodes in u's subtree
-     */
-    append(u,v) {
-        if (u == 0 || u == v) return v;
-        else if (v == 0) return u;
-        let t = this.last(u);
-        let [t1] = this.split(t);
-        t = this.join(t1,t,v);
-        return t;
-    }
-
-    /** Perform a rotation in a tree.
-     *  @param x is a node in some tree; this method
-     *  moves x up into its parent's position, while maintaining the
-     *  left-to-right order of the tree nodes
-     */
     rotate(x) {
-        this.steps++; this.rotations++;
-        let px = this.p(x); let gpx = this.#p[px];
-        if (px == 0) return;
-        let cx = 0;
-        if (x == this.left(px)) {
-            cx = this.right(x); this.left(px, cx); this.right(x, px);
+        let p = this.P; let left = this.Left; let right = this.Right;
+        let y = p[x]; if (!y) return;
+        p[x] = p[y];
+             if (y == left[p[y]])  left[p[x]] = x;
+        else if (y == right[p[y]]) right[p[x]] = x;
+        if (x == left[y]) {
+            left[y] = right[x];
+            if (left[y]) p[left[y]] = y;
+            right[x] = y;
         } else {
-            cx = this.left(x); this.right(px, cx); this.left(x, px);
+            right[y] = left[x];
+            if (right[y]) p[right[y]] = y;
+            left[x] = y;
         }
-        this.p(px, x); if (cx != 0) this.p(cx, px);
-        if (gpx > 0) {
-            if (px == this.left(gpx)) {
-                this.left(gpx, x);
-            } else if (px == this.right(gpx)) {
-                this.right(gpx, x);
-            }
-        }
-        this.#p[x] = gpx;
+        p[y] = x;
     }
 
-    /** Perform a double-rotation on a tree.
-     *  @param x is a node in the tree; the operation moves x into
-     *  its grandparent's position. Note that this is not the same
-     *  as simply doing two successive rotations at x.
-     */
-    rotate2(x) {
-        if (this.outerGrandchild(x))  {
-            this.rotate(this.p(x)); this.rotate(x); 
-        } else if (this.innerGrandchild(x)) {
-            this.rotate(x); this.rotate(x); 
-        }
+    property(t, p=-1) {
+        ea && assert(this.isroot(t),
+                     `BinaryForest.property: ${this.x2s(t)} ${this.P[t]}`);
+        if (p >= 0) this.P[t] = -p;
+        return -this.P[t]
     }
 }
 </textarea> <p>
 Notice that most methods that modify a tree's structure
-provide an optional function argument called <code>refresh</code>.
+provide an optional function argument called $\refresh$.
 These functions can be used to assist in balancing the data structure,
 and/or maintaining client data that may be affected by the
 tree structure.
@@ -869,7 +644,7 @@ now be addressed using one of the three remaining cases.
 (Case 2) If $x$'s sibling has rank $r+1$ and both of its children have
 rank $r$, then $rank(p(x))$ is decremented, eliminating the rank
 violation at $x$, but possibly creating a new violation between
-$p(x)$ and its parent. In this case, the checking process is repeated,
+$p(x)$ and its parent. In this case, the checking procedure is repeated,
 with $p(x)$ replacing $x$.
 <p>
 <div  style="text-align:center;">
@@ -921,67 +696,31 @@ starting at $i$.
 The <i>split</i> operation is done as before, but uses the balanced
 version of the <i>join</i> operation in place of the original.
 <p>
-The core of the <code>BalancedSets</code> class is shown below.
+The core of the $\BalancedForest$ class is shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class BalancedForest extends BinaryForest {
-    #rank;        // #rank[u] is an optional field used to maintain tree balance
+    Rank;        // Rank[u] is an optional field used to maintain tree balance
 
-    constructor(n=10, capacity=n) {
-        super(n, capacity);
-        this.#rank = new Int8Array(this.capacity+1).fill(1,1);
-    }
-
-    /* Get or set the rank child of a node.
-     * @param u is a node
-     * @param r is an optional new rank for u
-     * @return the rank of u
-     */
     rank(u, r=-1) {
-        if (r >= 0) this.#rank[u] = r;
-        return this.#rank[u];
+        if (r >= 0) this.Rank[u] = r;
+        return this.Rank[u];
     }
     
-    /** Insert a singleton immediately after another node in a tree.
-     *  @param u is a singleton
-	 *  @param t is root of tree into which u is to be inserted
-     *  @param v is a node in a tree which defines the point where u is
-     *  to be inserted; if zero, u is inserted before all nodes in tree
-     *  @param refresh(u) is an optional function that can be used to adjust
-     *  client data that is affected by the tree structure; it is called
-     *  just before the tree is rebalanced.
-     *  @param t is the tree root
-     */
     insertAfter(u, t, v, refresh=0) {
-        return super.insertAfter(u, v, t,  u => { if (refresh) refresh(u);
+        return super.insertAfter(u, t, v, u => { if (refresh) refresh(u);
                                                 this.rerankUp(u);
                                                 });
     }
 
-    /** Insert a node based on a key value.
-     *  @param u is a singleton node
-     *  @param key is an array mapping nodes to key values;
-     *  @param t is the root of the tree containing u
-     *  @param refresh(u) is an optional function, which is called
-     *  with argument u after u is inserted but before rebalancing.
-     *  @return the root of the modified tree
-     */
-    insertByKey(u, t, key, refresh=0) {
-        return super.insertByKey(u, t, key, u => { if (refresh) refresh(u);
+    insertByKey(u, t, key, compare, refresh=0) {
+        return super.insertByKey(u, t, key, compare,
+                                            u => { if (refresh) refresh(u);
                                                  this.rerankUp(u);
                                                  });
     }
 
-    /** Delete a node from a tree.
-     *  @param u is a non-singleton tree node.
-     *  @param t is the tree containing u
-     *  @param refresh(pu) is an optional function that can be used to adjust
-     *  client data that is affected by the tree structure; it is called
-     *  just before the tree is rebalanced and its argument is u's parent
-     *  just before the rebalancing takes place.
-     *  @return the modified tree
-     */
     delete(u, t=0, refresh=0) {
         t = super.delete(u, t, (cu,pu) => { if (refresh) refresh(pu);
                                              this.rerankDown(cu,pu);
@@ -995,21 +734,12 @@ export default class BalancedForest extends BinaryForest {
         let ru = this.rank(u); this.rank(u, this.rank(v)); this.rank(v, ru);
     }
 
-    /** Join two trees (or subtrees) at a node.
-     *  @param t1 is a tree
-     *  @param u is a node
-     *  @param t2 is a second tree (likewise)
-     *  @param refresh is an optional function 
-     *  @param refresh(pu) is an optional function that can be used to adjust
-     *  client data that is affected by the tree structure; it is called
-     *  just before the tree is rebalanced and its argument is u's parent
-     *  just before the rebalancing takes place.
-     *  @return root of new tree (or subtree) formed by joining t1, u and t2.
-     */
     join(t1, u, t2, refresh=0) {
         let r1 = this.rank(t1); let r2 = this.rank(t2);
         if (r1 == r2) {
-            let t = super.join(t1,u,t2); this.rank(t, r1+1);
+            let t = super.join(t1,u,t2);
+            if (refresh) refresh(u);
+            this.rank(t, r1+1);
             return t;
         }
         if (r1 > r2) {
@@ -1031,7 +761,7 @@ export default class BalancedForest extends BinaryForest {
                 pv = v; v = this.left(v); this.steps++;
             }
             super.join(t1, u, v);
-            this.link(u,pv,-1); this.rank(u, r1+1)
+            this.link(u,pv,-1); this.rank(u,r1+1)
             this.p(t2,0);
             if (refresh) refresh(u);
             this.rerankUp(u);
@@ -1044,12 +774,7 @@ export default class BalancedForest extends BinaryForest {
         let pair = super.split(u, refresh); this.rank(u,1); return pair;
     }
 
-    /** Adjust ranks after a node rank increases, leading to a violation
-     *  of the rank invariant; may do up to two rotations, as well;
-     *  assumes that other nodes satisfy the invariant.
-     *  @param x is a node whose rank may equal that of its grandparent, 
-     *  in violation of the rank invariant for balanced trees.
-     */ 
+	/** Adjust ranks after a node rank increases. */
     rerankUp(x) {
         let rx = this.rank(x);
         while (this.gp(x) != 0 && this.rank(this.gp(x)) == rx &&
@@ -1062,13 +787,7 @@ export default class BalancedForest extends BinaryForest {
         else this.rotate2(x);
     }
 
-    /** Adjust ranks after the rank of a node decreases, leading to a
-     *  violation in the rank invariant; may do up to two rotations;
-     *  assumes that other nodes satisfy the invariant.
-     *  @param x is a node in a tree or 0; the rank at x may be too small
-     *  for its parent (by 1).
-     *  @param px is the parent of x, or a node with a null child, if x=0
-     */
+	/** Adjust ranks after the rank of a node decreases. */
     rerankDown(x, px) {
         let r = this.rank(x);
         while (this.rank(px) == r+2) {
@@ -1100,7 +819,7 @@ export default class BalancedForest extends BinaryForest {
     }
 }
 </textarea> <p>
-Observe how the <code>refresh</code> function arguments are used
+Observe how the $\refresh$ function arguments are used
 to implement the re-balancing.
 
 <a id=SplayForest><h2>Splay Forest</h2></a>
@@ -1133,7 +852,7 @@ A similar thing happens for $u$'s original ancestors.
 Once an ancestor becomes a descendant of $u$, it benefits in the same way.
 That is, its distance to the root is reduced by roughly a factor of two.
 Even a vertex $p$ that is not an ancestor of $u$ can benefit, since it also
-starts moving closer to the tree root, once $u$ passes $p$'s ancestor on
+starts moving closer to the tree root, once $u$ passes $p$'s first ancestor on
 the original path from $u$ to the root.
 <p>
 When a <i>search</i> operation reaches a vertex with the target key,
@@ -1145,20 +864,25 @@ No splay is performed during a <i>join</i>, but a <i>split</i>
 is implemented by first performing a splay at the split vertex $u$ and
 then simply separating the two subtrees of the new root, $u$.
 <p>
-An amortized complexity analysis can be used to show that the time
+An <i>amortized complexity analysis</i> can be used to show that the time
 required to do a sequence of $m$ operations on a collection of
 splay trees is $O(n + m\log n)$ or $O(m\log n)$ in the common case
 where $m\geq n$.
-As usual, operations are paid for with credits and any excess
-credits not needed for a particular operation can be carried over
-to pay for future operations.
+The analysis uses a set of fictitious &ldquo;credits&rdquo; that are
+allocated for each operation and used to “pay” for computational steps.
+Credits that are not needed to pay for a particular operation can be
+saved and used to pay for later operations.
+The total number of credits allocated to a sequence of operations
+then serves as an upper bound on the number computational steps.
 To ensure that there are always enough credits on hand,
-the following credit policy is used.
+credits are allocated so as to satisfy the following credit policy.
 <p style="padding-left:5%;">
-For each vertex of $u$, maintain $rank(u)$ credits, where
-$$rank(u)= \lfloor \lg (\textrm{the number of descendants of }u)\rfloor$$
+For each vertex of $u$, maintain
+$rank(u)= \lfloor \lg (\textrm{the number of descendants of }u)\rfloor$
+credits.
 <p>
-To determine the number of credits needed for a splay at vertex $u$,
+To determine the number of credits that must be allocated to
+a splay operation at vertex $u$,
 let's first determine the number needed for one double-rotation.
 Let $v$ be the parent of $u$ and $w$ its grandparent and let
 $rank'$ denote the rank values after the rotation
@@ -1246,14 +970,11 @@ this definition. The more general version is used in a later section
 to analyze the performance of the dynamic trees data structure.
 <p>
 The core of the <i>Javascript</i> implementation of the
-<code>SplayForest</code> class is shown below.
+$\SplayForest$ class is shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class SplayForest extends BinaryForest {
-
-    constructor(n=10, capacity=n) { super(n,capacity); }
-
     splay(x) {
         for (let y = this.p(x); y; y = this.p(x)) {
             let z = this.p(y);
@@ -1271,8 +992,12 @@ export default class SplayForest extends BinaryForest {
         return this.splay(super.search(k, t, key));
     }
 
-    insertByKey(u, t, key) {
-        return super.insertByKey(u, t, key, u => this.splay(u));
+    insertAfter(u, t, v) {
+        super.insertAfter(u, t, v); this.splay(u);
+    }
+
+    insertByKey(u, t, key, compare=((a,b)=>a-b)) {
+        return super.insertByKey(u, t, key, compare, u => this.splay(u));
     }
 
     delete(u,t=0) {
@@ -1282,11 +1007,12 @@ export default class SplayForest extends BinaryForest {
     split(u) { this.splay(u); return super.split(u); }
 }
 </textarea> <p>
-In practice, the balanced binary tree is generally more efficient than
-the splay tree, since the rotations required for each splay are
-relatively expensive operations.
-However, there are some special cases, where the splay tree is
-technically superior.
+In most situtions, balanced binary trees are generally more efficient than
+the splay trees, since they requires far fewer rotations.
+While a single rotation does take constant time, it is still a
+fairly expensive operation.
+Still, there are some situations where splay trees can out-perform
+explicitly balanced trees.
 
 <h2>References</h2>
 <dl>

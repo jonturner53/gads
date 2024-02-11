@@ -28,22 +28,98 @@
 </script>
 </head>
 <body bgcolor=ffffff>
+\(
+\newcommand{\this}{\textit{this}}
+\newcommand{\true}{\texttt{true}}
+\newcommand{\Graph}{\texttt{Graph}}
+\newcommand{\Digraph}{\texttt{Digraph}}
+\newcommand{\Flograph}{\texttt{Flograph}}
+\newcommand{\ListPair}{\texttt{ListPair}}
+\newcommand{\ListSet}{\texttt{ListSet}}
+\newcommand{\toString}{\texttt{toString}}
+\newcommand{\fromString}{\texttt{fromString}}
+\newcommand{\equals}{\texttt{equals}}
+\newcommand{\edgeRange}{\texttt{edgeRange}}
+\newcommand{\constructor}{\texttt{constructor}}
+\newcommand{\n}{\textit{n}}
+\newcommand{\m}{\textit{m}}
+\newcommand{\clear}{\texttt{clear}}
+\newcommand{\validVertex}{\texttt{validVertex}}
+\newcommand{\validEdge}{\texttt{validEdge}}
+\newcommand{\left}{\texttt{left}}
+\newcommand{\right}{\texttt{right}}
+\newcommand{\head}{\texttt{head}}
+\newcommand{\tail}{\texttt{tail}}
+\newcommand{\first}{\texttt{first}}
+\newcommand{\next}{\texttt{next}}
+\newcommand{\firstAt}{\texttt{firstAt}}
+\newcommand{\nextAt}{\texttt{nextAt}}
+\newcommand{\mate}{\texttt{mate}}
+\newcommand{\join}{\texttt{join}}
+\newcommand{\delete}{\texttt{delete}}
+\newcommand{\degree}{\texttt{degree}}
+\newcommand{\maxDegree}{\texttt{maxDegree}}
+\newcommand{\weight}{\texttt{weight}}
+\newcommand{\length}{\texttt{length}}
+\newcommand{\cost}{\texttt{cost}}
+\newcommand{\firstIn}{\texttt{firstIn}}
+\newcommand{\firstOut}{\texttt{firstOut}}
+\newcommand{\nextIn}{\texttt{nextIn}}
+\newcommand{\nextOut}{\texttt{nextOut}}
+\newcommand{\inDegree}{\texttt{inDegree}}
+\newcommand{\outDegree}{\texttt{outDegree}}
+\newcommand{\source}{\texttt{source}}
+\newcommand{\sink}{\texttt{sink}}
+\newcommand{\res}{\texttt{res}}
+\newcommand{\flow}{\texttt{flow}}
+\newcommand{\setCapacity}{\texttt{setCapacity}}
+\newcommand{\addFlow}{\texttt{addFlow}}
+\newcommand{\clearFlow}{\texttt{clearFlow}}
+\newcommand{\totalFlow}{\texttt{totalFlow}}
+\newcommand{\totalCost}{\texttt{totalCost}}
+\newcommand{\floor}{\texttt{floor}}
+\newcommand{\hasFloors}{\texttt{hasFloors}}
+\newcommand{\hasWeights}{\texttt{hasWeights}}
+\newcommand{\hasLengths}{\texttt{hasLengths}}
+\newcommand{\hasCosts}{\texttt{hasCosts}}
+\newcommand{\randomGraph}{\texttt{randomGraph}}
+\newcommand{\randomTree}{\texttt{randomTree}}
+\newcommand{\randomConnectedGraph}{\texttt{randomConnectedGraph}}
+\newcommand{\randomRegularGraph}{\texttt{randomRegularGraph}}
+\newcommand{\randomBigraph}{\texttt{randomBigraph}}
+\newcommand{\randomRegularBigraph}{\texttt{randomRegularBigraph}}
+\newcommand{\randomDigraph}{\texttt{randomDigraph}}
+\newcommand{\randomFlograph}{\texttt{randomFlograph}}
+\newcommand{\randomWeights}{\texttt{randomWeights}}
+\newcommand{\randomLengths}{\texttt{randomLengths}}
+\newcommand{\randomCosts}{\texttt{randomCosts}}
+\newcommand{\randomCapacities}{\texttt{randomCapacities}}
+\newcommand{\randomFloors}{\texttt{randomFloors}}
+\newcommand{\Random}{\texttt{Random}}
+\newcommand{\RandomGraph}{\texttt{RandomGraph}}
+\newcommand{\randomFraction}{\texttt{randomFraction}}
+\newcommand{\randomInteger}{\texttt{randomInteger}}
+\newcommand{\randomPareto}{\texttt{randomPareto}}
+\newcommand{\randomExp}{\texttt{randomExp}}
+\newcommand{\scale}{\textit{scale}}
+\)
+
 <h1>Graph Data Structures<sup>&copy</sup></h1>
 <p>
 This section describes the data structures used to represent three
 different types of graphs:
 an <i>undirected graph</i>,
-implemented by the <code>Graph</code> class,
-a <i>directed graph</i>, implemented by the <code>Digraph</code> class,
-and a <i>flow graph</i>, implemented by the <code>Flograph</code> class.
-These form a class hierarchy, with <code>Digraph</code> extending
-<code>Graph</code> and <code>Flograph</code> extending <code>Digraph</code>.
+implemented by the $\Graph$ class,
+a <i>directed graph</i>, implemented by the $\Digraph$ class,
+and a <i>flow graph</i>, implemented by the $\Flograph$ class.
+These form a class hierarchy, with $\Digraph$ extending
+$\Graph$ and $\Flograph$ extending $\Digraph$.
 It also includes a section describing several methods for generating
 random graphs.
 
 <a id=Graph><h2>Undirected Graphs</h2></a>
 
-The implementation of the <code>Graph</code> class is illustrated below.
+The implementation of the $\Graph$ class is illustrated below.
 <p>
 <div  style="text-align:center;">
 <img width="60%" src="figs/graph.png"><br>
@@ -58,7 +134,7 @@ Edges are also identified by integer values in a bounded range.
 The <i>edges</i> array lists the pair of vertices joined by
 each edge, assigning them arbitrary designations of <i>left</i>
 and <i>right</i>.
-A <code>ListSet</code> object is used to represent the
+A $\ListSet$ object is used to represent the
 edges incident to each vertex.
 More precisely, it represents lists of <i>edge endpoints</i>,
 where the endpoints of edge $e$ are defined to be $2e$ and $2e+1$.
@@ -70,411 +146,220 @@ in the endpoint list for each vertex.
 <p>
 This implementation supports efficient iteration through the entire edge set,
 or the edges incident to each vertex. Edges can be added using the
-<code>join</code> method.
+$\join$ method.
 It's generally most efficient to pre-dimension the
-<code>edges</code> array to allow for the maximum number of
+$\edges$ array to allow for the maximum number of
 edges expected.
-The implementation also includes a <code>ListPair</code> object that
+The implementation also includes a $\ListPair$ object that
 keeps track of which edge numbers are in use and which are available
 to be allocated. This allows edges to be easily deleted as well.
 The implementation does supports dynamic expansion of the space,
 if that becomes necessary.
 
-The <code>Graph</code> class supports the following methods.
+The $\Graph$ class supports the following methods.
 <ul>
-<li> <code>n</code> returns the number of vertices.
-<li> <code>m</code> returns the number of edges.
-<li> <code>edgeRange</code> returns the range for the edge numbers;
-    that is <code>edgeRange</code> is the largest possible edge number.
-<li> <code>clear()</code> removes all the edges from the graph.
-<li> <code>validVertex(u)</code> returns true if <code>u</code> is a valid
-    vertex number.
-<li> <code>validEdge(e)</code> returns true if <code>e</code> is a valid
-    edge number.
-<li> <code>left(e)</code> returns the vertex that is designated the left
-    endpoint of <code>e</code>.
-<li> <code>right(e)</code> returns the vertex that is designated the right
-    endpoint of <code>e</code>.
-<li> <code>first()</code> returns the first edge in the edge list.
-<li> <code>next(e)</code> returns the next edge following <code>e</code> in
+<li> $\left(e)$ returns the vertex that is designated the left
+    endpoint of $e$.
+<li> $\right(e)$ returns the vertex that is designated the right
+    endpoint of $e$.
+<li> $\first()$ returns the first edge in the edge list.
+<li> $\next(e)$ returns the next edge following $e$ in
     the edge list.
-<li> <code>firstAt(u)</code> returns the first edge in the list of
-    edges incident to <code>u</code>.
-<li> <code>nextAt(u, e)</code> returns the next edge following <code>e</code>
-    in the list of edges incident to <code>u</code>.
-<li> <code>mate(u, e)</code> returns the endpoint of <code>e</code> that
-    is not <code>u</code>.
-<li> <code>join(u, v, e)</code> joins vertices <code>u</code> and
-    <code>v</code> with a new edge. If the optional third argument is
+<li> $\firstAt(u)$ returns the first edge in the list of
+    edges incident to $u$.
+<li> $\nextAt(u,e)$ returns the next edge following $e$
+    in the list of edges incident to $u$.
+<li> $\mate(u,e)$ returns the endpoint of $e$ that
+    is not $u$.
+<li> $\join(u,v,e)$ joins vertices $u$ and
+    $v$ with a new edge. If the optional third argument is
     provided, it must be an edge number not currently in use. This edge
     number is used for the new edge. If the third argument is omitted,
     an arbitrary choice is made for the new edge number.
-<li> <code>delete(e)</code> removes the edge <code>e</code>.
-<li> <code>degree(u)</code> returns the vertex degree of <code>u</code>.
-<li> <code>maxDegree(u)</code> returns the maximum vertex degree.
-<li> <code>addWeights</code> augments the basic graph with a vector of
-    edge weights.
-<li> <code>weight(e,w=null)</code> is used to get or set the weight of
-    an edge; if <code>w</code> is provided, the weight of edge <code>e</code>
-    is set to <code>w</code>. The weight of edge <code>e</code> is returned,
+<li> $\delete(e)$ removes the edge $e$.
+<li> $\weight(e,w=null)$ is used to get or set the weight of
+    an edge; if $w$ is provided, the weight of edge $e$
+    is set to $w$. The weight of edge $e$ is returned,
     in any case.
 </ul>
-Methods <code>length</code> and <code>cost</code> are alternate names
-for <code>weight</code>.
-The <code>Graph</code> class also supports the common methods,
-<code>toString()</code> <code>fromString()</code> and
-<code>equals()</code>. The core of the <i>Javascript</i> implementation
-is shown below.
+Properties $n$ and $m$ refer to the number of vertices and edges in
+the graph.
+Propertes $\length$ and $\cost$ are alternate names
+for $\weight$.
+The $\Graph$ class also supports the common methods,
+$\toString()$ $\fromString()$ and
+$\equals()$. The core of the <i>Javascript</i> implementation
+is shown below. This version is purposely abridged to give a clearer
+picture of the most essential features.
+Consult the web app for the complete source.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class Graph extends Top {
-    _firstEp;   // _firstEp[v] is first edge endpoint at v
-    _left;      // _left[e] is left endpoint of edge e
-    _right;     // _right[e] is right endpoint of edge e
-    _edges;     // sets of in-use and free edges
-    _epLists;   // lists of the edge endpoints at each vertex
-    _nabors;    // temporary list of neighbors used by fromString
+    firstEp;    // firstEp[v] is first edge endpoint at v
+    edges;      // sets of in-use and free edges
+    epLists;    // lists of the edge endpoints at each vertex
+    nabors;     // temporary list of neighbors used by fromString
 
-    _weight;    // _weight[e] is optional weight of edge e, initially unused
+    Left;       // Left[e] is left endpoint of edge e
+    Right;      // Right[e] is right endpoint of edge e
+    Weight;     // Weight[e] is optional weight of edge e, initially unused
 
-    /** Construct Graph with space for a specified # of vertices and edges.
-     *  @param n is the number of vertices in the graph
-     *  @param erange is the initial range for edge values (defaults to n)
-     *  @param capacity is the initial vertex capacity (defaults to n)
-     */
-    constructor(n=10, erange=n) {
-        super(n);
-        this._firstEp = new Int32Array(capacity+1);
-        this._left = new Int32Array(erange+1);
-        this._right = new Int32Array(erange+1);
-        this._edges = new ListPair(erange);
-        this._epLists = new ListSet(2*(erange+1));
-        this._weight = null;
-    }
+    get m() { return this.edges.length(1); }
 
-    /** Get the number of edges.
-     *  @return the number of edges in the graph.
-     */
-    get m() { return this._edges.n1(); }
+    left(e) { return this.Left[e]; }
+    right(e) { return this.Right[e]; }
+    mate(v, e) { return v == this.left(e) ? this.right(e) : this.left(e); }
 
-    /** Get the range of the edge numbers. */
-    get edgeRange() { return this._left.length-1; }
-
-    /** Get the left endpoint of an edge.
-     *  @param e is the edge of interest
-     *  @return the left endpoint of e, or 0 if e is not a valid edge.
-     */
-    left(e) {
-        fassert(this.validEdge(e), `Graph.left: invalid edge number: ${e}`);
-        return this._left[e];
-    }
-    
-    /** Get the right endpoint of an edge.
-     *  @param e is the edge of interest
-     *  @return the right endpoint of e, or 0 if e is not a valid edge.
-     */
-    right(e) {
-        fassert(e == 0 || this.validEdge(e));
-        return this._right[e];
-    }
-
-    /** Get/set the weight of an edge.
-     *  @param e is an edge
-     *  @param w is an optional weight to be assigned to e
-     *  @return the weight of e
-     */
+    /** Get/set the weight of an edge. */
     weight(e, w=null) {
         if (w != null) {
-            if (!this.hasWeights) this.addWeights();
-            this._weight[e] = w;
+            if (!this.hasWeights) this.hasWeights = true;
+            this.Weight[e] = w;
         }
-        return this.hasWeights ? this._weight[e] : 0;
-    }
-
-    addWeights() {
-        if (!this.hasWeights)
-            this._weight = new Float32Array(this.edgeRange+1);
+        return this.hasWeights ? this.Weight[e] : 0;
     }
     
-    /** Get the other endpoint of an edge.
-     *  @param v is a vertex
-     *  @param e is an edge incident to v
-     *  @return the other vertex incident to e
-     */
-    mate(v, e) {
-        fassert(this.validVertex(v) && this.validEdge(e) &&
-               (v == this._left[e] || v == this._right[e]));
-        return v == this._left[e] ? this._right[e] : this._left[e];
-    }
+    first() { return this.edges.first(1); }
+    next(e) { return this.edges.next(e); }
     
-    /** Get the first edge in the overall list of edges.
-     *  @return the first edge in the list
-     */
-    first() { return this._edges.first1(); }
-    
-    /** Get the next edge in the overall list of edges.
-     *  @param e is the edge whose successor is requested
-     *  @return the next edge in the list, or 0 if e is not in the list
-     *  or it has no successor
-     */
-    next(e) { return this._edges.next1(e); }
-    
-    /** Get the first edge incident to a vertex.
-     *  @param v is the vertex of interest
-     *  @return the first edge incident to v
-     */
-    firstAt(v) { 
-        fassert(this.validVertex(v));
-        return Math.trunc(this._firstEp[v]/2);
-    }
-    
-    /** Get the next edge in the adjacency list for a specific vertex.
-     *  @param v is the vertex whose adjacency list we're accessing
-     *  @param e is the edge whose successor is requested
-     *  @return the next edge in the adjacency list for v
-     *  or 0 if e is not incident to v or is the last edge on the list
-     */
+    firstAt(v) { return Math.trunc(this.firstEp[v]/2); }
     nextAt(v, e) {
-        fassert(this.validVertex(v) && this.validEdge(e));
-        if (v != this._left[e] && v != this._right[e]) return 0;
-        let ep = (v == this._left[e] ? 2*e : 2*e+1);
-        return Math.trunc(this._epLists.next(ep)/2);
+        if (v != this.left(e) && v != this.right(e)) return 0;
+        let ep = (v == this.left(e) ? 2*e : 2*e+1);
+        return Math.trunc(this.epLists.next(ep)/2);
     }
 
-    /** Join two vertices.
-     *  @param u is the left endpoint for the new edge
-     *  @param v is the right endpoint for the new edge
-     *  @param e is the number of an "unused" edge;
-     *  if omitted, the first unused edge is used
-     *  @return the edge number for the new edge or 0
-     *  on failure
-     */
-    join(u, v, e=this._edges.first2()) {
-        fassert(u != v && u > 0 && v > 0 &&
-               (e > 0 || this._edges.first2() == 0) &&
-               !this._edges.in1(e));
-        if (u > this.n || v > this.n || this._edges.n2() == 0) {
-            this.expand(Math.max(this.n, Math.max(u, v)),
-                        Math.max(e, this._edges.n+1));
-            if (e == 0) e = this._edges.first2();
+    join(u, v, e=this.edges.first(2)) {
+        if (u > this.n || v > this.n || this.edges.length(2) == 0) {
+            this.expand(Math.max(this.n, u, v),
+                        Math.max(e, this.edges.n+1));
+            if (e == 0) e = this.edges.first(2);
         }
-        this._edges.swap(e);
+        this.edges.swap(e);
 
         // initialize edge information
-        this._left[e] = u; this._right[e] = v;
-        if (this.hasWeights) this._weight[e] = 0;
+        this.Left[e] = u; this.Right[e] = v;
+        if (this.hasWeights) this.Weight[e] = 0;
     
         // add edge to the endpoint lists
-        this._firstEp[u] = this._epLists.join(this._firstEp[u], 2*e);
-        this._firstEp[v] = this._epLists.join(this._firstEp[v], 2*e+1);
+        this.firstEp[u] = this.epLists.join(this.firstEp[u], 2*e);
+        this.firstEp[v] = this.epLists.join(this.firstEp[v], 2*e+1);
     
         return e;
     }
     
-    /** Delete an edge from the graph.
-     *  @param e is the edge to be deleted.
-     *  @return true on success, false on failure
-     */
     delete(e) {
-        fassert(this.validEdge(e));
-        this._edges.swap(e);
-        let u = this._left[e]; let v = this._right[e];
-        this._firstEp[u] = this._epLists.delete(2*e,   this._firstEp[u]);
-        this._firstEp[v] = this._epLists.delete(2*e+1, this._firstEp[v]);
+        this.edges.swap(e);
+        let u = this.left(e); let v = this.right(e);
+        this.firstEp[u] = this.epLists.delete(2*e,   this.firstEp[u]);
+        this.firstEp[v] = this.epLists.delete(2*e+1, this.firstEp[v]);
         return true;
     }
 }
 </textarea>
 
 <a id=Digraph><h2>Directed Graphs</h2></a>
-The <code>Digraph</code> class extends the <code>Graph</code> class,
+The $\Digraph$ class extends the $\Graph$ class,
 adding the following methods.
 <ul>
-<li>    <code>tail(e)</code> returns the tail of the directed
-        edge <code>e</code>.
-<li>    <code>head(e)</code> returns the head of the directed
-        edge <code>e</code>.
-<li>    <code>firstIn(u)</code> returns the first edge for which
-        <code>u</code> is the head.  
-<li>    <code>firstOut(u)</code> returns the first edge for which
-        <code>u</code> is the tail.  
-<li>    <code>nextIn(u, e)</code> returns the next edge for which
-        <code>u</code> is the head, following <code>e</code>.
-<li>    <code>nextOut(u, e)</code> returns the next edge for which
-        <code>u</code> is the tail, following <code>e</code>.
-<li>    <code>inDegree(u)</code> returns the number of incoming edges
-        at <code>u</code>.
-<li>    <code>outDegree(u)</code> returns the number of outgoing edges
-        at <code>u</code>.
+<li>    $\tail(e)$ returns the tail of the directed
+        edge $e$.
+<li>    $\head(e)$ returns the head of the directed
+        edge $e$.
+<li>    $\firstIn(u)$ returns the first edge for which
+        $u$ is the head.  
+<li>    $\firstOut(u)$ returns the first edge for which
+        $u$ is the tail.  
+<li>    $\nextIn(u, e)$ returns the next edge for which
+        $u$ is the head, following $e$.
+<li>    $\nextOut(u, e)$ returns the next edge for which
+        $u$ is the tail, following $e$.
+<li>    $\inDegree(u)$ returns the number of incoming edges
+        at $u$.
+<li>    $\outDegree(u)$ returns the number of outgoing edges
+        at $u$.
 </ul>
-One can still use <code>firstAt(u)</code> and <code>nextAt(u, e)</code>
-to iterate through all edges at <code>u</code>.
+One can still use $\firstAt(u)$ and $\nextAt(u, e)$
+to iterate through all edges at $u$.
 
 The core of the <i>Javascript</i> implementation is shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class Digraph extends Graph {
-    _firstEpOut     // _firstEpOut[u] is endpoint of first outgoing edge
+    firstEpOut      // firstEpOut[u] is endpoint of first outgoing edge
                     // in u's adjacency list
 
-    /** Get the tail of a directed edge.
-     *  @param e is a directed edge
-     *  @return the vertex the e leaves from
-     */ 
     tail(e) { return this.left(e); }
-
-    /** Get the head of a directed edge.
-     *  @param e is a directed edge
-     *  @return the vertex the e goes to
-     */ 
     head(e) { return this.right(e); }
 
-    /** Get the first edge coming into u.
-     *  @param u is a vertex
-     *  @return the first edge in the list of edges entering u, or 0 if
-     *  no such edge
-     */ 
     firstIn(u) {
         let e = this.firstAt(u);
         return (u == this.tail(e) ? 0 : e);
     }
-
-    /** Get the next edge coming into u.
-     *  @param u is a vertex
-     *  @param e is an edge entering u
-     *  @return the next edge in the list of edges entering u, or 0 if
-     *  no such edge
-     */ 
     nextIn(u, e) {
         e = this.nextAt(u, e);
-        return (u == this.tail(e) ? 0 : e);
+        return (e == 0 || u == this.tail(e) ? 0 : e);
     }
 
-    /** Get the first edge leaving u.
-     *  @param u is a vertex
-     *  @return the first edge in the list of edges leaving u, or 0 if
-     *  no such edge
-     */ 
-    firstOut(u) { return Math.trunc(this._firstEpOut[u]/2); }
-
-    /** Get the next edge leaving u.
-     *  @param u is a vertex
-     *  @param e is an edge leaving u
-     *  @return the next edge in the list of edges leaving u, or 0 if
-     *  no such edge
-     */ 
+    firstOut(u) { return Math.trunc(this.firstEpOut[u]/2); }
     nextOut(u, e) { return this.nextAt(u, e); }
 
-    /** Compute the in-degree of a vertex.
-     *  @param u is a vertex
-     *  @return the number of edges incident to u
-     */
-    inDegree(u) {
-        assert(this.validVertex(u));
-        let d = 0;
-        for (let e = this.firstIn(u); e != 0; e = this.nextIn(u,e)) {
-             d++;
+    join(u, v, e=this.edges.first(2)) {
+        if (u > this.n || v > this.n || this.edges.length(2) == 0) {
+            this.expand(Math.max(this.n, u, v), Math.max(e, this.edges.n+1));
+            if (e == 0) e = this.edges.first(2);
         }
-        return d;
-    }
-
-    /** Compute the out-degree of a vertex.
-     *  @param u is a vertex
-     *  @return the number of edges incident to u
-     */
-    outDegree(u) {
-        assert(this.validVertex(u));
-        let d = 0;
-        for (let e = this.firstOut(u); e != 0; e = this.nextOut(u,e)) d++;
-        return d;
-    }
-
-    /** Join two vertices.
-     *  @param u is the tail for the new edge
-     *  @param v is the head of the new edge
-     *  @param e is the number of an "unused" edge;
-     *  if omitted, the first unused edge is used
-     *  @return the edge number for the new edge or 0
-     *  on failure
-     */
-    join(u, v, e=this._edges.firstOut()) {
-        assert(u > 0 && v > 0 && (e > 0 || this._edges.firstOut() == 0) &&
-               !this._edges.isIn(e));
-        if (u > this.n || v > this.n || this._edges.nOut() == 0) {
-            this.expand(Math.max(this.n, Math.max(u, v)),
-                        Math.max(e, this._edges.n+1));
-            if (e == 0) e = this._edges.firstOut();
-        }
-        this._edges.swap(e);
+        this.edges.swap(e);
 
         // initialize edge information
-        this._left[e] = u; this._right[e] = v;
+        this.Left[e] = u; this.Right[e] = v;
     
         // add edge to the endpoint lists
-        if (this._firstEpOut[u] == 0) this._firstEpOut[u] = 2*e;
-            // this._firstEpOut[u] changes only with first outgoing edge
-        this._firstEp[u] = this._epLists.join(this._firstEp[u], 2*e);
-        this._firstEp[v] = this._epLists.join(2*e+1, this._firstEp[v]);
+        if (this.firstEpOut[u] == 0) this.firstEpOut[u] = 2*e;
+            // this.firstEpOut[u] changes only with first outgoing edge
+        this.firstEp[u] = this.epLists.join(this.firstEp[u], 2*e);
+        this.firstEp[v] = this.epLists.join(2*e+1, this.firstEp[v]);
             // incoming edges inserted at the front of the list,
             // to keep them separate from outputs
     
         return e;
     }
 
-    /** Delete an edge from the graph.
-     *  @param e is the edge to be deleted.
-     */
     delete(e) {
-        assert(this.validEdge(e));
         let u = this.left(e);
         if (e == this.firstOut(u))
-            this._firstEpOut[u] = 2 * this.nextOut(u,e);
+            this.firstEpOut[u] = 2 * this.nextOut(u,e);
         super.delete(e);
     }
 }
 </textarea>
 
 <a id=Flograph><h2>Flow Graphs</h2></a>
-The <code>Flograph</code> class extends the <code>Digraph</code> class,
+The $\Flograph$ class extends the $\Digraph$ class,
 adding an array of edge capacities and an array of edge flows.
 It also defines two special vertices, the <i>source</i> vertex and
 the <i>sink</i> vertex.
 Finally, it adds the following methods.
 <ul>
-<li>    <code>source</code> returns the source vertex.
-<li>    <code>sink</code> returns the sink vertex.
-<li>    <code>setSource(u)</code> makes vertex <code>u</code> the source.
-<li>    <code>setSink(u)</code> makes vertex <code>u</code> the sink.
-<li>    <code>f(e,u)</code> returns the flow leaving vertex <code>u</code>
-        on edge <code>e</code>. May be negative.
-        If <code>u</code> is omitted, it defaults to the tail of the edge.
-<li>    <code>cap(e,c=-1)</code> gets or sets the capacity of edge
-        <code>e</code>; if c is non-negative, the capacity of <code>e</code>
-        is set to <code>c</code>.
-<li>    <code>res(e,u)</code> returns the residual capacity of edge
-        <code>e</code> leaving vertex <code>u</code>.
-<li>    <code>flow(e,f=-1)</code> gets or sets the flow on edge
-        <code>e</code>, leaving the tail;
-        if <code>f</code> is non-negative, the flow on
-        <code>e</code> is set to <code>f</code>.
-<li>    <code>setCapacity(e,cap)</code> sets the capacity of edge
-        <code>e</code> to <code>cap</code>.
-<li>    <code>addFlow(e,u,f)</code> adds <code>f</code> units of flow
-        leaving vertex <code>u</code> on edge <code>e</code>.
-<li>    <code>clearFlow()</code> sets the flow on all edges to 0.
-<li>    <code>totalFlow()</code> returns the flow leaving the source vertex.
-<li>    <code>totalCost()</code> returns the cost of the current flow.
-<li>    <code>addFloors()</code> adds the ability to support minimum flow
-        requirements for the edges. When floors are defined, they
-        affect the residual capacity in the reverse direction.
-<li>    <code>floor(e)</code> returns the floor value for edge <code>e</code>
-        or 0 if floors are not yet enabled.
-<li>    <code>setFloor(e, f)</code> sets the floor of edge <code>e</code>
-        to <code>f</code>. If floors are not yet enabled, they are enabled
-        as a side effect.
+<li>    $\texttt{f}(e,u)$ returns the flow leaving vertex $u$ on edge $e$.
+        May be negative.
+        If $u$ is omitted, it defaults to the tail of the edge.
+<li>    $\flow(e,f)$ sets the flow on edge $e$ to $f$.
+<li>    $\addFlow(e,u,f)$ adds $f$ units of flow leaving vertex $u$ on edge $e$.
+<li>    $\texttt{cap}(e,c)$ sets the capacity of edge $e$ to $c$,
+		if the optional argument $c$ is present.
+		In any case, the capacity of $e$ is returned.
+<li>    $\res(e,u)$ returns the residual capacity of edge
+        $e$ leaving vertex $u$ ($u$ defaults to the tail).
+<li>    $\floor(e,f)$ sets a minimum flow requirement for edge $e$ to $f$,
+		if the optional argument $f$ is present.
+        In any case, the floor value is returned
+        (or 0, if floors are not enabled).
 </ul>
+Properties $\source$ and $\sink$ identify the source and sink vertices.
+They can also be used to set the source and sink.
 <p>
 The basic data structure can be extended to include edge costs,
 which define a cost per unit of flow. By default, edge costs are zero.
@@ -486,173 +371,82 @@ The core of the <i>Javascript</i> implementation is shown below.
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class Flograph extends Digraph {
-    #f;             // #f[e] is flow on edge e
-    #cap;           // #cap[e] is capacity of edge e
-    #source;        // source vertex
-    #sink;          // sink vertex
-    #floor;         // floor[e] is min flow requirement (optional)
+    F;             // F[e] is flow on edge e
+    Cap;           // Cap[e] is capacity of edge e
+    Source;        // source vertex
+    Sink;          // sink vertex
+    Floor;         // floor[e] is min flow requirement (optional)
 
-    /** Get the source vertex.
-     *  @param s is the new source vertex.
-     *  @return the source
-     */
-    get source() { return this.#source; }
-    setSource(s) { this.#source = s; }
-
-    /** Get the sink vertex.
-     *  @param t is the new sink vertex
-     *  @return the sink
-     */
-    get sink() { return this.#sink; }
-    setSink(s) { this.#sink = s; }
-
-    /** Get/set the capacity of an edge.
-     *  @param e is an edge that is incident to u
-     *  @return the capacity of e
-     */
-    cap(e,c=-1) { if (c >= 0) this.#cap[e] = c; return this.#cap[e]; }
-
-    /** Get the residual capacity of an edge.
-     *  @param u is a vertex in the flograph
-     *  @param e is an edge that is incident to u
-     *  @return the unused capacity of e, going from u to mate(u)
-     */
-    res(e, u=this.tail(e)) {
-        return (u == this.tail(e) ? this.#cap[e] - this.#f[e] :
-                                    this.#f[e] - this.floor(e));
-    }
-
-    /** Get the flow on an edge.
-     *  @param u is a vertex in the flograph
-     *  @param e is an edge that is incident to u
-     *  @return the flow on e, going from u to mate(u)
-     */
     f(e, u=this.tail(e)) {
-        return (u == this.tail(e) ? this.#f[e] : -this.#f[e]);
+        return (u == this.tail(e) ? this.F[e] : -this.F[e]);
     }
 
-    /** Get/set the flow on an edge.
-     *  @param e is an edge
-     *  @param f is the new flow on e from the tail to the head
-     *  @return the flow from the tail
-     */ 
     flow(e, f=-1) {
-        if (f >= 0) this.#f[e] = Math.min(f, this.#cap[e]);
-        return this.#f[e];
+        if (f >= 0) this.F[e] = Math.min(f, this.cap(e));
+        return this.f(e);
     }
     
-    /** Set the flow of every edge to zero. */
-    clearFlow() {
-        for (let e = this.first(); e != 0; e = this.next(e))
-            this.flow(e, 0);
-    }
-
-    /** Return the current flow magnitude (total flow leaving source). */
-    totalFlow() {
-        let flow = 0; let src = this.source;
-        for (let e = this.firstOut(src); e != 0; e = this.nextOut(src, e)) {
-            flow += this.f(e);
-        }
-        return flow;
-    }
-
-    /** Add flow to an edge.
-     *  @param e is an edge
-     *  @param u is an endpoint of e
-     *  @param f is a flow amount to be added to the flow on e leaving u
-     */
     addFlow(e, u, f) {
-        fassert(f <= this.res(e, u), 'addFlow: edge capacity violation');
-        if (u == this.tail(e)) this.#f[e] += f;
-        else                    this.#f[e] -= f;
+        if (u == this.tail(e)) this.F[e] += f;
+        else                    this.F[e] -= f;
     }
 
-    /** Join two vertices with an edge.
-     *  @param u is a vertex
-     *  @param v is an edge
-     *  @param e is a currently unused edge number to be used for the
-     *  new edge (u,v); if omitted, the first available edge number is used
-     *  the edge capacity and flow are both initialized to zero,
-     *  as is the min flow requirement, if enabled
-     */
+    cap(e,c=-1) { if (c >= 0) this.Cap[e] = c; return this.Cap[e]; }
+
+    res(e, u=this.tail(e)) {
+        return (u == this.tail(e) ? this.cap(e) - this.f(e) :
+                                    this.f(e) - this.floor(e));
+    }
+
+    floor(e,f=-1) {
+        if (f >= 0) {
+            if (!this.hasFloors) this.hasFloors = true;
+            this.Floor[e] = f;
+        }
+        return this.hasFloors ? this.Floor[e] : 0;
+    }
+
     join(u, v, e) {
         let ee = super.join(u, v, e);
         this.cap(ee, 0); this.flow(ee, 0);
         if (this.hasFloors) this.floor(ee, 0);
         return ee;
     }
-
-    /** Get the cost of an edge from a specified endpoint.
-     *  @param e is an edge
-     *  @param u is an endpoint of e
-     *  @return the cost of e, with from u to the other endpoint
-     */
-    costFrom(e, u) {
-        return u == this.tail(e) ? this.cost(e) : -this.cost(e);
-    }
-
-    /** Return the current flow cost (sum of flow*cost for all edges). */
-    totalCost() {
-        let cost = 0;
-        for (let e = this.first(); e != 0; e = this.next(e)) {
-            cost += this.f(e) * this.cost(e);
-        }
-        return cost;
-    }
-
-    /** Enable minimum flow requirements. */
-    addFloors() {
-        if (!this.hasFloors)
-            this.#floor = new Int32Array(this.edgeRange+1);
-    }
-
-    /** Get/set the min flow requirement for an edge.
-     *  @param e is an edge that is incident to u
-     *  @return the min flow requirement for e
-     */
-    floor(e,f=-1) {
-        if (f >= 0) {
-            if (!this.hasFloors) this.addFloors();
-            this.#floor[e] = f;
-        }
-        return this.hasFloors ? this.#floor[e] : 0;
-    }
 }
 </textarea>
 
 <a id=RandomGraphs><h2>Random Graphs</h2></a>
-The <code>RandomGraphs</code> module provides a collection of methods for
+The $\RandomGraph$ module provides a collection of methods for
 generating simple (no self-loops or parallel edges) random graphs
 of all three types.
 It provides the following methods.
 <ul>
-<li> <code>randomGraph(n,m)</code> returns a <code>Graph</code> object with
-    <code>n</code> vertices and <code>m</code> random edges.
-<li> <code>randomTree(n)</code> returns a <code>Graph</code> object with
-    <code>n</code> vertices that defines a random tree.
-<li> <code>randomConnectedGraph(n,m)</code> returns a <code>Graph</code>
-    object with <code>n</code> vertices and <code>m</code> edges
+<li> $\randomGraph(n,m)$ returns a $\Graph$ object with
+    $n$ vertices and $m$ random edges.
+<li> $\randomTree(n)$ returns a $\Graph$ object with
+    $n$ vertices that defines a random tree.
+<li> $\randomConnectedGraph(n,m)$ returns a $\Graph$
+    object with $n$ vertices and $m$ edges
     that is guaranteed to be connected.
-<li> <code>randomRegularGraph(n,d)</code> returns a <code>Graph</code>
-    object with <code>n</code> vertices and <code>d</code> edges
+<li> $\randomRegularGraph(n,d)$ returns a $\Graph$
+    object with $n$ vertices and $d$ edges
     incident to each vertex.
-<li> <code>randomBigraph(ni,di,no=ni)</code> returns a <code>Graph</code> object
-    that defines a bipartite graph with <code>ni+no</code> vertices
+<li> $\randomBigraph(n_i,d_i,n_o=n_i)$ returns a $\Graph$ object
+    that defines a bipartite graph with $n_i+n_o$ vertices
     where the first
-    <code>ni</code> vertices are referred to as &ldquo;inputs&rdquo; and
-	the remaining <code>no</code> as &ldquo;outputs&rdquo;.
-	The number of edges is the product of <code>ni</code> and <code>di</code>,
-	making <code>di</code> the average vertex degree for the inputs.
-<li> <code>randomRegularBigraph(ni,di,no=ni)</code> returns a <code>Graph</code>
+    $n_i$ vertices are referred to as &ldquo;inputs&rdquo; and
+    the remaining $n_o$ as &ldquo;outputs&rdquo;.
+    The number of edges is the product of $n_i$ and $d_i$,
+    making $d_i$ the average vertex degree for the inputs.
+<li> $\randomRegularBigraph(n_i,d_i,n_o=n_i)$ returns a $\Graph$
     object that defines a bipartite graph in which each input has
-	exactly <code>di</code> incident edges and the outputs have
-	<code>do=ni*di/no</code> edges.
-<li> <code>randomDigraph(n,m)</code> returns a <code>Digraph</code> object
-    with <code>n</code> vertices and <code>m</code> random edges.
-<li> <code>randomFlograph(p,q,k,m)</code> returns a <code>Flograph</code>
-    object with <code>2+p*q</code> vertices and <code>m</code> random edges.
+    exactly $d_i$ incident edges and the outputs have $d_o=n_i*d_i/n_o$ edges.
+<li> $\randomDigraph(n,m)$ returns a $\Digraph$ object
+    with $n$ vertices and $m$ random edges.
+<li> $\randomFlograph(p,q,k,m)$ returns a $\Flograph$
+    object with $2+p*q$ vertices and $m$ random edges.
     The non-source/sink vertices are distributed among
-    <code>p</code> <i>levels</i> with <code>q</code> vertices per level.
+    $p$ <i>levels</i> with $q$ vertices per level.
     For each value of $i$, edges are generated within level $i$,
     from level $i$ to level $i+1$ and from $i$ to levels
     $i-1$ through $i-k$. In addition, edges are generated from the
@@ -667,40 +461,40 @@ assign random values to its edge properties
 (weights, lengths, costs, capacities, floors).
 These are summarized below.
 <ul>
-<li>    <code>randomWeights(f)</code> generates random weights for the
-        edges in a graph, using the random number generator <code>f</code>.
-        If the function <code>f</code> requires any arguments, they must
-        be supplied as additional arguments to  <code>randomWeights()</code>.
-        For example, <code>randomWeights(randomInteger,3,7)</code>
-        assigns random integer values in [3,7] to the edges of a Graph.
-        The <code>randomInteger</code> method can be found in the
-		<code>Random</code> module.
-		If edge weights have not been previously enabled, they are
+<li>    $\randomWeights(f)$ generates random weights for the
+        edges in a graph, using the random number generator $f$.
+        If the function $f$ requires any arguments, they must
+        be supplied as additional arguments to  $\randomWeights()$.
+        For example, $\randomWeights(\randomInteger,3,7)$
+        assigns random integer values in [3,7] to the edges of a $\Graph$.
+        The $\randomInteger$ method can be found in the
+        $\Random$ module.
+        If edge weights have not been previously enabled, they are
         enabled as a side-effect.
-<li>    <code>randomLengths(f)</code> is an alias for
-        <code>randomWeights()</code>, for use on Digraph objects.
-<li>    <code>randomCosts(f)</code> is an alias for
-        <code>randomWeights()</code>, for use on Flograph objects.
-<li>    <code>randomCapacities(scale, f)</code> generates random edge
-        capacities in a Flograph object. The <code>scale</code> argument
+<li>    $\randomLengths(f)$ is an alias for
+        $\randomWeights()$, for use on $\Digraph$ objects.
+<li>    $\randomCosts(f)$ is an alias for
+        $\randomWeights()$, for use on $\Flograph$ objects.
+<li>    $\randomCapacities(scale,f)$ generates random edge
+        capacities in a $\Flograph$ object. The $\scale$ argument
         is applied to source/sink edges, allowing their capacities to
         be scaled relative to those of other edges.
         The second argument is a random number generator and any remaining
         arguments are used as arguments to it.
-<li>    <code>randomFloors(f)</code> generates minimum flow requirements
-        for the edges, using a random number generator <code>f</code>.
+<li>    $\randomFloors(f)$ generates minimum flow requirements
+        for the edges, using a random number generator $f$.
 </ul>
-The <code>Random</code> module contains several random number generators
-that can be used in conjunction with the <code>RandomGraph</code> module.
+The $\Random$ module contains several random number generators
+that can be used in conjunction with the $\RandomGraph$ module.
 <ul>
-<li>    <code>randomFraction()</code> returns a random value in [0,1].
-<li>    <code>randomInteger(lo,hi)</code> returns a random integer in
-        <code>[lo,hi]</code>.
-<li>    <code>randomExp(mu)</code> returns a random sample from an
-        exponential distribution with mean <code>mu</code>.
-<li>    <code>randomPareto(mu,s)</code> returns a random sample from a
-        Pareto distribution with mean <code>mu</code> and shape parameter
-        <code>s</code>.
+<li>    $\randomFraction()$ returns a random value in [0,1].
+<li>    $\randomInteger(lo,hi)$ returns a random integer in
+        $[lo,hi]$.
+<li>    $\randomExp(\mu)$ returns a random sample from an
+        exponential distribution with mean $\mu$.
+<li>    $\randomPareto(\mu,s)$ returns a random sample from a
+        Pareto distribution with mean $\mu$ and shape parameter
+        $s$.
 </ul>
 <hr> <h4>&copy; Jonathan Turner - 2022</h4>
 <script src="../../googleAnalytics.js"></script>

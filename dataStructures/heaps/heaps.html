@@ -55,18 +55,18 @@ A heap $h$ is an abstract data type that represents
 a collection of items, where each item has a numeric <i>key</i>.
 A typical heap implementation supports the following methods.
 <ul>
-<li> $\textit{insert}(i, k)$ inserts item $i$ into the heap with key $k$.
-<li> $\textit{deletemin}()$ deletes a minimum key item from the heap and
+<li> $\insert(i, k)$ inserts item $i$ into the heap with key $k$.
+<li> $\deletemin()$ deletes a minimum key item from the heap and
     returns it.
-<li> $\textit{changekey}(i, k)$ changes the key of heap item $i$ to $k$.
+<li> $\changekey(i, k)$ changes the key of heap item $i$ to $k$.
 </ul>
-It is also common to include a <i>findmin</i> method, which returns the item
-with the smallest key without deleting it, and a general <i>delete</i> method.
+It is also common to include a $\findmin$ method, which returns the item
+with the smallest key without deleting it, and a general $\delete$ method.
 <p>
 Efficient heap implementations are usually built around the idea of a
 <i>heap-ordered tree</i>,
 which is a tree in which each heap item $i$ is viewed as a tree node and
-$\textit{key}(i) \geq \textit{key}(p(i))$ where 
+$\key(i) \geq \key(p(i))$ where 
 $p(i)$ is the parent of $i$ in the tree.
 This property ensures that the root of the tree has the
 smallest key value.
@@ -74,16 +74,13 @@ Using a suitably structured heap-ordered tree, the various operations
 can be implemented to run in $O(\log n)$ time.
 
 <a id=ArrayHeap><h2>Array Heap</h2></a>
-The <i>array heap</i> (also known as $d$-heap) is a simple version
+The <i>array heap</i> (also known as a $d$-heap) is a simple version
 of the heap data type that uses an array to implement a
 $d$-ary heap-ordered tree.
 The provided <i>Javascript</i> implementation
 includes the following methods in addition to the
 three standard ones mentioned earlier.
 <ul>
-<li>    <code>d</code> returns the &ldquo;arity&rdquo; of the heap-ordered tree.
-<li>    <code>m</code> returns the number of items in the heap
-        (note, this is not the same as the index range).
 <li>    $\key(i)$ returns the key of item $i$.
 <li>    $\empty()$ returns true if the heap is empty.
 <li>    $\contains(i)$ returns true if item $i$ is in the heap.
@@ -93,6 +90,9 @@ three standard ones mentioned earlier.
         to the keys of all heap items.
 </ul>
 <p>
+The property <code>d</code> is the &ldquo;arity&rdquo;
+of the heap-ordered tree.
+The <code>size</code> property is the number of items in the heap.
 The web app  can be used to construct a heap from a string and
 try out its methods as shown below.
 <pre style="padding-left:5%;">
@@ -152,13 +152,13 @@ with key 5 into the previous example heap yields the following.
 </div>
 <p>
 The insertion is done with the assistance of a helper method
-$\textit{siftup}(i, x)$, which scans for a position for item $i$ starting
+$\siftup(i, x)$, which scans for a position for item $i$ starting
 from position $x$, moving items down as it goes, before inserting $i$
 into its final position.
 <p>
-$\textit{Deletemin}$ is implemented in a similar way.
+The $\deletemin$ operation is implemented in a similar way.
 Let $i$ be the last item in the <i>item</i> array and let
-$k = \textit{key}(i)$.
+$k = \key(i)$.
 Starting from the root, scan down the heap looking for a
 new place to insert $i$. 
 At each step, select the
@@ -166,7 +166,7 @@ child of the current item that has the smallest key.
 When this process reaches an item with a key that is at least as large as $k$,
 item $i$ is inserted just above that item, while the other items in
 the search path are moved up one level.
-So for example, a $\textit{deletemin}$ on the heap
+So for example, a $\deletemin$ on the heap
 from the last example, yields the configuration shown below.
 <p>
 <div  style="text-align:center;">
@@ -187,104 +187,99 @@ The core methods for the $\ArrayHeap$ class are shown below.
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class ArrayHeap extends Top {
-    #d;          // base of heap
-    #m;          // # of items in the heap set
+    D;          // base of heap
+    Size;       // # of items in the heap
 
-    #item;       // {#item[1],...,#item[m]} is the items in the heap
-    #pos;        // #pos[i] gives position of i in #item
-    #key;        // #key[i] is key of item i
-    #offset;     // offset for key values, allowing all to shift at once
+    pos;        // pos[i] gives position of i in the heap
+    Item;       // Item[x] is the item at position x in the heap
+    Key;        // Key[i] is key of item i
+    Offset;     // offset for key values, allowing all to shift at once
 
-    constructor(n=10, d=4) {
-        super(n);
-        this.#item = new Int32Array(n+1);
-        this.#pos = new Int32Array(n+1);
-        this.#key = new Float32Array(n+1);
-        this.#item[0] = this.#m = 0; this.#d = d;
-        this.#offset = 0;
-    }
-
-    get d() { return this.#d; }
-
-    get m() { return this.#m; }
-
-    itemAt(pos) { return this.#item[pos]; };
-
+    get d() { return this.D; }
+    get size() { return this.Size; }
+    get offset() { return this.Offset; }
+    
+    key(i) { return this.Offset + this.Key[i]; }
+    itemAt(pos) { return this.Item[pos]; };
     p(pos) { return Math.ceil((pos-1)/this.d); }
-
     left(pos) { return this.d*(pos-1)+2; }
-
     right(pos) { return this.d*pos+1; }
 
-    findmin() { return this.empty() ? 0 : this.itemAt(1); }
-    
-    key(i) { return this.#offset + this.#key[i]; }
-
-    get offset() { return this.#offset; }
-
-    add2keys(delta) { this.#offset += delta; }
-    
-    contains(i) { return this.#pos[i] != 0; }
-    
-    empty() { return this.m == 0; };
-    
-    insert(i, key) {
-        if (this.contains(i)) { this.changekey(i,key); return; }
-        if (i > this.n) this.expand(i);
-        this.#key[i] = key - this.#offset; this.#m++; this.#siftup(i, this.m);
+    first() { return this.size >= 1 ? this.itemAt(1) : 0; }
+    next(i) { 
+        let pi = this.pos[i];
+        return (pi && pi < this.size ?  this.Item[pi+1] : 0);
     }
+    
+    findmin() { return this.empty() ? 0 : this.itemAt(1); }
     
     deletemin() {
         if (this.empty()) return 0;
         let i = this.itemAt(1); this.delete(i);
         return i;
     }
+
+    add2keys(delta) { this.Offset += delta; }
+    
+    contains(i) { return this.pos[i] != 0; }
+    
+    empty() { return this.size == 0; };
+    
+    insert(i, key) {
+        if (this.contains(i)) { this.changekey(i,key); return; }
+        if (i > this.n) this.expand(i);
+        this.Key[i] = key - this.Offset; this.Size++; this.siftup(i, this.size);
+    }
     
     delete(i) {
         if (!this.contains(i)) return;
-        let j = this.itemAt(this.#m--);
+        let j = this.itemAt(this.Size--);
         if (i != j) {
-            if (this.#key[j] <= this.#key[i])
-                this.#siftup(j, this.#pos[i]);
+            if (this.Key[j] <= this.Key[i])
+                this.siftup(j, this.pos[i]);
             else
-                this.#siftdown(j, this.#pos[i]);
+                this.siftdown(j, this.pos[i]);
         }
-        this.#pos[i] = 0;
+        this.pos[i] = 0;
     }
     
-    #siftup(i, x) {
+    siftup(i, x) {
+        this.upsteps++;
         let px = this.p(x);
-        while (x > 1 && this.#key[i] < this.#key[this.itemAt(px)]) {
-            this.#item[x] = this.itemAt(px); this.#pos[this.itemAt(x)] = x;
+        while (x > 1 && this.Key[i] < this.Key[this.itemAt(px)]) {
+            this.Item[x] = this.itemAt(px); this.pos[this.itemAt(x)] = x;
             x = px; px = this.p(x);
+            this.upsteps++;
         }
-        this.#item[x] = i; this.#pos[i] = x;
+        this.Item[x] = i; this.pos[i] = x;
     }
     
-    #siftdown(i, x) {
-        let cx = this.#minchild(x);
-        while (cx != 0 && this.#key[this.#item[cx]] < this.#key[i]) {
-            this.#item[x] = this.#item[cx]; this.#pos[this.#item[x]] = x;
-            x = cx; cx = this.#minchild(x);
+    siftdown(i, x) {
+        let cx = this.minchild(x);
+        while (cx != 0 && this.Key[this.Item[cx]] < this.Key[i]) {
+            this.Item[x] = this.Item[cx]; this.pos[this.Item[x]] = x;
+            x = cx; cx = this.minchild(x);
         }
-        this.#item[x] = i; this.#pos[i] = x;
+        this.Item[x] = i; this.pos[i] = x;
     }
     
-    #minchild(x) {
+    minchild(x) {
         let minc = this.left(x);
-        if (minc > this.m) return 0;
-        for (let y = minc + 1; y <= this.right(x) && y <= this.m; y++) {
-            if (this.#key[this.#item[y]] < this.#key[this.#item[minc]])
+        if (minc > this.size) return 0;
+        for (let y = minc + 1; y <= this.right(x) && y <= this.size; y++) {
+            this.downsteps++;
+            if (this.Key[this.Item[y]] < this.Key[this.Item[minc]])
                 minc = y;
         }
         return minc;
     }
     
     changekey(i, k) {
-        let ki = this.#key[i] + this.#offset;
-        this.#key[i] = k - this.#offset;
-             if (k < ki) this.#siftup(i, this.#pos[i]);
-        else if (k > ki) this.#siftdown(i, this.#pos[i]);
+        let ki = this.Key[i] + this.Offset;
+        //this.Key[i] += k - ki;
+        this.Key[i] = k - this.Offset;
+             if (k < ki) this.siftup(i, this.pos[i]);
+        else if (k > ki) this.siftdown(i, this.pos[i]);
     }
 }
 </textarea>
@@ -329,7 +324,7 @@ includes the following methods.
         $h$.
 <li>    $\delete(i, h)$ deletes $i$ from the
         heap identified by $h$.
-<li>    $\meld(h1, h2)$ combines the two heaps identified by
+<li>    $\meld(h_1, h_2)$ combines the two heaps identified by
         $h_1$ and $h_2$ and returns the identifier of
         the combined heap.
 <li>    $\insert(i, h, k)$ inserts $i$ into the
@@ -582,53 +577,63 @@ The core methods of the $\FibHeaps$ class are shown below.
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class FibHeaps extends Forest {
-    #key;        // #key[i] is key of item i
-    #rank;        // #rank[i] gives rank of item i
-    #mark;        // #mark[i] is true if item i is considered marked
+    Key;        // Key[i] is key of item i
+    Rank;       // Rank[i] gives rank of item i
+    Mark;       // Mark[i] is true if item i is considered marked
 
-    #rankVec;    // #rankVec is an auxiliary array used during restructuring
-    #tmpq;        // #tmpq is a List object used as a temporary queue 
+    rankVec;    // rankVec is an auxiliary array used during restructuring
+    tmpq;       // tmpq is a List object used as a temporary queue 
 
-    #MAXRANK = 32;
-
-    constructor(n=10) {
-        super(n);
-        this.#key = new Float32Array(this.n+1);
-        this.#rank = new Int32Array(this.n+1);
-        this.#mark = new Int8Array(this.n+1);
-        this.#rankVec = new Int32Array(this.#MAXRANK+1);
-        this.#tmpq = new List(this.n);
-    }
+    MAXRANK = 32;
 
     key(i, v=false) {
-        if (v !== false) this.#key[i] = v;
-        return this.#key[i];
+        if (v !== false) this.Key[i] = v;
+        return this.Key[i];
     }
 
     rank(i, r=false) {
-        if (r !== false) this.#rank[i] = r;
-        return this.#rank[i];
+        if (r !== false) this.Rank[i] = r;
+        return this.Rank[i];
     }
 
     mark(i, m=-1) {     
-        if (m != -1) this.#mark[i] = m;
-        return this.#mark[i];
+        if (m != -1) this.Mark[i] = m;
+        return this.Mark[i];
     }
 
     c(i) { return this.firstChild(i); }
 
     findmin(h) { return h; }
+        
+    deletemin(h) {
+        // Move h's children into root list and delete h
+        for (let i = this.firstChild(h); i; i = this.firstChild(h)) {
+            this.cut(i); this.joinGroups(h,i);
+        }
+        this.rank(h,0);
+        if (!this.nextSibling(h)) return [h,0];
+        let r = this.ungroup(h,h); // r is first root remaining in tree group
+        return [h, (r ? this.mergeRoots(r) : 0)];
+    }
+    
+    delete(i, h) {
+        let k = this.key(i);
+        h = decreasekey(i, (this.key(i) - this.key(h)) + 1, h);
+        h = deletemin(h);
+        this.key(i,k);
+        return h;
+    }
+
+    insert(i, h, k) {
+        if (i > this.n) this.expand(i);
+        this.key(i,k); return this.meld(i, h);
+    }
 
     meld(h1, h2) {
         if (h1 == 0) return h2;
         if (h2 == 0 || h1 == h2) return h1;
         return (this.key(h1) <= this.key(h2) ?
                     this.joinGroups(h1, h2) : this.joinGroups(h2, h1));
-    }
-
-    insert(i, h, k) {
-        if (i > this.n) this.expand(i);
-        this.key(i,k); return this.meld(i, h);
     }
     
     changekey(i, h, k) {
@@ -655,15 +660,9 @@ export default class FibHeaps extends Forest {
         return h;
     }
 
-    /** Merge the tree roots in heap, to eliminate repeated ranks.
-     *  @param r0 is the first tree root in a tree group for a heap;
-     *  it is called after the node with the smallest key is removed from heap
-     *  @return the root of the the tree root with the smallest key,
-     *  following the merging
-     */
-    #mergeRoots(r0) {
-        let key = this.#key; let rank = this.#rank;
-        let tmpq = this.#tmpq; let rvec = this.#rankVec;
+    mergeRoots(r0) {
+        let key = this.Key; let rank = this.Rank;
+        let tmpq = this.tmpq; let rvec = this.rankVec;
 
         // Build queue of roots and find root with smallest key
         let minRoot = r0;
@@ -694,25 +693,6 @@ export default class FibHeaps extends Forest {
             }
         }
         return r0;
-    }
-        
-    deletemin(h) {
-        // Move h's children into root list and delete h
-        for (let i = this.firstChild(h); i; i = this.firstChild(h)) {
-            this.cut(i); this.joinGroups(h,i);
-        }
-        this.rank(h,0);
-        if (!this.nextSibling(h)) return [h,0];
-        let r = this.ungroup(h,h); // r is first root remaining in tree group
-        return [h, (r ? this.#mergeRoots(r) : 0)];
-    }
-    
-    delete(i, h) {
-        let k = this.key(i);
-        h = decreasekey(i, (this.key(i) - this.key(h)) + 1, h);
-        h = deletemin(h);
-        this.key(i,k);
-        return h;
     }
 }
 </textarea>
@@ -810,25 +790,24 @@ are shown below.
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class LeftistHeaps extends BinaryForest {
-    #key;        // #key[i] is key of item i
-    #rank;        // #rank[i] gives rank of item i
-
-    constructor(n=10) {
-        super(n);
-        this.#key = new Float32Array(this.n+1)
-        this.#rank = new Int32Array(this.n+1).fill(1,1);
-    }
+    Key;        // Key[i] is key of item i
+    Rank;       // Rank[i] gives rank of item i
 
     key(i, k=false) {
-        if (k !== false) this.#key[i] = k;
-        return this.#key[i];
+        if (k !== false) this.Key[i] = k;
+        return this.Key[i];
     }
 
     rank(i, r=false) {
-        if (r !== false) this.#rank[i] = r;
-        return this.#rank[i];
+        if (r !== false) this.Rank[i] = r;
+        return this.Rank[i];
     }
 
+    insert(i, h, k) {
+        this.key(i, k);
+        return this.meld(i, h);
+    }
+    
     meld(h1, h2) {
         // relies on null node having rank==0
         if (h1 == 0) return h2;
@@ -847,20 +826,13 @@ export default class LeftistHeaps extends BinaryForest {
         return h1;
     }
 
-    insert(i, h, k) {
-        fassert(this.valid(i) && this.valid(h));
-        fassert(this.left(i) == 0 && this.right(i) == 0 && this.rank(i) == 1);
-        this.key(i, k);
-        return this.meld(i, h);
-    }
-    
     findmin(h) { return h; }
 
     deletemin(h) {
         let lh = this.left(h); let rh = this.right(h);
         if (lh) this.cut(lh); if (rh) this.cut(rh);
         let hnew = this.meld(lh, rh);
-        this.#rank[h] = 1;
+        this.Rank[h] = 1;
         return [h,hnew];
     }
 
@@ -910,49 +882,41 @@ application to identify and mark each of these nodes, it can be more
 efficient to identify them with a function call when it's time to purge
 them from the heap-ordered tree.
 <p>
-The core methods of the $\LeftistHeaps$ class are shown below.
+The core methods of the $\LazyHeaps$ class are shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class LazyHeaps extends LeftistHeaps {
-    nn;          // largest valid index for a non-dummy node
-    #dummy;      // first node in list of free dummy nodes
-    #retired;    // #retired is either a user-supplied function
-                 // or an array of bits
-    #plist;      // temporary list used by purge
+    nn;         // largest valid index for a non-dummy node
+    dummy;      // first node in list of free dummy nodes
+    Retired;    // Retired is either a user-supplied function
+                // or an array of bits
+    plist;      // temporary list used by purge
 
-    constructor(n=20, retired=null) {
-        super((n&1) ? n+1 : n); this.nn = this.n/2;
-
-        for (let i = this.nn+1; i <= this.n; i++) this.rank(i,-1);
-        this.#plist = new List(this.nn);
-        if (retired != null) this.#retired = retired;
-        else this.#retired = new Int8Array(this.n+1).fill(false);
-
-        // implement list of dummy nodes as a tree
-        for (let i = this.nn+1; i < this.n; i++) this.link(i+1,i,1);
-        this.#dummy = this.nn+1;
-
-    }
+    find(i) { return super.root(i); }
 
     isdummy(i) { return i > this.nn; }
 
     isactive(i) { return i <= this.nn && !this.retired(i); }
 
+    valid(i) {
+        return i >= 0 && (i <= this.nn || (i <= this.n && this.rank(i) >= 0));
+    }
+
     retire(i) {
-        if (this.#retired.constructor != 'function')
-            this.#retired[i] = true;
+        if (this.Retired.constructor != 'function')
+            this.Retired[i] = true;
     }
 
     retired(i) {
         return i <= this.nn &&
-                        (typeof this.#retired == 'function' ?
-                            this.#retired(i) : this.#retired[i]);
+                        (typeof this.Retired == 'function' ?
+                            this.Retired(i) : this.Retired[i]);
     }
 
     findmin(h) {
-        this.#plist.clear(); this.#purge(h);
-        return this.heapify(this.#plist);
+        this.plist.clear(); this.purge(h);
+        return this.heapify(this.plist);
     }
 
     deletemin(h) {
@@ -964,15 +928,14 @@ export default class LazyHeaps extends LeftistHeaps {
         return [h,hnew];
     }
 
-    #purge(h) {
+    purge(h) {
         if (h == 0) return;
-        fassert(this.valid(h));
         if (this.isactive(h)) {
-            this.#plist.enq(h);
+            this.plist.enq(h);
         } else {
-            this.#purge(this.left(h)); this.#purge(this.right(h));
+            this.purge(this.left(h)); this.purge(this.right(h));
             if (this.isdummy(h)) {
-                this.link(this.#dummy, h, +1); this.#dummy = h;
+                this.link(this.dummy, h, +1); this.dummy = h;
             }
             this.rank(h,-1);
         }
@@ -982,13 +945,11 @@ export default class LazyHeaps extends LeftistHeaps {
     lazyMeld(h1, h2) {
         if (h1 == 0) return h2;
         if (h2 == 0) return h1;
-        fassert(this.valid(h1));
-        fassert(this.valid(h1) && this.valid(h2) && this.#dummy);
         if (this.rank(h1) < this.rank(h2)) {
             let h = h1; h1 = h2; h2 = h;
         }
-        let d = this.#dummy; this.#dummy = this.right(d);
-        this.cut(this.#dummy);
+        let d = this.dummy; this.dummy = this.right(d);
+        this.cut(this.dummy);
         this.join(h1,d,h2);
         this.rank(d, this.rank(h2) + 1);
         this.key(d, Number.NEGATIVE_INFINITY);

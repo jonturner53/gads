@@ -193,61 +193,50 @@ export default class GroupHeap extends Top {
     lastOffset;   // for an active group b, lastOffset[b] is the value of
                   // active.offset, when b was last modified or became active
 
-    constructor(n=10, gn=5) {
-        super(n); this.gn = gn;
-
-        this.groups = new OrderedHeaps(n);
-        this.active = new ArrayHeap(gn);
-        this.top = new Int32Array(gn+1);
-        this.lastOffset = new Float32Array(gn+1);
-
-        this.steps = 0;
+    empty(g=0) {
+        return (g ? this.top[g] != 0 : this.active.empty() ||
+                    this.active.key(this.active.findmin()) == Infinity);
     }
 
-    /** Determine if a group is active. */
     isactive(g) { return this.active.contains(g); }
 
-    /** Check for item in an active group */
     contains(i, g) {
         return this.isactive(g) ? this.groups.contains(i, this.top[g]) : false;
     }
 
-    /** Get the key of an item in a group.  */
     key(i, g) {
-        if (this.isactive(g)) this.#updateKeys(g);
+        if (this.isactive(g)) this.updateKeys(g);
         return this.groups.key(i, this.top[g]);
     }
 
-    /** Update the keys of an active group.  */
-    #updateKeys(g) {
+    updateKeys(g) {
         if (this.top[g]) {
             this.groups.add2keys(this.active.offset - this.lastOffset[g],
-                                  this.top[g]);
+                                 this.top[g]);
         }
         this.lastOffset[g] = this.active.offset;
     }
 
     activate(g) {
         let h = this.top[g];
-        fassert(h, 'GroupHeap.activate requires a non-empty heap');
         this.active.insert(g, h ? this.key(this.groups.findmin(h),g) :
                                            Infinity);
         this.lastOffset[g] = this.active.offset;
     }
 
-    deactivate(g) { this.#updateKeys(g); this.active.delete(g); }
+    deactivate(g) { this.updateKeys(g); this.active.delete(g); }
 
     findmin() {
         let g = this.active.findmin();
         if (!g) return 0;
-        this.#updateKeys(g);
+        this.updateKeys(g);
         return this.groups.findmin(this.top[g]);
     }
 
     add2keys(delta) { this.active.add2keys(delta); }
 
     insertAfter(i, g, k, i0) {
-        if (this.isactive(g)) this.#updateKeys(g);
+        if (this.isactive(g)) this.updateKeys(g);
         let h = this.top[g];
         this.top[g] = this.groups.insertAfter(i, h, k, i0);
         if (this.isactive(g) && k < this.active.key(g)) {
@@ -256,7 +245,7 @@ export default class GroupHeap extends Top {
     }
 
     delete(i, g) {
-        if (this.isactive(g)) this.#updateKeys(g);
+        if (this.isactive(g)) this.updateKeys(g);
         this.top[g] = this.groups.delete(i, this.top[g]);
         if (this.isactive(g)) {
             let h = this.top[g];
@@ -272,7 +261,7 @@ export default class GroupHeap extends Top {
 
     divide(g, i, g0) {
         if (this.isactive(g)) {
-            this.#updateKeys(g); this.deactivate(g);
+            this.updateKeys(g); this.deactivate(g);
         }
         if (i == 0) {
             this.top[g0] = this.top[g]; this.top[g] = 0;
@@ -284,8 +273,7 @@ export default class GroupHeap extends Top {
     }
 }
 </textarea><p>
-The following script can be used to demonstrate the data
-structure in the web app.
+The following script can be used to demonstrate the group heap in the web app.
 <pre style="padding-left:5%;">
 let gh = new GroupHeap();
 gh.fromString('{1[a:3 b:2] 2@![c:2 d:5 e:1 j:7] 6[f:6 g:3] 4@[i:10]}');
@@ -394,29 +382,22 @@ The core of the <i>Javascript</i> implementation appears below.
 <p><textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class OrderedHeaps extends BalancedForest {
-    #key;           // #key[i] is key of item i
-    #minkey;        // #minkey[i] is smallest key within subtree at i 
-    #offset;        // offset[h] is a key offset for heap h
+    Key;           // Key[i] is key of item i
+    Minkey;        // Minkey[i] is smallest key within subtree at i 
+    offset;        // offset[h] is a key offset for heap h
 
-    constructor(n=10) {
-        super(n);
-        this.#key = new Float32Array(this.n+1)
-        this.#minkey = new Float32Array(this.n+1)
-        this.#offset = new Float32Array(this.n+1)
+    key(i, h=super.root(i)) {
+        return this.Key[i] + this.offset[h];
     }
 
-    /** Get key of a heap item. */
-    key(i, h=super.root(i)) { return this.#key[i] + this.#offset[h]; }
-
-    /** Get minkey of a heap item. */
     minkey(i, h=super.root(i)) {
-        return this.#minkey[i] + this.#offset[h];
+        return this.Minkey[i] + this.offset[h];
     }
 
-    add2keys(delta, h) { if (h) this.#offset[h] += delta; }
+    add2keys(delta, h) { if (h) this.offset[h] += delta; }
 
     changekey(i, h, k) {
-        this.#key[i] = k - this.#offset[h];
+        this.Key[i] = k - this.offset[h];
         this.refresh(i);
     }
 
@@ -425,38 +406,37 @@ export default class OrderedHeaps extends BalancedForest {
     }
 
     insertAfter(i, h, k, j) {
-        fassert(this.valid(i) && this.valid(j) && this.valid(h));
         if (h == 0) {
-            this.#key[i] = this.#minkey[i] = k; return i;
+            this.Key[i] = this.Minkey[i] = k; return i;
         }
-        let offset = this.#offset[h];
-        this.#key[i] = k - offset; this.#minkey[i] = this.#key[i];
+        let offset = this.offset[h];
+        this.Key[i] = k - offset; this.Minkey[i] = this.Key[i];
         h = super.insertAfter(i, h, j, x => this.refresh(x));
-        this.#offset[h] = offset;
+        this.offset[h] = offset;
         return h;
     }
 
     delete(i, h=this.find(i)) {
         if (this.singleton(i)) return;
-        let offset = this.#offset[h];
+        let offset = this.offset[h];
         // identify an item near the root that is not i
         let hh = (i != h ? h : (this.left(h) ? this.left(h) : this.right(h)));
         super.delete(i, h, pi => this.refresh(pi));
         hh = this.find(hh);
-        this.#offset[hh] = offset;
-        this.#key[i] += offset; this.#minkey[i] = this.#key[i];
-        this.#offset[i] = 0;
+        this.offset[hh] = offset;
+        this.Key[i] += offset; this.Minkey[i] = this.Key[i];
+        this.offset[i] = 0;
         return hh;
     }
 
     divide(i, h=this.find(i)) {
-        let offset = this.#offset[h];
+        let offset = this.offset[h];
         let [h1,h2] = super.split(i);
-        if (h1) this.#offset[h1] = offset;
-        if (h2) this.#offset[h2] = offset;
-        this.#minkey[i] = this.#key[i]; this.#offset[i] = offset;
+        if (h1) this.offset[h1] = offset;
+        if (h2) this.offset[h2] = offset;
+        this.Minkey[i] = this.Key[i]; this.offset[i] = offset;
         h2 = this.join(0,i,h2);
-        this.#offset[h2] = offset;
+        this.offset[h2] = offset;
         return [h1,h2];
     }
 
@@ -464,51 +444,54 @@ export default class OrderedHeaps extends BalancedForest {
 
     refresh(i) {
         while (i) {
-            let min = this.#key[i];
+            let min = this.Key[i];
             let l = this.left(i); let r = this.right(i);
-            if (l) min = Math.min(min, this.#minkey[l]);
-            if (r) min = Math.min(min, this.#minkey[r]);
-            this.#minkey[i] = min;
+            if (l) min = Math.min(min, this.Minkey[l]);
+            if (r) min = Math.min(min, this.Minkey[r]);
+            this.Minkey[i] = min;
             i = this.p(i);
-            this.steps++;
         }
     }
 
     findmin(h, which=0) {
         if (!h) return 0;
-        let k = this.#minkey[h];
+        let k = this.Minkey[h];
         let i = h;
         while (i) {
             let l = this.left(i); let r = this.right(i);
-            if (this.#key[i] == k) {
+            if (this.Key[i] == k) {
                 if (which == 0 ||
-                    which == -1 && (!l || this.#minkey[l] != k) ||
-                    which == +1 && (!r || this.#minkey[r] != k)) {
+                    which == -1 && (!l || this.Minkey[l] != k) ||
+                    which == +1 && (!r || this.Minkey[r] != k)) {
                     return i;
                 }
             }
-            i = (l && this.#minkey[l] == k ? l : r);
-            this.steps++;
+            i = (l && this.Minkey[l] == k ? l : r);
         }
-        fassert(false, `program error in OrderedHeaps.findmin(${this.x2s(h)})`);
     }
 
+    /** Remove a miniminum key item from from the heap and return it.
+     *  @param h is a heap.
+     *  @return [u,h] where u is the min key item and h is the id of the
+     *  resulting heap
+     */
     deletemin(h) {
         let u = this.findmin(h); h = this.delete(u,h);
         return [u,h];
     }
 
+    /** Extend rotation operation to maintain minkey field. */
     rotate(x) {
         let y = this.p(x);
         if (y == 0) return;
         super.rotate(x);
-        this.#minkey[x] = this.#minkey[y]; 
-        let min = this.#key[y];
+        this.Minkey[x] = this.Minkey[y]; 
+        let min = this.Key[y];
         let l = this.left(y); let r = this.right(y);
-        if (l)  min = Math.min(min, this.#minkey[l]);
-        if (r) min = Math.min(min, this.#minkey[r]);
-        this.#minkey[y] = min;
-        if (!this.p(x)) this.#offset[x] = this.#offset[y];
+        if (l)  min = Math.min(min, this.Minkey[l]);
+        if (r) min = Math.min(min, this.Minkey[r]);
+        this.Minkey[y] = min;
+        if (!this.p(x)) this.offset[x] = this.offset[y];
     }
 }
 </textarea><p>
@@ -639,21 +622,16 @@ the dynamic trees data structure appears below.
 <p> <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class DynamicTrees extends PathSet {
-    constructor(n=10) {
-        super(n); this.exposeCount = this.spliceCount = 0;
-    }
-
     expose(u) {
-        fassert(this.valid(u));
         let [p,s] = [0,u];
-        while (s != 0) {
-            [p,s] = this.#splice([p,s]);
+        while (s) {
+            [p,s] = this.splice([p,s]);
         }
         this.succ(p, 0);
         return p;
     }
     
-    #splice([p,s]) {
+    splice([p,s]) {
         let next_s = this.succ(super.findpath(s));
         let [p1,p2] = this.split(s);
         if (p1 != 0) this.succ(p1, s);
@@ -662,7 +640,6 @@ export default class DynamicTrees extends PathSet {
     }
     
     findroot(u) {
-        fassert(this.valid(u));
         let p = this.expose(u);
         let x = this.findtail(p);
         this.succ(x, 0); // works because x is now both tail and path id
@@ -676,19 +653,17 @@ export default class DynamicTrees extends PathSet {
     }
     
     addcost(u, c) {
-        fassert(this.valid(u));
         this.addpathcost(this.expose(u), c);
     }
     
     graft(t, u) {
-        fassert(this.valid(t) && this.valid(u));
+        ea && assert(this.valid(t) && this.valid(u));
         let p = this.expose(u); // id of path from u to tree root
         let sp = this.succ(p);
         this.succ(this.join(0, this.expose(t), p), sp);
     }
     
     prune(u) {
-        fassert(this.valid(u));
         let v = this.succ(this.findpath(u));
         let [p,q] = this.split(u);
         if (p != 0) this.succ(p, u);
@@ -802,82 +777,33 @@ The core of the provided <i>Javascript</i>implementation is shown below.
 <p><textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class PathSet extends SplayForest {
-    #dcost;        // #dcost[u] = cost(u)-mincost(u)
-    #dmin;        // #dmin[u] = mincost(u)-mincost(p(u)) 
+    Dcost;       // Dcost[u] = cost(u)-mincost(u)
+    Dmin;        // Dmin[u] = mincost(u)-mincost(p(u)) 
 
-    constructor(n=10) {
-        super(n);
-        this.#dcost = new Float32Array(this.n+1).fill(0);
-        this.#dmin = new Float32Array(this.n+1).fill(0);
-        this.#dcost[0] = this.#dmin[0] = Infinity;
-    }
-
-    /** Get/set the dcost of a node. */
     dcost(u, c=-1) {
-        if (c != -1) this.#dcost[u] = c;
-        return this.#dcost[u];
+        if (c != -1) this.Dcost[u] = c;
+        return this.Dcost[u];
     }
     
-    /** Get/set the dmin of a node.  */
     dmin(u, c=-1) {
-        if (c != -1) this.#dmin[u] = c;
-        return this.#dmin[u];
+        if (c != -1) this.Dmin[u] = c;
+        return this.Dmin[u];
     }
     
-    /** Get/set the successor of a path. */
-    succ(p, s=-1) {
-        return super.property(p);
-    }
+    succ(p, s=-1) { return super.property(p,s); }
     
-    findpath(u, nosplay=false) { return super.find(u,nosplay); }
-    
-    findtail(q) { return this.splay(super.last(q)); }
-    
-    addpathcost(q, x) { this.dmin(q, this.dmin(q) + x); }
-    
-    findpathcost(q) {
-        while (true) {
-            if (this.right(q) != 0 && this.dmin(this.right(q)) == 0)
-                q = this.right(q);
-            else if (this.dcost(q) > 0)
-                q = this.left(q);
-            else
-                break;
+    mincost(u) {
+        let mc = 0;
+        for (let v = u; v > 0; v = this.p(v)) {
+            mc += this.dmin(v);
         }
-        q = this.splay(q);
-        return [q, this.dmin(q)];
+        return mc;
     }
     
-    join(r, u, q) {
-        let dmin_u = this.dmin(u);
-        let sq = (q ? this.property(q) : 0);
-        super.join(r,u,q);
-        if (r == 0 && q == 0) {
-            ; // do nothing
-        } else if (r == 0) {
-            this.dmin(u, Math.min(this.dmin(u), this.dmin(q)));
-            this.dmin(q, this.dmin(q) - this.dmin(u));
-        } else if (q == 0) {
-            this.dmin(u, Math.min(this.dmin(u), this.dmin(r)));
-            this.dmin(r, this.dmin(r) - this.dmin(u));
-        } else {
-            this.dmin(u, Math.min(this.dmin(r), this.dmin(u), this.dmin(q)));
-            this.dmin(r, this.dmin(r) - this.dmin(u));
-            this.dmin(q, this.dmin(q) - this.dmin(u));
-        }
-        this.dcost(u, dmin_u - this.dmin(u)); this.property(u, sq);
-        return u;
+    cost(u,mc=null) {
+        return this.dcost(u) + (mc ? mc[u] : this.mincost(u));
     }
-    
-    split(u) {
-        let [p,q] = super.split(u);
-        let su = this.succ(u);
-        if (p != 0) { this.#dmin[p] += this.dmin(u); this.p(p,0); }
-        if (q != 0) { this.#dmin[q] += this.dmin(u); this.property(q,su); }
-        this.#dmin[u] += this.dcost(u); this.#dcost[u] = 0;
-        return [p,q];
-    }
-    
+
     rotate(x) {
         let y = this.p(x); if (y <= 0) return;
         let z = this.p(y);
@@ -890,19 +816,70 @@ export default class PathSet extends SplayForest {
         super.rotate(x);
     
         // update dmin, dcost values
-        let dmx = this.dmin(x);
-        let dma = this.dmin(a); let dmb = this.dmin(b); let dmc = this.dmin(c);
+        let dmin = this.Dmin; let dcost = this.Dcost;
+        let dmx = dmin[x];
+        let dma = dmin[a]; let dmb = dmin[b]; let dmc = dmin[c];
             // note: if a=0, dma = Infinity; same for b,c
 
-        this.dcost(x, this.dcost(x) + dmx);
-        this.dmin(x, this.dmin(y));
+        dcost[x] += dmx;
+        dmin[x] = dmin[y];
 
-        this.dmin(y, Math.min(this.dcost(y), dmb+dmx, dmc));
-        this.dcost(y, this.dcost(y) - this.dmin(y))
+        dmin[y] = Math.min(dcost[y], dmb+dmx, dmc);
+        dcost[y] -= dmin[y];
 
-        this.dmin(a, dma + dmx);
-        this.dmin(b, dmb + dmx - this.dmin(y));
-        this.dmin(c, dmc       - this.dmin(y));
+        dmin[a] = dma + dmx;
+        dmin[b] = dmb + dmx - dmin[y];
+        dmin[c] = dmc       - dmin[y];
+    }
+    
+    findpath(u, nosplay=false) { return super.find(u,nosplay); }
+    
+    findtail(q) { return this.splay(super.last(q)); }
+    
+    addpathcost(q, x) { this.dmin(q, this.dmin(q) + x); }
+    
+    findpathcost(q) {
+        while (true) {
+            if (this.right(q) && this.dmin(this.right(q)) == 0)
+                q = this.right(q);
+            else if (this.dcost(q) > 0)
+                q = this.left(q);
+            else
+                break;
+        }
+        q = this.splay(q);
+        return [q, this.dmin(q)];
+    }
+    
+    join(r, u, q) {
+        let dmin = this.Dmin; let dcost = this.Dcost;
+        let dmin_u = dmin[u];
+        let sq = (q ? this.property(q) : 0);
+        super.join(r,u,q);
+        if (r == 0 && q == 0) {
+            ; // do nothing
+        } else if (r == 0) {
+            dmin[u] = Math.min(dmin[u], dmin[q]);
+            dmin[q] -= dmin[u];
+        } else if (q == 0) {
+            dmin[u] = Math.min(dmin[u], dmin[r]);
+            dmin[r] -= dmin[u];
+        } else {
+            dmin[u] = Math.min(dmin[r], dmin[u], dmin[q]);
+            dmin[r] -= dmin[u];
+            dmin[q] -= dmin[u];
+        }
+        dcost[u] = dmin_u - dmin[u]; this.property(u, sq);
+        return u;
+    }
+    
+    split(u) {
+        let [p,q] = super.split(u);
+        let su = this.succ(u);
+        if (p != 0) { this.Dmin[p] += this.dmin(u); this.p(p,0); }
+        if (q != 0) { this.Dmin[q] += this.dmin(u); this.property(q,su); }
+        this.Dmin[u] += this.dcost(u); this.Dcost[u] = 0;
+        return [p,q];
     }
 }
 </textarea><p>
@@ -1025,17 +1002,17 @@ the root of the path tree representing this path.
 To satisfy the credit policy, up to $\lfloor \lg n\rfloor$ additional
 credits may be needed, so if $1+\lfloor \lg n\rfloor$
 are allocated to each $\graft$, there is one credit to pay for
-operation while still satisfying the credit policy.
+the operation while still satisfying the credit policy.
 Since every operation is paid for with allocated credits and the number
 of credits allocated to a sequence of $m$ tree operations is $O(n+m\log n)$
 the time required for the operations is also $O(n+m\log n)$.
 
 <h2>References</h2>
 <dt> [GMG86]
-<dd> <i>An $O(E V \log V)$ algorithm for finding a maximal weighted
-	matching in general graphs</i> by
-	Zvi Galil, Silvio Micali and Harold Gabow.
-	In <i>SIAM Journal on Computing</i>, 2/1986.
+<dd> &ldquo;An $O(E V \log V)$ algorithm for finding a maximal weighted
+    matching in general graphs&rdquo; by
+    Zvi Galil, Silvio Micali and Harold Gabow.
+    In <i>SIAM Journal on Computing</i>, 2/1986.
 <dt> [Tarjan87]
 <dd> <i>Network Algorithms and Data Structures</i> by Robert E. Tarjan.
      Society for Industrial and Applied Mathematics, 1987.

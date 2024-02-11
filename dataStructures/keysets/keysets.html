@@ -28,6 +28,30 @@
 </script>
 </head>
 <body bgcolor=ffffff>
+\(
+\newcommand{\contains}{\texttt{contains}}
+\newcommand{\lookup}{\texttt{lookup}}
+\newcommand{\insert}{\texttt{insert}}
+\newcommand{\delete}{\texttt{delete}}
+\newcommand{\join}{\texttt{join}}
+\newcommand{\split}{\texttt{split}}
+\newcommand{\KeySets}{\texttt{KeySets}}
+\newcommand{\DualKeySets}{\texttt{DualKeySets}}
+\newcommand{\Map}{\texttt{Map}}
+\newcommand{\get}{\texttt{get}}
+\newcommand{\put}{\texttt{put}}
+\newcommand{\deletePair}{\texttt{deletePair}}
+\newcommand{\first}{\texttt{first}}
+\newcommand{\next}{\texttt{next}}
+\newcommand{\size}{\texttt{size}}
+\newcommand{\BalancedForest}{\texttt{BalancedForest}}
+\newcommand{\findmin}{\texttt{findmin}}
+\newcommand{\limit}{\textit{limit}}
+\newcommand{\left}{\textit{left}}
+\newcommand{\key}{\textit{key}}
+\newcommand{\Min}{\textit{min}}
+\newcommand{\getPair}{\texttt{getPair}}
+\)
 
 <h1>Key Sets and Maps<sup>&copy</sup></h1>
 
@@ -50,183 +74,151 @@ The <i>key sets</i> data structure represents a collection of key sets,
 and can be implemented using binary forest.
 A typical implementation supports the following methods.
 <ul>
-<li> <code>key(i,k)</code> sets the key of item <code>i</code> to
-    <code>k</code>, if <code>k</code> is present;
-    in any case, it returns the key of <code>i</code>.
-<li> <code>contains(i,s)</code> returns true if item <code>i</code> is
-    contained in set <code>s</code>.
-<li> <code>lookup(k,s)</code> returns an item <code>i</code> in set
-    <code>s</code> with key <code>k</code>, or 0 if there is no such item.
-<li> <code>insert(i,s)</code> inserts item <code>i</code> into set
-    <code>s</code> and returns the modified set.
-<li> <code>delete(i)</code> deletes an item <code>i</code> from the set
-    containing it; upon return, <code>i</code> is a singleton.
+<li> $\contains(i,s)$ returns true if item $i$ is
+    contained in set $s$.
+<li> $\lookup(k,s)$ returns an item $i$ in set
+    $s$ with key $k$, or 0 if there is no such item.
+<li> $\insert(i,s)$ inserts item $i$ into set
+    $s$ and returns the modified set.
+<li> $\delete(i)$ deletes an item $i$ from the set
+    containing it; upon return, $i$ is a singleton.
 </ul>
 Some implementations also support the following methods.
 <ul>
-<li> <code>join(s1,i,s2)</code> forms a larger set from a singleton
-    item <code>i</code> and sets <code>s1</code> and <code>s2</code>,
-    where <code>s1</code> is required to have keys $\leq$<code>key(i)</code>
-    and <code>s2</code> is required to have keys $\geq$<code>key(i)</code>.
-<li> <code>split(i)</code> divides a set into three parts,
-    <code>s1</code> containing items with keys $\leq$<code>key(i)</code> and
-    <code>s2</code> containing items with keys
-    $\geq$<code>key(i)</code> and <code>i</code>.
+<li> $\join(s_1,i,s_2)$ forms a larger set from a singleton
+    item $i$ and sets $s_1$ and $s_2$,
+    where $s_1$ is required to have keys $\leq\key(i)$
+    and $s_2$ is required to have keys $\geq\key(i)$.
+<li> $\split(i)$ divides a set into three parts,
+    $s_1$ containing items with keys $\leq\key(i)$ and
+    $s_2$ containing items with keys
+    $\geq$$\key(i)$ and $i$.
 </ul>
 Keys sets can be implemented by extending the
 <a href="trees.html#binaryForest"><i>binary forest</i></a> class
 introduced earlier, or either of its balanced variants.
 The provided <i>Javascript</i> implementation extends the
 <a href="./trees.html#balancedForest"><i>balanced forest</i></a>
-class and its core methods (excluding those inherited
-the <code>BalancedForest</code>) are shown below.
+class and its core methods (omitting those inherited
+from the $\BalancedForest$) are shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class KeySets extends BalancedForest {
-    #key;        // #key[u] is the key of item u
-    #stringKey;  // true if the keys are strings
-    #compare;    // function used to compare two strings
-
-    constructor(n=10, stringKey=false) {
-        super(n);
-        this.#stringKey = stringKey;
-        this.#compare = (stringKey ? (a,b) => a.localeCompare(b) :
-                                     (a,b) => a-b);
-        this.#key = new Array(this.n+1).fill(this.#stringKey ? '' : 0);
-    }
+    Key;        // Key[u] is the key of item u
+    stringKey;  // true if the keys are strings
+    compare;    // function used to compare two strings
 
     find(u) { return super.root(u); }
     
     key(u, k=null) {
-        if (k != null) this.#key[u] = k;
-        return this.#key[u];
+        if (k != null) this.Key[u] = k;
+        return this.Key[u];
     }
     
     contains(u, s) { return s == this.find(u); }
     
     lookup(k, s) {
-        return this.search(k, s, this.#key, (a,b) => this.#compare(a,b));
+        return this.search(k, s, this.Key, (a,b) => this.compare(a,b));
     }
     
     insert(u, t, refresh=0) {
         if (u > this.n) this.expand(u);
-        return super.insertByKey(u, t, this.#key,
-                                 (a,b) => this.#compare(a,b), refresh);
+        return super.insertByKey(u, t, this.Key,
+                                 (a,b) => this.compare(a,b), refresh);
     }
-}
 </textarea> <p>
 
 <a id=dualkeySets><h2>Dual Key Sets</h2></a>
 
 The <i>dual key sets</i> data structure is an extension of the <i>key sets</i>
-data structure that includes a secondary key for each item <code>i</code>,
-referred to as <code>key2(i)</code>.
+data structure that includes a secondary key for each item $i$,
+referred to as $\key_2(i)$.
 The data structure is still organized principally around its primary
 key values, but it also provides a method
-<code>findmin(limit)</code> that returns an item of minimum
-<code>key2</code> value from among the items with primary key
-values $\leq$<code>limit</code>.
+$\findmin(limit)$ that returns an item of minimum
+$\key_2$ value from among the items with primary key
+values $\leq\limit$.
 <p>
 Hence, it can be viewed as a heap, with respect to the second key,
 and it can be implemented in a way that is similar to that of the
 <a href="./heaps.html#orderedHeaps"><i>ordered heaps</i></a>
 data structure.
-In particular, it can use an auxiliary field <code>min2(u)</code> that gives
-the smallest <code>key2</code> value in the subtree of node <code>u</code>.
+In particular, it can use an auxiliary field $\Min_2(u)$ that gives
+the smallest $\key_2$ value in the subtree of node $u$.
 An example appears below.
 <p>
 <div  style="text-align:center;">
 <img width="60%" src="figs/dualkey.png"><br>
 </div>
 <p>
-The <code>findmin</code> operation can be implemented by first identifying the
-<i>boundary</i> between the nodes with primary keys $\leq$<code>limit</code> and
-those with primary keys $>$<code>limit</code>.
-In the example above, a limit of 15 defines a boundary with nodes
-<code>c</code>, <code>d</code> and <code>e</code> to its right,
-and all other nodes to its left. Nodes <code>a</code> and <code>j</code>
-lie just to the left of this boundary and all other nodes to the left
-of the boundary fall with the left subtrees of these two.
-Nodes like <code>a</code> and <code>j</code> are called <i>boundary nodes</i>.
-More generally, a node <code>u</code> is a boundary node if
-<code>key1(u)</code>$\leq$<code>limit</code> and none of $u$'s
-ancestors is a boundary node.
-Consequently, one can identify boundary nodes by starting at the
-root and continuing to the right at each node <code>u</code> with
-<code>key1(u)</code>$\leq$<code>limit</code> and to the left at
-every other node.
-<p>
-For a boundary node <code>u</code>,
-the subtree consisting of <code>u</code> and its left subtree
-is a <i>boundary subtree</i>, and every node to the left of the boundary
-belongs to one of the boundary subtrees.
-Since
-<code>min(key2(u),min2(left(u)))</code> is the smallest <code>min2</code>
-value in its boundary subtree, one can easily determine the smallest
-<code>key2</code> value within a boundary subtree.
-By comparing these values for all boundary subtrees, one can identify
-a boundary subtree that contains a node with the smallest <code>key2</code>
-value.
-Once such a subtree is identified, it can be searched using just
-the <code>key2</code> and </code>min2</code> fields to guide the remaining
-search steps.
+The $\findmin$ operation can be implemented by
+traversing the tree while comparing the $\key_1$ value to $\limit$.
+A node is considered <i>eligible</i> if $\key_1\leq \limit$.
+The eligible node with the smallest $\key_2$ value is referred to
+as the <i>target</i> of the $\findmin$.
+If a node $u$ is not eligible, the target cannot be in $u$'s
+right subtree, so there is no need to search it.
+On the other hand, if $u$ is eligible then every node in its
+left subtree is also eligible and one can use the $\Min_2$
+value of the subtree to determine its smallest $\key_2$ value.
+As the search progresses, for each eligible node $u$ with
+left child $l$, $b_2(u)=\min(\key_2(u),\Min_2(l))$ is computed
+and the node on the path with the smallest $b_2$ value is
+identified.
+If $u$ has the smallest $c_2$ value when the search reaches
+the leaf, then either $u$ is the target, or the target is in
+$u$'s left subtree and can be quickly identified by a search
+of the subtree using the just the $\Min_2$ values.
 <p>
 Note that rotation operations must be extended
-to update <code>min2</code> value.
-Also, <code>insert</code>, <code>delete</code> and <code>join</code> must be
-modified to update the <code>min2</code> values.
+to update $\Min_2$ value.
+Also, $\insert$, $\delete$ and $\join$ must be
+modified to update the $\Min_2$ values.
 This can be done by traversing a
-path from a node to the root, updating <code>min2</code> values along the way.
+path from a node to the root, updating $\Min_2$ values along the way.
 <p>
 The provided <i>Javascript</i> implementation extends the
-<code>KeySets</code> class, so all operations are $O(\log n)$.
+$\KeySets$ class, so all operations are $O(\log n)$.
 The core methods are shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class DualKeySets extends KeySets {
-    #key2;         // #key2[u] is second key value
-    #min2;         // #min2[u] is the smallest key2 value in the subtree at u
-    
-    constructor(n=10) {
-        super(n);
-        this.#key2 = new Array(this.n+1);
-        this.#min2 = new Array(this.n+1);
-    }
+    Key2;         // Key2[u] is second key value
+    Min2;         // Min2[u] is the smallest key2 value in the subtree at u
 
     key2(u, k=false) {
         if (k !== false) {
             // assumes u is a singleton
-            this.#key2[u] = k; this.#min2[u] = k;
+            this.Key2[u] = k; this.Min2[u] = k;
         }
-        return this.#key2[u];
+        return this.Key2[u];
     }
 
     min2(u, k=false) {
-        if (k !== false) this.#min2[u] = k;
-        return this.#min2[u];
+        if (k !== false) this.Min2[u] = k;
+        return this.Min2[u];
     }
 
     findmin(t, limit=Infinity) {
         // first, find eligible subtrees on boundary and identify best one
         let u = t; let best = 0; let bestMin = 0;
-        while (u != 0) {
-            let l = this.left(u);
+        while (u) {
+            let l = this.left(u); this.steps++;
             if (this.key(u) > limit) {
                 u = l; continue;
             }
-            // so, u defines an eligible subtree
-            if (best == 0 || this.key2(u) < bestMin ||
-                (l && this.min2(l) < bestMin)) {
-                best = u;
-                bestMin = this.key2(u) <= this.min2(l) ?
-                                           this.key2(u) : this.min2(l);
+            // so, u and its left subtree are eligible
+            let b = (l ? Math.min(this.key2(u), this.min2(l)) : this.key2(u));
+            if (!best || b < bestMin) {
+                best = u; bestMin = b;
             }
-            u = this.right(u); // right subtree may contain eligible subtrees
+            u = this.right(u); // right subtree may contain boundary subtrees
         }
-        if (best == 0) return 0;
+        if (!best) return 0;
         if (this.key2(best) == bestMin) return best;
+
         // target is in left subtree of best
         u = this.left(best);
         while (this.key2(u) != bestMin) {
@@ -237,6 +229,22 @@ export default class DualKeySets extends KeySets {
         return u;
     }
         
+    insert(u, t) {
+        return super.insert(u, t, u => this.refresh(u));
+    }
+
+    delete(u) { super.delete(u, 0, pu => this.refresh(pu)); }
+
+    swap(u, v) {
+        super.swap(u, v);
+        let k2 = this.key2(u);
+        this.key2(u, this.key2(v)); this.key2(v, k2);
+    }
+
+    join(t1, u, t2) {
+        return super.join(t1, u, t2, u => this.refresh(u));
+    }
+        
     rotate(x) {
         let y = this.p(x);
         if (y == 0) return;
@@ -244,18 +252,9 @@ export default class DualKeySets extends KeySets {
         this.min2(x, this.min2(y));
         this.update2(y);
     }
-        
-    insert(u, t) {
-        return super.insert(u, t, u => this.refresh(u));
-    }
 
-    /** Update min2 values along path to root.
-     *  @param u is a node defining a path to the root;
-     *  min2 values are refreshed along this path
-     */
     refresh(u) {
         while (u != 0) {
-            this.refreshSteps++;
             this.update2(u);
             u = this.p(u);
         }
@@ -270,18 +269,6 @@ export default class DualKeySets extends KeySets {
             m2 = (m2 <= this.min2(r) ?  m2 : this.min2(r));
         this.min2(u, m2);
     }
-
-    delete(u) { super.delete(u, 0, pu => this.refresh(pu)); }
-
-    swap(u, v) {
-        super.swap(u, v);
-        let k2 = this.key2(u);
-        this.setkey2(u, this.key2(v)); this.setkey2(v, k2);
-    }
-
-    join(t1, u, t2) {
-        return super.join(t1, u, t2, u => this.refresh(u));
-    }
 }
 </textarea> <p>
 
@@ -290,22 +277,20 @@ export default class DualKeySets extends KeySets {
 A <i>map</i> defines a collection of key-value pairs and defines the
 following methods.
 <ul>
-<li> <code>get(k)</code> returns the value part of the key-value pair
-    with key <code>k</code> or undefined.
-<li> <code>put(k,v)</code> adds the key-value pair <code>[k,v]</code>,
-    possibly replacing an existing pair with key <code>k</code>.
+<li> $\get(k)$ returns the value part of the key-value pair
+    with key $k$ or undefined.
+<li> $\put(k,v)$ adds the key-value pair $[k,v]$,
+    possibly replacing an existing pair with key $k$.
 </ul>
 The provided <i>Javascript</i> implementation also provides the following
 methods.
 <ul>
-<li> <code>getPair(k)</code> returns an integer index for the pair
-    with key <code>k</code>, or 0.
-<li> <code>key(p)</code> returns the key of pair <code>p</code>.
-<li> <code>value(p)</code> returns the value of pair <code>p</code>.
-<li> <code>deletePair(p)</code> removes pair <code>p</code>
-<li> <code>first()</code> returns first pair in the map.
-<li> <code>next(p)</code> returns the pair following <code>p</code>.
-<li> <code>size</code> is the number of pairs in the map.
+<li> $\getPair(k)$ returns an integer index for the pair
+    with key $k$, or 0.
+<li> $\deletePair(p)$ removes pair $p$
+<li> $\first()$ returns first pair in the map.
+<li> $\next(p)$ returns the pair following $p$.
+<li> $\size$ is the number of pairs in the map.
 </ul>
 A map can be implemented using a key set to represent the collection
 of keys, with the values stored in a separate array.
@@ -316,39 +301,37 @@ or strings and its core components appear below.
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class Map extends Top {
-    #keys;       // KeySet used to store keys
-    #top         // id of the specific set in #keys used to represent map
-    #value;      // #value[i] is value paired with key(i)
-    #size;       // number of key-value pairs
-    #free;       // list of unused pair ids
+    keys;      // KeySet used to store keys
+    top;       // id of the specific set in keys used to represent map
+    Value;     // Value[i] is value paired with key(i)
+    Size;      // number of key-value pairs
+    free;      // list of unused pair ids
 
-    #stringKey;    // true if keys are strings
-    #stringValue;  // true if values are strings
+    stringKey;    // true if keys are strings
+    stringValue;  // true if values are strings
     
-    #compare;      // function for comparing two keys
+    compare;       // function comparing two keys
 
-    /** Constructor for Map object.
-     *  @param n is the initial index range for key-value pairs
-     *  @param stringKey is true if the keys are strings
-     *  @param stringValue is true if the values are strings
-     */
-    constructor(n=10, stringKey=false, stringValue=false) {
-        super(n);
+    get size() { return this.Size; }
 
-        this.#stringKey = stringKey;
-        this.#stringValue = stringValue;
-        this.#compare = (stringKey ? (a,b) => localeCompare : (a,b) => a-b);
+    empty() { return this.size == 0; }
 
-        this.#keys = new KeySets(n, stringKey);
-        this.#top = 0; this.#size = 0;
-        this.#value = new Array(this.n+1).fill(stringKey ? '' : 0);
-        this.#free = new List(this.n+1);
-        for (let i = 1; i <= this.n; i++) this.#free.enq(i);
+    first() { return this.keys.first(this.top); }
+    next(p) { return this.keys.next(p); }
+
+    key(p) { return this.keys.key(p); }
+    value(p,v) {
+        if (v) this.Value[p] = v;
+        return this.Value[p];
     }
 
+    getPair(k) {
+        return this.keys.lookup(k, this.top);
+    }
+    
     get(k) {
         let p = this.getPair(k);
-        return p ? this.#value[p] : undefined;
+        return p ? this.Value[p] : undefined;
     }
 
     put(k, v=undefined) {
@@ -360,44 +343,27 @@ export default class Map extends Top {
             this.value(p,v); return p;
         }
         if (v == undefined) return 0;
-        p = this.#free.deq();
+        p = this.free.deq();
         if (!p) {
             this.expand(Math.max(this.n+10, ~~(1.5*this.n)));
-            p = this.#free.deq();
+            p = this.free.deq();
         }
-        this.#keys.key(p, k);
-        this.#top = this.#keys.insert(p, this.#top)
+        this.keys.key(p, k);
+        this.top = this.keys.insert(p, this.top)
         this.value(p,v);
-        this.#size++;
+        this.Size++;
         return p;
     }
 
     delete(k) { let p = this.get(k); if (p) this.deletePair(p); }
 
-    getPair(k) { return this.#keys.lookup(k, this.#top); }
-
     deletePair(p) {
         if (!p || this.size == 0) return;
-        this.#top = (this.size > 1 ? this.#keys.delete(p, this.#top) : 0);
-        this.#free.enq(p);
+        this.top = (this.size > 1 ? this.keys.delete(p, this.top) : 0);
+        this.free.enq(p);
         this.value(p,undefined);
-        this.#size--;
+        this.Size--;
     }
-
-    key(p) { return this.#keys.key(p); }
-
-    value(p,v) {
-        if (v) this.#value[p] = v;
-        return this.#value[p];
-    }
-    
-    get size() { return this.#size; }
-
-    empty() { return this.size == 0; }
-
-    first() { return this.#keys.first(this.#top); }
-
-    next(p) { return this.#keys.next(p); }
 }
 </textarea> <p>
 
