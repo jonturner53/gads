@@ -1,0 +1,726 @@
+<html>
+<head>
+<title>Hamiltonian Paths and Cycles</title>
+<link type="text/css" rel="stylesheet" href="../../main.css">
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41SPK9725S"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-41SPK9725S');
+</script>
+</head>
+<body bgcolor=ffffff>
+\(
+\newcommand{\color}{\textit{color}}
+\newcommand{\avail}{\textit{avail}}
+\newcommand{\np}{\textit{NP}}
+
+\newcommand{\Proc}{\textbf{procedure}}
+\newcommand{\Func}{\textbf{function}}
+\newcommand{\flip}{\textit{flip}}
+\newcommand{\bmax}{b_{\textit{max}}}
+
+\newcommand{\proof}{\noindent\textit{proof}}
+\)
+
+<h1>Hamiltonian Paths and Cycles<sup>&copy;</sup></h1>
+
+A Hamiltonian path (cycle) is a path (cycle) in a graph that
+includes every vertex exactly once.
+The problem of determining
+if a graph is Hamiltonian is $NP$-complete,
+however there are efficient methods that can work well on random graphs.
+<p>
+<div  style="text-align:center;">
+<img width="23%" src="figs/example1.png"><br>
+</div>
+<p>
+Erdos and Renyi showed that almost all random graphs with fewer than
+$\frac{1}{2} n \ln n$ edges are disconnected, but almost all graphs with
+more than $\frac{1}{2} n \ln n$ are connected [ER59].
+In 1976, Posa showed that for large enough constant $c$,
+almost all graphs with $c n\ln n$ edges are Hamiltonian [Posa76],
+and in 1983, Komlos and Szemeredi improved on this to show that
+almost all graphs with more than $\frac{1}{2} n \ln n$ edges are [KS83].
+Moreover, in 1994 Robinson and Wormald showed that almost all
+$d$-regular graphs are Hamiltonian for all $d\geq 3$ [RW94].
+So Hamiltonian paths and cycles are surprisingly common, even in
+quite sparse graphs.
+
+<h2>Extension-Rotation Method</h2>
+
+Posa's proof that almost all graphs with $c n\ln n$ edges are Hamiltonian
+includes a method for building a Hamiltonian path incrementally.
+It uses two basic operations, path extension and rotation.
+<p>
+<div  style="text-align:center;">
+<img width="60%" src="figs/extension-rotation.png"><br>
+</div>
+<p>
+The extension operation simply adds an edge from the <i>free</i> endpoint of
+the current partial path to a vertex not yet in the path.
+The rotation uses an edge from the free endpoint to an interior vertex
+to expose a new endpoint from which further path extension may be possible.
+Angluin and Valiant built an explicit algorithm based on Posa's method.
+It starts by fixing an <i>anchor</i> vertex, initializes the free
+endpoint to be the same as the anchor, then repeats the following step.
+<p style="padding-left:5%">
+If the partial path constructed so far contains all vertices and there
+is an edge connecting the free endpoint to the anchor, add the edge to close
+the cycle and terminate successfully.
+Otherwise, select an <i>unmarked edge</i> $e=\{u,v\}$ incident to the
+free endpoint $u$ and delete it from the graph.
+If there is no edge in the graph at $u$, terminate with a failure.
+<ul style="padding-left:8%">
+<li>
+If $v$ is not on the current path,
+add $\{u,v\}$ to the end of the path, making $v$ the new free endpoint.
+<li>
+If $v$ is an internal vertex on the current path,
+use $\{u,v\}$ to rotate the path, exposing a new free endpoint.
+</ul>
+<p>
+Edges are selected randomly and the deletion of selected edges ensures
+that no edge is selected more than once.
+<p>
+A <i>Javascript</i> implementation of this algorithm appears below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function hpcPAV(g0) {
+    // create copy of input graph to allow for edge deletion by algorithm
+    let g = new Graph(g0.n,g0.edgeRange);
+    g.assign(g0);
+
+    // select random anchor u0 and let u be the free endpoint
+    let u0 = randomInteger(1,g0.n); let u = u0; 
+    let path = new Int32Array(g.n); let k = 0;
+    while (g.firstAt(u)) {
+        if (k == g.n-1) {
+            let lastEdge = g0.findEdge(u, u0);
+            if (lastEdge) {
+                path[k++] = lastEdge; break;
+            }
+        }
+
+        // select random edge at free endpoint
+        let e = g.firstAt(u);
+        let i = randomInteger(1,g.degree(u));
+        while (i-- > 1) { e = g.nextAt(u,e); }
+        let v = g.mate(u,e);
+
+        if (v == u0) continue;
+
+        // find position of first edge in path containing v
+        let pv;
+        for (pv = 0; pv < k; pv++) {
+            if (g0.left(path[pv]) == v || g0.right(path[pv]) == v)
+                break;
+        }
+
+        if (pv == k) { // v not on path
+            path[k++] = e; u = v;
+        } else {
+            // reverse tail end of path
+            path[pv+1] = e;
+            for (let j = 0; j < ~~((k-(pv+1))/2); j++) {
+                let ee = path[pv+2+j];
+                path[pv+2+j] = path[(k-1)-j];
+                path[(k-1)-j] = ee;
+            }
+            for (let j = pv+2; j < k; j++)
+                u = g0.mate(u,path[j]);
+        }
+    }
+    return [path ..]
+}
+</textarea><p>
+This abridged version omits a couple features of the program in the
+provided library.
+Specifically, the provided version also supports the construction of a
+Hamiltonian path between two specified vertices or the construction of a
+path starting at a specified vertex, but ending anywhere.
+It also allows edges to be selected multiple times (up to a specified maximum),
+enabling it to find Hamiltonian paths or cycles that the basic version may not.
+The following script can be used to demonstrate the algorithm.
+<p> <pre style="padding-left:5%">
+let g = hpcRandom(10, 3);
+let [path,ts,stats] = hpcPAV(g,1,0,0,1);
+log(ts + (stats.length==g.n ? 'success' : 'failure'));
+</pre> <p>
+The function <code>hpcRandom</code> returns a random graph that
+contains a Hamiltonian cycle and has
+10 vertices and average vertex degree 3.
+Here is the output from a sample (successful) execution of the script.
+<p> <pre style="padding-left:5%">
+graph: {
+a[h j f]
+b[h e c g]
+c[d f b]
+d[c j
+e[i h b]
+f[c a]
+g[h b i]
+h[e g b a]
+i[e j g]
+j[a i d]
+}
+
+vertices on partial paths from d with selected edge
+[d j a f c b g i] {j,i}
+[d j i g b c f a h e] {e,b}
+
+final cycle: [dj ji ig bg eb he ha af fc cd]
+success
+</pre> <p>
+The trace output shows the vertices on each partial path
+just before each rotation operation.
+In this case, the first seven steps extended the path.
+Then, there was a rotation that reversed the order of
+the last six vertices on the path, exposing $a$ as the
+new free endpoint. This rotation was
+followed by two more path extensions, followed by a rotation
+that reversed the order of the last five vertices,
+exposing $c$.
+The last step closed the cycle with edge $\{c,d\}$.
+<p>
+Increasing the second argument of <code>hpcPAV</code> to 2 allows
+each edge to be selected twice. Here is an example showing the
+effect of this change, with an asterisk marking the edges selected
+for the second time.
+<p> <pre style="padding-left:5%">
+graph: {
+a[b f c]
+b[a j i g]
+c[d e g j a]
+d[h i c]
+e[c g j]
+f[a h]
+g[b c e]
+h[f d]
+i[b d]
+j[e b c]
+}
+
+vertices on partial paths from h with selected edge
+[h d i b g c j] {j,c}*
+[h d i b g c j] {b,j}
+[h d i b j c g] {g,c}*
+[h d i b j c g] {b,g}
+[h d i b g c j e] {e,j}*
+[h d i b g c j e] {e,c}
+[h d i b g c e j] {b,j}*
+[h d i b j e c g] {g,e}
+[h d i b j e g c] {e,c}*
+[h d i b j e c g] {g,e}*
+[h d i b j e g c a] {c,a}*
+
+final cycle: [hd di ib bj ej ge gc ca af fh]
+success 
+</pre> <p>
+From this example, it's not obvious that allowing multiple edge
+selections is productive, but as will be shown, it can boost
+performance substantially.
+
+To generate and then attempt to find a graph with a Hamiltonian path
+joining vertices $b$ and $e$, use this version of the script.
+<p> <pre style="padding-left:5%">
+let g = hpcRandom(10,3,2,5);
+[path,ts,stats] = hpcPAV(g,1,2,5,1);
+log(ts + (stats.length==g.n-1 ? 'success' : 'failure'));
+</pre> <p>
+A sample run appears below.
+<p> <pre style="padding-left:5%">
+graph: {
+a[i h e f c]  b[g]  c[g f a]  d[h e]
+e[d h a]  f[c j a h]  g[b c i]  h[a d e f]
+i[j a g]  j[f i]
+}
+
+vertices on partial paths from b with selected edge
+[b g i a h f c] {g,c}
+[b g c f h a i j] {f,j}
+
+final path: [bg gc cf fj ji ia ah hd de]
+success 
+</pre> <p>
+The following script can be used to explore the performance
+of the algorithm.
+<p> <pre style="padding-left:5%">
+let n = 100; let d = 8; let selectLimit = 1;
+let successCount = 0; let rotations = 0;
+for (let i = 1; i <= 10; i++) {
+    let g = hpcRandom(n,d);
+    let [path,ts,stats] = hpcPAV(g);
+    if (stats.length==g.n) successCount++;
+    rotations += stats.rotations
+}
+log(`n=${n} d=${d} successes=${successCount} ` +
+    `rotations=${rotations/10).toFixed(1)}`);
+</pre> <p>
+Here are some results.
+<p> <pre style="padding-left:5%">
+n=100 d= 3 limit= 1 successes=0 rotations=  4.5 
+n=100 d= 4 limit= 1 successes=0 rotations= 11 
+n=100 d= 8 limit= 1 successes=0 rotations= 83.9 
+n=100 d=12 limit= 1 successes=0 rotations=157.5 
+n=100 d=16 limit= 1 successes=6 rotations=317.3 
+n=100 d=15 limit= 1 successes=4 rotations=261.3 
+
+n=100 d=14 limit= 2 successes=7 rotations=447.2 
+n=100 d=13 limit= 2 successes=9 rotations=384.1 
+n=100 d=12 limit= 2 successes=7 rotations=379.8 
+n=100 d=11 limit= 2 successes=4 rotations=371.6 
+
+n=100 d=11 limit= 3 successes=9 rotations=589 
+n=100 d=10 limit= 3 successes=3 rotations=483.9 
+
+n=100 d= 9 limit= 4 successes=8 rotations=502.4 
+n=100 d= 8 limit= 4 successes=4 rotations=532.7 
+
+n=100 d= 8 limit= 5 successes=5 rotations=594.2 
+n=100 d= 7 limit= 5 successes=2 rotations=381.8
+ 
+n=100 d= 6 limit=10 successes=5 rotations=570.6 
+n=100 d= 5 limit=10 successes=1 rotations=568.2 
+
+n=100 d= 5 limit=20 successes=7 rotations=641.6 
+n=100 d= 4 limit=20 successes=1 rotations=675.4 
+</pre> <p>
+Observe that when the selection limit is 1, the algorithm is unable to
+find the Hamiltonian cycles that are present in the graphs of small degree.
+For graphs with average degree 16,
+it is able to find the cycles roughly half the time.
+Increasing the limit to 2 allows it to match this performance level
+for degree 12 graphs. Further increases enable it to reach this
+performance level for degree values as small as 5, a three-to-one
+improvement over the <code>selectLimit=1</code> case.
+Also, note that in most cases, the number of rotations is smaller than
+the number of edges and it is never than four times the number of edges,
+even when the selection limit is 20.
+So the improved performance can be obtained with a relatively modest
+increase in computational effort.
+<p>
+The following script uses binary search to find the smallest average degree
+for which cycles are found at least half the time.
+<p> <pre style="padding-left:5%">
+let n = 800; let selectLimit = 10;
+let successCount = 0; let rotations = 0; let k = 10;
+let lo = 3; let hi = 30; let dmin=0;
+while (lo < hi) {
+    let success = 0;
+    let d = ~~((lo+hi)/2);
+    for (let i = 0; i < k; i++) {
+        let g = hpcRandom(n,d);
+        let [path] = hpcPAV(g,selectLimit);
+        if (path[g.n-1]) success++;
+    }
+    if (success/k < 0.5) lo = d+1;
+    else { hi = d; dmin = d; }
+}
+log(`hpcPAV n=${n} selectLimit=${selectLimit} dmin=${dmin}`);
+</pre> <p>
+Here are some results showing how the minimum vertex degree
+increases with the number of vertices.
+<p> <pre style="padding-left:5%">
+hpcPAV n= 50 selectLimit= 1 dmin=12 
+hpcPAV n=100 selectLimit= 1 dmin=16 
+hpcPAV n=200 selectLimit= 1 dmin=18 
+hpcPAV n=400 selectLimit= 1 dmin=23 
+hpcPAV n=800 selectLimit= 1 dmin=24 
+
+hpcPAV n= 50 selectLimit=10 dmin= 6 
+hpcPAV n=100 selectLimit=10 dmin= 6 
+hpcPAV n=200 selectLimit=10 dmin= 7 
+hpcPAV n=400 selectLimit=10 dmin= 8 
+hpcPAV n=800 selectLimit=10 dmin= 9
+</pre> <p>
+Observe that when <code>selectLimit=1</code>, each doubling of $n$
+produces an average increase of 3 in <code>dmin</code>.
+The incremental difference appears essentially constant,
+suggesting a logarithmic growth rate.
+Note that the random graph generator guarantees that there
+is a Hamiltonian cycle in all cases, so these results imply that the
+algorithm struggles to find cycles until the higher density
+makes them more plentiful.
+When <code>selectLimit=10</code>, each doubling of $n$
+produces an average increase of about 0.75 in <code>dmin</code>.
+<p>
+One can easily modify the script to use the <code>randomGraph</code>
+function in place of <code>hpcRandom</code>. This produces larger
+<code>dmin</code> values.
+Alternatively, <code>randomRegularGraph</code> produces smaller values.
+These differences are consistent with the differences in the variance of
+the vertex degrees in the different random graph models.
+In general, one can expect performance to deteriorate as variance increases.
+
+<h2>Cycle Patching Method</h2>
+
+The <i>traveling salesman problem</i> can be viewed as a generalization
+of the Hamiltonian cycle problem.
+In this case, edges have costs and the objective is to find a simple
+cycle that visits all the vertices and has minimum cost.
+Reference [Karp79] describes a <i>patching</i> algorithm for the
+nonsymmetric version of the traveling salesman problem.
+He shows that if costs are selected uniformly in $[0,1]$ for all ordered pairs
+of vertices $(u,v)$, that the patching algorithm produces near-optimal
+solutions with high probability.
+<p>
+Karp's algorithm starts by finding a minimum cost collection of
+disjoint cycles. This can be done by solving a weighted matching problem on
+a complete bipartite graph and the cost of the collection of cycles
+is guaranteed to be no larger than that of the least-cost Hamiltonian
+cycle. The disjoint cycles can be combined into a Hamiltonian cycle
+by applying a pairwise patching operation, and if the patching
+operations are chosen judiciously, the final cost is not much
+larger than that of the initial collection.
+<p>
+The cycle patching idea can be adapted to the Hamiltonian cycle problem,
+but some changes are needed to account for the differences between the
+two problems. There are two main issues. First, in the Hamilotonian cycle
+context, the graphs are undirected, meaning that edges can be used in either
+direction. Second there are no edge costs.
+Finally, the problem is trivial for complete graphs and is only challenging
+in sparse graphs where solutions can be hard to find.
+Still, the basic framework of Karp's algorithm remains relevant.
+The first part is to construct a collection of disjoint cycles that
+includes every vertex. The second part is to patch the cycles together,
+using a variant of Karp's patching method that is suited to
+undirected graphs.
+<p>
+An initial collection of cycles can be obtained using essentially the
+same method that Karp uses. However, because the graph is undirected
+and has no edge costs, this method tends to produce lots of small cycles,
+not all of which can be readily patched into other cycles. For this
+reason, another method generally works better. [Tutte54] describes a
+general method for extracting a $d$-regular spanning subgraph of an
+arbitrary graph, by solving a matching problem on another graph.
+For the particular case of $d=2$, this yields a method for computing
+a collection of disjoint cycles that includes every vertex.
+<p>
+Let $G=(V,E)$ be a graph and let $G'$ be a graph defined follows.
+For each $u\in V$, $G'$ contains a <i>cluster</i> $C_u$ with
+$2d(u)-2$ vertices, where $d(u)$ is the degree of $u$.
+$C_u$ is a complete bipartite graph with $d$ <i>external</i> vertices
+and $d-2$ <i>internal</i> vertices. For each edge $\{u,v\}$ in $G$,
+$G'$ has an edge linking an external vertex of $C_u$ to an external
+vertex of $C_v$. Each external vertex is incident to exactly one
+of these inter-cluster edges.
+An example is shown below.
+<p>
+<div  style="text-align:center;">
+<img width="80%" src="figs/cycleCoverReduction.png"><br>
+</div>
+<p>
+The heavy weight edges in the diagram identify a perfect matching in $G'$.
+The external edges in this matching define a pair of disjoint cycles in $G$
+that includes every vertex. Since one edge of each internal vertex in a
+cluster must be matched, exactly two of its external vertices must be
+incident to inter-cluster edges in the matching.
+In general, a graph $G$ can be partitioned into disjoint cycles
+if and only if $G'$ has a perfect matching.
+<p>
+Once an initial set of cycles is found, the algorithm identifies
+<i>compatible pairs</i> of cycles and combines them to form larger cycles,
+continuing until only one cycle remains, or none of the remaining
+cycles are compatible. Call two vertices on the same cycle <i>buddies</i>
+if they are adjacent on the cycle.
+Two cycles $C_1$ and $C_2$ are compatible if they contain
+vertices $u$ and $v$, where $u$ is adjacent to a buddy of $v$
+and $v$ is adjacent to a buddy of $u$.
+This is illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="60%" src="figs/patching.png"><br>
+</div>
+<p>
+The essential core of the <i>Javascript</i> implementation of the
+algorithm is shown below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let g;           // shared reference to graph
+let pi;          // permutation on 1..n that defines cycles in g
+let rpi;         // reverse of permutation pi
+let clist;       // List of the current valid cycle ids
+let clen;        // clen[u] is length of cycle identified by u
+let link;        // link[u][v] is edge number of connecting edge or 0
+
+export default function hpcKT(g0) {
+    g = g0; 
+
+    pi  = new Int32Array(g.n+1);
+    rpi = new Int32Array(g.n+1);
+    clist = new List(g.n);
+    clen = new Int32Array(g.n+1);
+
+    link = new Array(g.n+1);
+    for (let u = 1; u <= g.n; u++)
+        link[u] = new Int32Array(g.n+1);
+    for (let e = g.first(); e; e = g.next(e)) {
+        link[g.left(e)][g.right(e)] = e;
+        link[g.right(e)][g.left(e)] = e;
+    }
+
+    let path = new Int32Array(g0.n);
+
+    if (!initialCycles()) return [path ..];
+
+    while (clist.length > 1) {
+        let cp = compatiblePair();
+        if (!cp) break;
+        let [c1,c2,u,v] = cp;
+        splice(u,v); clen[c1] += clen[c2]; clist.delete(c2);
+    }
+
+    // identify longest cycle
+    let lc = clist.first();
+    for (let u = clist.next(lc); u; u = clist.next(u))
+        if (clen[u] > clen[lc]) lc = u;
+
+    // create array of edges in cycle
+    let v = lc; let i = 0;
+    do {
+        path[i++] = link[v][pi[v]]; v = pi[v];
+    } while(v != lc);
+
+    return [path ..];
+}
+
+function initialCycles() {
+    // preliminaries
+    let n = 0; let m = g.m;
+    let d = new Int32Array(g.n+1);    // d[u]=degree(u)
+    let base = new Int32Array(g.n+1); // base[u]=first vertex in u's cluster
+    let b = 1;
+    for (let u = 1; u <= g.n; u++) {
+        d[u] = g.degree(u); if (d[u] < 2) return false;
+        base[u] = b; let nu = 2*d[u]-2; b += nu;
+        n += nu; m += d[u]*(d[u]-2);
+    }
+
+    let mg = new Graph(n, m >= g.edgeRange ? m : g.edgeRange);
+    // define inter-custer edges
+    let offset = new Int32Array(g.n+1);
+        // offset[u] determines position of next edge in u's cluster
+    for (let e = g.first(); e; e = g.next(e)) {
+        let [u,v] = [g.left(e),g.right(e)];
+        mg.join(base[u] + offset[u]++, base[v] + offset[v]++, e); 
+    }
+
+    // define intra-cluster edges
+    for (let u = 1; u <= g.n; u++) {
+        for (let i = 0; i < d[u]; i++) {
+            for (let j = 0; j < d[u]-2; j++) {
+                let me = mg.join(base[u]+i, base[u]+d[u]+j);
+            }
+        }
+    }
+
+    let [match] = matchEG(mg);
+    if (match.size() != mg.n/2) return false;
+
+    let cycleEdges = new List(g.edgeRange);
+    for (let e = match.first(); e; e = match.next(e)) {
+        if (g.validEdge(e)) cycleEdges.enq(e);
+    }
+    // every vertex is incident to two edges in cycleEdges
+
+    pi.fill(0); rpi.fill(0);
+    while (!cycleEdges.empty()) {
+        let e = cycleEdges.first();
+        let u = g.left(e);
+        let v = u;
+        do {
+            pi[v] = g.mate(v,e); rpi[g.mate(v,e)] = v;
+            cycleEdges.delete(e);
+            clen[u]++;
+            v = pi[v];
+            for (e = g.firstAt(v); e; e = g.nextAt(v,e))
+                if (cycleEdges.contains(e)) break;
+        } while (v != u);
+        clist.enq(u);
+    }
+    return true;
+}
+
+/** Search for a compatible pair in clist.
+ *  @return a tuple [c1,c2,u,v] on success, or null on failure;
+ *  c1 and c2 are a pair of compatible cycles; u and v are vertices
+ *  at which the cycles can be spliced.
+ */
+function compatiblePair() {
+    for (let c1 = clist.first(); c1; c1 = clist.next(c1)) {
+        for (let c2 = clist.next(c1); c2; c2 = clist.next(c2)) {
+            let pair = compatible(c1,c2);
+            if (pair) {
+                let [u,v] = pair;
+                return [c1,c2,u,v];
+            }
+        }
+    }
+    return null;
+}
+
+/** Determine if two cycles are compatible.
+ *  @param c1 is a cycle
+ *  @param c2 is a different cycle
+ *  @return a vertex pair [x,y], one from each cycle that can be
+ *  used to splice the cycles together; or null on failure
+ */
+function compatible(c1,c2) {
+    let u = c1;
+    do {
+        let v = c2;
+        do {
+            if ((link[u][pi[v]] || link[u][rpi[v]]) &&
+                (link[v][pi[u]] || link[v][rpi[u]]))
+                return [u,v];
+            v = pi[v];
+        } while (v != c2);
+        u = pi[u];
+    } while (u != c1);
+
+    return null;
+}
+
+/** Splice two cycles at a specified pair of vertices.
+ *  @param u is a vertex in a cycle
+ *  @param v is a vertex in a different cycle
+ */
+function splice(u,v) {
+    if (!link[u][pi[v]]) reverseCycle(v);
+    if (!link[v][pi[u]]) reverseCycle(u);
+    let  pu =  pi[u]; let  pv =  pi[v];
+    [pi[u], pi[v], rpi[pv], rpi[pu]] = [pv, pu, u, v];
+}
+
+/** Reverse a cycle.
+ *  @paren u is a vertex on some cycle.
+ */  
+function reverseCycle(u) {
+    let v = u;
+    do {
+        let pv = pi[v]; let rpv = rpi[v];
+        pi[v] = rpv; rpi[v] = pv; v = pv;
+    } while (v != u);
+}
+</textarea><p>
+A variant of the script used earler can be
+used to demonstrate the algorithm. Here is some sample
+trace output.
+<p> <pre style="padding-left:5%">
+graph: {
+a[m e c]  b[m i]  c[n m a]  d[i e n j]
+e[d a]  f[h k]  g[m l]  h[f o]
+i[o b j d]  j[d l p k i]  k[p f j]  l[p g j]
+m[c a b g]  n[c d o]  o[h i n]  p[l k j]
+}
+
+{[e a c n d] [b i o h f k p j l g m]}
+
+final cycle: [ea ac cn no oh hf fk pk jp jl lg gm mb bi id de] 16
+</pre> <p>
+The trace output shows the cycles at the start of each iteration
+of the main loop. For small examples like this, the intial collection
+of cycles is often a single cycle, allowing the main loop to be skipped.
+In this case, the initial collection has two cycles, which are
+combined yielding the final result.
+<p>
+For larger graphs, more iterations typically occur.
+Terse trace output showing only the lengths of the cycles appears below.
+This output is for two different random graphs on 200 vertices with
+average degree 8.
+<p> <pre style="padding-left:5%">
+37 58 72 23 10 
+95 72 23 10 
+167 23 10 
+190 10 
+200 
+ 
+170 3 11 5 11 
+175 3 11 11 
+186 3 11 
+186 3 11
+</pre> <p>
+The cycle lengths are shown at the start of each iteration of the main
+loop and at the end of execution.
+In the first case, the first two cycles are combined on each iteration,
+leading to a single cycle at the end.
+In the second case, the cycles remaining at the end could not be
+combined and the program failed to find a solution.
+<p>
+The results below were obtained using a variant of the earlier binary search
+script. They show the smallest average vertex degree for which the
+algorithm found a Hamiltonian circuit in at least half of the cases it tried.
+<p> <pre style="padding-left:5%">
+hpcKT n= 50 dmin=3 
+hpcKT n=100 dmin=4 
+hpcKT n=200 dmin=5 
+hpcKT n=400 dmin=6 
+hpcKT n=800 dmin=8 
+</pre> <p>
+This is a bit better than <code>hpcPAV</code> for the smaller graphs,
+even when the selection limit is quite large.
+For larger graphs, the performance of the two is roughly comparable.
+<p>
+The complete implementation of <code>hpcKT</code> includes code to support
+Hamiltonian paths as well as cycles. This is done using a general reduction
+from the Hamilonian path problem to the Hamiltonian cycle problem.
+When both $s$ and $t$ are specified, an extra vertex is added to the
+graph with edges connecting it to both $s$ and $t$. The original
+graph has a Hamiltonian path if and only if the augmented graph
+has a Hamiltonian cycle. A variant of this reduction can be used
+if $t$ is left unspecified.
+
+<h2>References</h2>
+<dl>
+<dt> [AV79]
+<dd> &ldquo;Fast probabilistic algorithms for Hamiltonian circuits
+    and matchings,&rdquo;
+    by D. Anluin and L. Valiant.
+    In <i>Journal of Computer and System Sciences</i>, 1979.
+
+<dt> [ER59]
+<dd> &ldquo;On Random Graphs I,&rdquo;
+    by P. Erdos and A. Renyi.
+    In <i>Publicationes Mathematicae</i>, 1959.
+
+<dt> [Karp79]
+<dd> &ldquo;A patching algorithm for the nonsymmetric traveling-salesman
+    problem,&rdquo; by Richard Karp.
+    In <i>SIAM Journal on Computing</i> 1979. 
+
+<dt> [Posa76]
+<dd> &ldquo;Hamiltonian circuits in random graphd,&rdquo;
+    by L. Posa.
+    In <i>Discrete Mathematics</i>, 1976.
+
+<dt> [RW94]
+<dd> &ldquo;Almost all regular graphs are Hamiltonian,&rdquo;
+    by R. W. Robinson and N. C. Wormald.
+    In <i>Random Structures and Algorithms</i>, 1994.
+<dt> [Tutte54]
+<dd> &ldquo;A Short Proof of the Factor Theorem for Finite Graphs,&rdquo;
+    by W. T. Tutte. In <i>Canadian Journal of Mathematics</i>, 1954.
+</dl>
+<hr> <h4>&copy; Jonathan Turner - 2024</h4>
+<script src="../../googleAnalytics.js"></script>
+</body>
+</html>
