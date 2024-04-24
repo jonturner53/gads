@@ -35,19 +35,19 @@ abbr, acronym, bdo, button, fieldset, ins, label	{
 		
 body	{	
 	color:	black;
-	background:	white;
+	background: lightYellow;
 	}	
 		
 em	{	
 	font-style:	normal;
 	font-weight:	bold;
 	color:	black;
-	background:	white;
+	/*background: white*/;
 	}	
 		
 strong	{	
 	font-style:	italic;
-	background:	white;
+	/*background: white*/;
 	font-weight:	bold;
 	color:	black;
 	}	
@@ -56,7 +56,7 @@ em strong, strong em	{
 	text-transform:	uppercase;
 	font-style:	normal;
 	font-weight:	bold;
-	background:	white;
+	/*background: white*/;
 	color:	red;
 	}	
 		
@@ -72,7 +72,7 @@ i	{
 	text-transform:	none;
 	font-style:	normal;
 	font-weight:	bold;
-	background:	white;
+	/*background: white*/;
 	color:	red;
 	}	
 		
@@ -102,7 +102,7 @@ acronym	{
 		
 h1, h2, h3, h4, h5, h6, dt, th, thead, tfoot	{	
 	color:	black;
-	background:	white;
+	/*background: white*/;
 	}	
 		
 hr	{	
@@ -119,7 +119,7 @@ col, colgroup, table, tbody, td, tr	{
 	text-decoration:	none;
 	border-color:	black;
 	border-style:	normal;
-	background:	white;
+	/*background: white*/;
 	}	
 		
 a:link	{	

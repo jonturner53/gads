@@ -29,6 +29,8 @@
 </head>
 <body bgcolor=ffffff>
 \(
+\newcommand{\siftup}{\texttt{siftup}}
+\newcommand{\siftdown}{\texttt{siftdown}}
 \newcommand{\key}{\texttt{key}}
 \newcommand{\insert}{\texttt{insert}}
 \newcommand{\deletemin}{\texttt{deletemin}}
@@ -47,6 +49,7 @@
 \newcommand{\ArrayHeap}{\texttt{ArrayHeap}}
 \newcommand{\FibHeaps}{\texttt{FibHeaps}}
 \newcommand{\LeftistHeaps}{\texttt{LeftistHeaps}}
+\newcommand{\LazyHeaps}{\texttt{LeftistHeaps}}
 \)
 
 <h1>Heaps<sup>&copy;</sup></h1>
@@ -174,7 +177,7 @@ from the last example, yields the configuration shown below.
 </div>
 <p>
 The search process described above is implemented by
-a helper method called <i>siftdown</i>.
+a helper method called $\siftdown$.
 <p>
 The $\addtokeys$ method is implemented by adding an
 increment to an internal <i>offset</i>
@@ -311,7 +314,7 @@ $d$ <i>delete</i>, <i>deletemin</i> and increasing <i>changekey</i>
 operations, the total running time is $O(m + d\log n)$.
 <p>
 The provided <i>Javascript</i> implementation extends the
-<a href="../trees/trees.html#Forest">$\Forest$ data structure</a> and
+<a href="../trees/trees.html#Forest">forest data structure</a> and
 includes the following methods.
 <ul>
 <li>    $\key(i,k)$ sets the key of item $i$
@@ -858,13 +861,13 @@ using a <i>dummy node</i> with a key of minus infinity,
 and making the two heaps to be combined, children of this dummy node.
 <p>
 The presence of retired or dummy nodes means that the
-&ldquo;true&rdquo; minimum key node may not be at the root of a heap.
+&ldquo;true&rdquo; minimum key node may not be at the root of a heap's tree.
 Consequently,
 the $\findmin$ and $\deletemin$ operations must start
 with an initial step that traverses the top of the heap, removing all
 the retired/dummy nodes that it finds and constructing a list of sub-heaps
 for which the roots are not retired or dummy.
-This is illustrated below, with retired/dummy nodes shown in yellow.
+This is illustrated below, with retired/dummy nodes shown in green.
 <p>
 <div  style="text-align:center;">
 <img width="90%" src="figs/lheap3.png"><br>
