@@ -112,8 +112,8 @@ place upper bounds on linear combinations of the optimization variables)
 is called <i>standard form</i>.
 When an LP is expressed in this form, it can be written more
 concisely in the form of vectors and matrices.
-$$\textrm{maximize}\;C\!\cdot\! X \quad\textrm{subject to}\;AX\leq B$$
-where $C$ is a vector of objective coefficients ($C$ is its transpose),
+$$\textrm{maximize}\;C^T\!\cdot\! X \quad\textrm{subject to}\;AX\leq B$$
+where $C$ is a vector of objective coefficients ($C^T$ is its transpose),
 $X$ is a vector of variables, $A$ is an array of constraint coefficients
 and $B$ a vector of bounds. For the example shortest path LP,
 $C^T=[1\;1\;1]$, $X^T=[d_a\;d_b\;d_c]$, $B^T=[2\;6\;3\;5\;4]$ and
@@ -183,9 +183,9 @@ one another, and maximization in the primal becomes minimization in
 the dual, while the constraints go from upper bounds to lower bounds.
 <p>
 In general, if the <i>primal</i> version of the problem is
-$$\textrm{maximize}\;C\!\cdot\! X \quad\textrm{subject to}\;AX\leq B$$
+$$\textrm{maximize}\;C^T\!\cdot\! X \quad\textrm{subject to}\;AX\leq B$$
 the dual is
-$$\textrm{minimize}\;B\!\cdot\! Z \quad\textrm{subject to}\;A^T Z\geq C$$
+$$\textrm{minimize}\;B^T\!\cdot\! Z \quad\textrm{subject to}\;A^T Z\geq C$$
 <p>
 The optimal objective function value is the same for the primal and the dual,
 enabling two distinct strategies for solving a linear program.

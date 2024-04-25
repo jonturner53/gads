@@ -35,7 +35,7 @@ abbr, acronym, bdo, button, fieldset, ins, label	{
 		
 body	{	
 	color:	black;
-	background: lightYellow;
+	backgroud-color: lightYellow;
 	}	
 		
 em	{	
@@ -78,12 +78,12 @@ i	{
 		
 del	{	
 	text-decoration:	line-through;
-	background:	#F66;
+	backgroud-color:	#F66;
 	}	
 		
 ins	{	
 	text-decoration:	underline;
-	background:	yellow;
+	backgroud-color:	yellow;
 	}	
 		
 var, cite, dfn, .note	{	
@@ -143,7 +143,7 @@ a:active	{
 	font-weight:600;
 	font-style: italic;
 	color:#F00;
-	background:	#FC0;
+	backgroud-color:	#FC0;
 	}	
 		
 a:hover	{	
@@ -151,7 +151,7 @@ a:hover	{
 	font-weight:600;
 	font-style: italic;
 	color:	#66c;
-	background:	#8bb;
+	backgroud-color:	#8bb;
 	}	
 		
 a.offsite	{	
@@ -159,7 +159,7 @@ a.offsite	{
 	font-weight:600;
 	font-style: italic;
 	color:	#C00;
-	background:	#ffc;
+	backgroud-color:	#ffc;
 	}	
 		
 	/* end affordances */	
