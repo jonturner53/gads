@@ -50,6 +50,7 @@
 This section describes some variations on the standard
 matching problem that are useful in some applications.
 
+
 <h2>Maximum Priority Matchings</h2>
 In the maximum priority matching problem,
 each vertex is $u$ assigned an integer priority $p(u)$
@@ -101,24 +102,23 @@ matched by $M$. This means that the weight of $M$ can be increased
 by exchanging its matching edges in $P$ with those in $M'$,
 contradicting the fact that $M$ has maximum weight.
 <p>
-A <i>Javascript</i> implementation of Okumura's algorithm is shown below.
+An abridged <i>Javascript</i> implementation of Okumura's algorithm is
+shown below.
 Note that the program checks to see if the graph is bipartite and
 if so uses the Hungarian algorithm to compute the weighted matching.
 Otherwise, it uses Edmonds' algorithm.
 <p> <textarea rows="15" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
-export default function priorityMatchO(g0, priority) {
-    let g = new Graph(g0.n, g0.edgeRange); g.assign(g0);
+export default function priorityMatchO(G, priority) {
+    let g = new Graph(G.n, G.edgeRange); g.assign(G);
     for (let e = g.first(); e; e = g.next(e)) {
         let [u,v] = [g.left(e),g.right(e)];
         g.weight(e, priority[u] + priority[v]);
     }
-    let subsets = findSplit(g);
-    let [match0,,stats0] = subsets ? wbimatchH(g,subsets) :
-                                     wmatchE(g,subsets);
-    if (!match0) return [];
-    let match = new Matching(g0);
-    for (let e = match0.first(); e; e = match0.next(e))
+    let [wmatch,,stats0] = g.bipartite ? wbimatchH(g) : wmatchE(g);
+    if (!wmatch) return [];
+    let match = new Matching(G);
+    for (let e = wmatch.first(); e; e = wmatch.next(e))
         match.add(e);
     return match;
 }
@@ -128,7 +128,7 @@ The program can be demonstrated using the following script.
 let g = randomGraph(16,3);
 let prio = new Int32Array(g.n+1);
 randomFill(prio, p => randomGeometric(p)-1, .3);
-let [,ts] = priorityMatchO(g,prio,1);
+let [,ts] = pmatchO(g,prio,1);
 log(ts);
 </pre>
 Sample output appears below.
@@ -160,6 +160,34 @@ o/g  n=500 m=5000 pmax=499 steps=22648837 1298ms
 o/b  n=500 m=5000 pmax=499 steps= 1928640   56ms
 o/b* n=500 m=5000 pmax=499 steps= 5333600  349ms 
 </pre>
+Okumura's algorithm can be extended to handle graphs with edge weights.
+In this case, it produces the maximum priority matching that has the
+largest weight among all such matchings.
+When solving this problem, the vertex priorities are used to
+modify the provided edge weights. Specifically, for edge $e=\{u,v\}$,
+<code>(prio[u]+prio[v])*C</code> is added to the weight of $e$,
+where <code>C=n*W/2</code> and <code>W</code> is the largest edge weight.
+<p>
+The example below shows a priority matching of an unweighted graph,
+followed by a matching of a weighted version of the same graph.
+<pre style="padding-left:5%">
+{
+a:1[b c d f i] b:3[a f h] c:0[a f] d:1[a g i j]
+e:0[j] f:2[a b c h] g:3[d h] h:1[b f g]
+i:2[a d j] j:1[d e i]
+}
+matching: [bf gh dj ai]
+ 
+{
+a:1[b c:2 d f:2 i:3] b:3[a f:2 h:2] c:0[a:2 f:3] d:1[a g:2 i:2 j:1]
+e:0[j:3] f:2[a:2 b:2 c:3 h:3] g:3[d:2 h:2] h:1[b:2 f:3 g:2]
+i:2[a:3 d:2 j] j:1[d:1 e:3 i]
+}
+matching: [ai:3 dg:2 ej:3 cf:3 bh:2] 13
+</pre>
+Notice that if the first matching is used with the seond version of
+the graph, its weight is 8, while the second matching has a weight of 13.
+Both have the same priority sum.
 
 <h3>Direct Solution of Priority Matching Problems</h3>
 Okumura showed that one can raise the priority of a matching using a
@@ -219,7 +247,7 @@ Apply the appropriate case from the list below.
      through $e$. Augment the matching using this path and start
      a new path search.
 </ul>
-The <i>Javascript</i> implementation shown below is based on Gabow's
+An abridged <i>Javascript</i> implementation shown below is based on Gabow's
 implementation of Edmonds' algorithm.
 <p> <textarea rows="15" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
@@ -242,8 +270,8 @@ let plists;       // ListSet with separate list per priority class
 let first;        // first[k] is first vertex in priority k list
 let roots;        // priority-ordered list of unmatched vertices
 
-export default function pmatchEGT(g0, prio0) {
-    g = g0; prio = prio0;
+export default function pmatchEGT(G, Prio) {
+    g = G; prio = Prio;
 
     match = new Matching(g);
     link = new Int32Array(g.n+1);
@@ -274,7 +302,6 @@ export default function pmatchEGT(g0, prio0) {
     for (let k = pmax; k; k--) {
         if (!first[k]) continue;
         for (let u = first[k]; u; u = plists.next(u)) {
-            steps++;
             if (match.at(u)) continue;
             for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
                 if (!match.at(g.mate(u,e))) {
@@ -332,7 +359,7 @@ function newPhase() {
     for (let k = pmax; k >= 0; k--) {
         if (!first[k]) continue;
         for (let u = first[k]; u; u = plists.next(u)) {
-            base[u] = u; steps++;
+            base[u] = u; 
             if (!match.at(u)) {
                 state[u] = 1;
                 if (k > 0) roots.enq(u);
@@ -347,7 +374,6 @@ function newPhase() {
 }
 
 function addBranch(u, e, r) {
-    steps++;
     let v = g.mate(u,e);  state[v] = -1; link[v] = e;
     let ee = match.at(v);
     let w = g.mate(v,ee); state[w] = +1; link[w] = ee;
@@ -364,7 +390,6 @@ function addBranch(u, e, r) {
 function add2q(u) {
     for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
         if (!match.contains(e) && !q.contains(e)) q.enq(e);
-        steps++;
     }
 }
 
@@ -382,7 +407,6 @@ function addBlossom(e,A,r) {
             return apath.join(apath.join(ee,e),path(u,x));
         }
         x = bid(g.mate(x,link[x]));
-        steps++;
     }
 
     x = V;
@@ -393,7 +417,6 @@ function addBlossom(e,A,r) {
             return apath.join(apath.join(ee,e),path(v,x));
         }
         x = bid(g.mate(x,link[x]));
-        steps++;
     }
 
     // proceed to forming new blossom
@@ -405,7 +428,6 @@ function addBlossom(e,A,r) {
         bridge[x] = [e,u];
         add2q(x);
         x = bid(g.mate(x,link[x]));
-        steps++;
     }
     x = V;
     while (x != A) {
@@ -435,7 +457,7 @@ function bid(u) {
 
 function root(rv) {
     while (link[rv] != 0) {
-        rv = bid(g.mate(rv,link[rv])); steps++;
+        rv = bid(g.mate(rv,link[rv])); 
     }
     return rv;
 }
@@ -474,7 +496,6 @@ function nca(u, v) {
 }
 
 function path(a, b) {
-    steps++;
     if (a == b) return 0;
     if (state[a] > 0) { // a is even
         let e1 = link[a];  let pa = g.mate(a,e1);
@@ -611,7 +632,7 @@ It continues until an iteration produces no further progress, then halts.
 When the number of priority classes is large, this can greatly reduce
 the number of iterations, leading to a significant improvement in performance.
 <p>
-A <i>Javascript</i> implementation appears below.
+An abridged <i>Javascript</i> implementation appears below.
 This program implements both the <i>strict</i> (original) version of
 the algorithm and the relaxed version.
 <p> <textarea rows="15" cols="80" readonly
@@ -629,8 +650,8 @@ let level;        // level[u] is distance to u from a root vertex
 let nextedge;     // nextedge[u] is next edge at u to be processed
 let q;            // q is List used by newPhase
 
-export default function pbimatchHKT(g0, prio0, strict=false) {
-    g = g0; prio = prio0;
+export default function pbimatchHKT(G, Prio, strict=false) {
+    g = G; prio = Prio;
 
     match = new Matching(g);
     link = new Int32Array(g.n+1);
@@ -711,12 +732,12 @@ function newPhase(strict) {
     if (roots.empty()) return 0;
 
     for (let u = 1; u <= g.n; u++) {
-        level[u] = g.n+1; nextedge[u] = g.firstAt(u); steps++;
+        level[u] = g.n+1; nextedge[u] = g.firstAt(u); 
     }
     // add roots with highest priority to q
     q.clear(); let r = roots.first(); let rp = prio[r];
     for ( ; r && prio[r] == rp; r = roots.next(r)) {
-        level[r] = 0; q.enq(r); steps++;
+        level[r] = 0; q.enq(r); 
     }
     // r is now the first root with priority <rp (or 0)
 
@@ -751,7 +772,7 @@ function newPhase(strict) {
         // update rp and add priority rp roots to q
         rp = (r ? prio[r] : 0);
         for ( ; r && prio[r] == rp; r = roots.next(r)) {
-            level[r] = 0; q.enq(r); steps++;
+            level[r] = 0; q.enq(r); 
         }
         // r is now the first root with priority <rp (or 0)
     }
@@ -789,7 +810,6 @@ function augment(u,e) {
         match.add(e); u = g.mate(u,e);
     }
     while (link[u]) {
-        steps++;
         e = link[u]; u = g.mate(u,e); match.drop(e);
         e = link[u]; u = g.mate(u,e); match.add(e);
     }
@@ -941,7 +961,7 @@ An example of the overall process appears below.
 <img width="95%" src="figs/mdmatch.png"><br>
 </div>
 <p>
-A <i>Javascript</i> implementation of Gabow's max degree matching
+An abridged <i>Javascript</i> implementation of Gabow's max degree matching
 algorithm is shown below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
@@ -972,7 +992,7 @@ export default function mdmatchG(g) {
     for (let e = g.first(); e; e = g.next(e)) {
         let [u,v] = [g.left(e),g.right(e)];
         if (degree[subsets.in2(u) ? u : v] != Delta) continue;
-        xg.join(u,v,e); steps++;
+        xg.join(u,v,e); 
     }
     let [xmatch2,,stats2] = bimatchHK(xg,0,subsets);
 
@@ -1135,7 +1155,7 @@ With the aid of an array mapping an edge $\{x,y\}$ to the position of
 $x$ in $y$'s preference list, each step can be implemented in constant time.
 Consequently, the algorithm can be implemented to run in $O(m)$ time.
 <p>
-A <i>Javascript</i> implementation is shown below.
+An abridged <i>Javascript</i> implementation is shown below.
 <p> <textarea rows="15" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 export default function smatchGS(g, pref, subsets) {
@@ -1208,6 +1228,809 @@ each pass.
 Note that when an edge is added, it may conflict with a currently
 matched edge, which is removed to accommodate the new match.
 
+<h2>Weighted Perfect Matchings</h2>
+
+A <i>perfect matching</i> is simply a matching that matches all the vertices.
+There is variant of Edmond's algorithm that can be used to find
+minimum weight perfect matchings. It can also be used to find either
+maximum or minimum weight matchings with a specified number of edges.
+<p>
+In this case, each augmenting path
+is a <i>minimum weight</i> augmenting path with respect to the current
+matching. Consequently, each intermediate matching is a minimum weight
+matching among all matchings of its size and one can obtain a
+minimum weight matching of any specified size by simply halting
+when the current matching has the specified number of edges.
+<p>
+As before, augmenting paths are found using a primal-dual approach,
+but a different linear program is required.
+The primal problem seeks to minimize $\sum_e w_e x_e$ subject to the
+constraints
+$$
+\begin{array}{rl}
+\sum_{e=\{u,v\}} x_e = 1 & \quad \hbox{for all $u$} \\
+\sum_{|e \cap S|=1} x_e \geq 1 
+    & \quad \hbox{for all odd subsets $S$ with $|S|\geq 3$} \\
+x_e \ge 0 & \quad \hbox{for all $e$}
+\end{array}
+$$
+The first constraint ensures that all vertices are matched
+and the second requires that all odd vertex subsets $S$ have at least edge
+with exactly one endpoint in $S$.
+This linear program has optimal integer solutions.
+The corresponding dual problem seeks
+to maximize $\sum_u z_u + \sum_S z_S$ (where $S$ ranges over all odd subsets
+with at least three vertices) subject to the constraints
+$$
+\begin{array}{rl}
+z_u + z_v + \sum_{|S \cap e|=1} z_S \leq w_e
+    & \quad \hbox{for all edges $e=\{u,v\}$} \\
+z_S \geq 0 & \quad \hbox{for all odd subsets $S$ with $|S|\geq 3$}
+\end{array}
+$$
+Note that the dual variables for vertices may be negative.
+<p>
+The algorithm is essentially the same as the earlier version,
+differing in just three ways.
+First, it initializes all the dual variables to zero.
+This ensures that the dual constraints are satisfied.
+Second, the algorithm halts when all vertices are matched
+(rather than when the dual variables for the unmatched vertices are zero).
+Finally, a different procedure is used to adjust the dual variables.
+In this case, $\delta$ is added to $z_u$ if $u$ is an even vertex in the
+outer graph (that is, it is are not contained in any blossom)
+and $\delta$ is subtracted from $z_u$ if $u$ is an odd vertex in the
+outer graph.
+Similarly, $\delta$ is added to $z_B$ if $B$ is a non-trivial even
+outer blossom and 
+$\delta$ is subtracted from $z_B$ if $B$ is a non-trivial odd outer blossom.
+<p>
+The value of $\delta$ is chosen so that the dual variables
+for the blossoms remain non-negative and so that no dual constraints
+are violated.
+This can be accomplished by making
+$\delta=\min\{\delta_1,\delta_2, \delta_3\}$, where
+$\delta_1$ is the smallest dual variable for an odd outer blossom,
+$\delta_2$ is the smallest slack in a dual constraint involving an
+outer edge with one even and one unbound endpoint and
+$\delta_3$ is one half of the smallest slack in a dual constraint involving
+an outer edge with two even endpoints.
+<p>
+Note that the dual adjustment ensures that for any outer edge
+joining odd and even endpoints, the slack of the constraint for
+the edge does not change.
+The same is true for edges joining vertices in the same blossom.
+So no further limitations need to be imposed on
+the value of $\delta$, to ensure the validity of the dual constraints.
+Also, tight edges remain tight after a relabeling.
+<p>
+If $G$ is a graph with weights $w_e$ and maximum weight $W$,
+and $G'$ is the same graph with weights $W-w_e$,
+then a maximum weight matching on $k$ vertices in $G$
+is also a minimum weight matching in $G'$ on $k$ vertices.
+Consequently, one can use the min weight perfect matching algorithm
+to compute max weight perfect matchings, or max weight matchings of
+any specified size.
+<p>
+An abridged <i>Javascript</i> implementation is shown below.
+The complete version also supports matchings of specified size and
+maximum weight matchings, in addition minimum weight.
+For graphs that do not have a perfect matching, a maximum size matching
+of minimum weight is returned.
+<p> <textarea rows="15" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let g             // shared copy of graph
+let match;        // Matching object representing matching for graph
+let bloss;        // Blossoms object representing blossoms and matching trees
+
+let z;            // z[b] is dual variable for blossom (or vertex) b
+let slack;        // slack[e] is slack in dual constraint for e
+let q;            // list of tight edges with an even endpoint
+let blist;        // temporary list of blossoms
+let mark;         // temporary array of flags
+
+export default function wperfectE(G) {
+    g = G;
+
+    match = new Matching(g);
+    bloss = new Blossoms(g, match, 1);
+    z = new Float32Array(bloss.n+1);
+    slack = new Float32Array(g.edgeRange+1);
+    q = new List(g.edgeRange);
+    blist = new List(bloss.n);
+    mark = new Int8Array(bloss.n+1).fill(false);
+
+    for (let e = g.first(); e; e = g.next(e)) {
+        slack[e] = g.weight(e);
+        if (slack[e] == 0) q.enq(e);
+    }
+
+    while (true) {
+        while (!q.empty()) {
+            let e = q.deq();
+            let [u,v] = [g.left(e),g.right(e)];
+            let [U,V] = [bloss.outer(u),bloss.outer(v)];
+            let [sU,sV] = [bloss.state(U),bloss.state(V)];
+            if (U == V || sU + sV <= 0 || slack[e] > 0) continue;
+            // at least one even endpoint
+            if (sU + sV == 1 && sU == 0) {
+                [u,v] = [v,u]; [U,V] = [V,U]; [sU,sV] = [sV,sU];
+            }
+
+            // now e is tight, U is even and V is even or unbound
+            if (sV == +1) {
+                let A = nca(U,V);
+                if (A == 0) {
+                    augment(e); newPhase();
+                } else {
+                    let [B,subs,sb] = bloss.addBlossom(e,A); z[B] = 0;
+                    let state = +1; // add edges to q that are incident to
+                                    // formerly odd blossoms used to form b
+                    for (let b = subs.first(); b; b = subs.next(b)) {
+                        if (state == -1) add2q(b);
+                        state = (b == sb ? +1 : -state);
+                    }
+                }
+            } else if (sV == 0) {
+                let W = bloss.addBranch(e,v,V); add2q(W);
+                branches++;
+            }
+        }
+        if (match.size() == g.n/2 || !relabel()) break;
+    }
+    bloss.rematchAll(); // extend outer matching to blossoms and sub-blossoms
+    return [match ..];
+}
+
+
+/** Augment the current matching.
+ *  @param e is an edge joining two even outer blossoms in distinct trees;
+ *  the path joining the tree roots that passes through e
+ *  is an augmenting path
+ */
+function augment(e) {
+    match.add(e);
+
+    // trace paths up to tree roots and update matching
+    let x = g.left(e); let X = bloss.outer(x);
+    let [y,ee] = bloss.link(X);
+    while (y) {
+        if (match.contains(ee)) {
+            match.drop(ee); bloss.base(X,x);
+        } else {
+            match.add(ee); bloss.base(X,y);
+        }
+        x = g.mate(y,ee); X = bloss.outer(x); [y,ee] = bloss.link(X);
+    }
+    bloss.base(X,x);
+
+    x = g.right(e); X = bloss.outer(x); [y,ee] = bloss.link(X);
+    while (y) {
+        if (match.contains(ee)) {
+            match.drop(ee); bloss.base(X,x);
+        } else {
+            match.add(ee); bloss.base(X,y);
+        }
+        x = g.mate(y,ee); X = bloss.outer(x); [y,ee] = bloss.link(X);
+    }
+    bloss.base(X,x);
+}
+
+/** Prepare for next phase, following an augmentation.
+ *  Expand all outer blossoms with z==0, set states of remaining outer
+ *  blossoms to unbound or even and their links to null.
+ *  Put all vertices in even blossoms into queue of even vertices.
+ */
+function newPhase() {
+    // expand non-trivial outer blossoms with z == 0
+    q.clear(); blist.clear();
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+        if (z[b] == 0 && b > g.n) blist.enq(b);
+    }
+    while (!blist.empty()) {
+        let b = blist.deq();
+        let subs = bloss.expand(b); 
+        for (let sb = subs.first(); sb; sb = subs.next(sb)) {
+            if (z[sb] == 0 && sb > g.n) blist.enq(sb);
+        }
+    }
+
+    // set state and link for remaining blossoms 
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+        bloss.state(b, match.at(bloss.base(b)) ? 0 : +1);
+        bloss.link(b,[0,0])
+    }
+    // and add eligible edges to q
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b))
+        if (bloss.state(b) == +1) add2q(b);
+}
+
+/** Adjust the labels for the vertices and blossoms.
+ *  @return true if the relabeling added new tight edges or
+ *  expanded an odd blossom, else false.
+ */
+function relabel() {
+    let d1 = Infinity; let d2 = Infinity; let d3 = Infinity;
+    let smallOddBloss = 0; // odd n.t. outer blossom with smallest z[b]
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+        if (bloss.state(b) == +1) {
+            for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
+                for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+                    let v = g.mate(u,e); let V = bloss.outer(v);
+                    if (V == b) continue;
+                    let sV = bloss.state(V);
+                         if (sV == 0) d1 = Math.min(d1, slack[e]);
+                    else if (sV == 1) d2 = Math.min(d2, slack[e]/2);
+                }
+            }
+        } else if (bloss.state(b) == -1) {
+            if (b > g.n && z[b] < d3) {
+                d3 = z[b]; smallOddBloss = b;
+            }
+        }
+    }
+
+    let delta = Math.min(d1,d2,d3);
+    if (delta == Infinity || delta == 0 && !smallOddBloss) {
+        return false;
+    }
+    
+    // adjust the z values for outer blossoms and slack values of outer edges
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+        if (bloss.state(b) == +1) z[b] += delta;
+        if (bloss.state(b) == -1) z[b] -= delta;
+        for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
+            for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+                if (u != g.left(e)) continue;
+                let v = g.right(e); let V = bloss.outer(v);
+                if (b == V) continue;
+                let ss = bloss.state(b) + bloss.state(V);
+                slack[e] -= ss * delta;
+                if (slack[e] == 0 && !q.contains(e))
+                    ss == 2 ? q.push(e) : q.enq(e);
+            }
+        }
+    }
+
+    if (delta == d3 && smallOddBloss) {
+        // expand an odd blossom with zero z
+        let subs = bloss.expandOdd(smallOddBloss);
+        for (let b = subs.first(); b; b = subs.next(b)) {
+            if (bloss.state(b) == +1) add2q(b);
+        }
+    }
+    return true;
+}
+
+/** Add edges incident to an even blossom to q.
+ *  @param b is an even blossom or sub-blossom.
+ */
+function add2q(b) {
+    let B = bloss.outer(b);
+    for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
+        for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+            let v = g.mate(u,e); let V = bloss.outer(v);
+            if (bloss.state(V) >= 0 && V != B && slack[e] == 0) {
+                if (bloss.state(V) >= 0 && !q.contains(e))
+                    q.enq(e);
+            }
+        }
+    }
+}
+
+/** Find the nearest common ancestor of two vertices in
+ *  the current graph.
+ *  @param U is an outer blossom
+ *  @param V is another outer blossom
+ *  @returns the nearest common ancestor of u and v or 0 if none
+ */
+function nca(U, V) {
+    let result;
+    // first pass to find the nca
+    let X = U; let [x,ex] = bloss.link(X);
+    let Y = V; let [y,ey] = bloss.link(Y);
+    while (true) {
+        if (X == Y) { result = X; break; }
+        if (mark[X]) { result = X; break; }
+        if (mark[Y]) { result = Y; break; }
+        if (!x && !y) { result = 0; break; }
+        if (x) {
+            mark[X] = true;
+            X = bloss.outer(g.mate(x,ex)); [x,ex] = bloss.link(X);
+        }
+        if (y) {
+            mark[Y] = true;
+            Y = bloss.outer(g.mate(y,ey)); [y,ey] = bloss.link(Y);
+        }
+    }
+    // second pass to clear mark bits
+    X = U; [x,ex] = bloss.link(X);
+    while (mark[X]) {
+        mark[X] = false; X = bloss.outer(g.mate(x,ex)); [x,ex] = bloss.link(X);
+    }
+    Y = V; [y,ey] = bloss.link(Y);
+    while (mark[Y]) {
+        mark[Y] = false; Y = bloss.outer(g.mate(y,ey)); [y,ey] = bloss.link(Y);
+    }
+    return result;
+}
+</textarea><p>
+One can demonstrate the algorithm using the following script.
+<p><pre style="padding-left:5%">
+let g = randomGraph(16,3); g.randomWeights(randomInteger,1,3);
+let [match,ts,stats] = wperfectE(g,0,0,1);
+log(ts);
+</pre><p>
+Some sample output appears below.
+<p> <textarea rows="15" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+{
+a[b:2 e:1 k:2 l:2 m:3] b[a:2 l:1] c[d:3 i:3 j:2] d[c:3 g:1 h:2 n:1]
+e[a:1 i:3 n:3] f[m:2 n:1] g[d:1 k:3 n:2] h[d:2 o:3 p:1]
+i[c:3 e:3 k:1 n:2] j[c:2] k[a:2 g:3 i:1] l[a:2 b:1 p:3]
+m[a:3 f:2] n[d:1 e:3 f:1 g:2 i:2 p:3] o[h:3] p[h:1 l:3 n:3]
+}
+eligible: []
+
+relab(Infinity 0.5 Infinity)
+    [ik hp fn dn dg bl ae]
+augment: {i,k,1} i--k
+augment: {h,p,1} h--p
+augment: {f,n,1} f--n
+augment: {b,l,1} b--l
+augment: {d,g,1} d--g
+augment: {a,e,1} a--e
+relab(1 0.5 Infinity)
+    [cj ae bl dg dn fn hp ik]
+augment: {c,j,2} c--j
+
+relab(0.5 Infinity Infinity)
+    [ae bl cj dg dn fm fn hp ik]
+branch: m f n
+branch: n d g
+relab(1 0.5 Infinity)
+    [gn ae bl cj dg dn fm fn hp ik]
+blossom: {g,n,2} n A[n d g]
+    {[m(f(A))]}
+relab(0.5 Infinity Infinity)
+    [ae am bl cj fm fn ho hp ik in]
+branch: m a e
+branch: o h p
+branch: A.n i k
+relab(1.5 0.5 Infinity)
+    [gk np en ae am bl cj fm fn ho hp ik in]
+blossom: {g,k,3} A B[n.A.g k i]
+    {[m(a(e) f(B))] [o(h(p))]}
+augment: {n,p,3}
+    {[m(a(e) f(B))] [o(h(p))]}
+    m f n.B.n--p h o
+    [bl:1 ae:1 cj:2 np:3 fm:2 ho:3] 6 12
+    {[A(!n d g)]}
+
+final matching:
+    [bl:1 ae:1 cj:2 np:3 fm:2 ho:3 ik:1 dg:1] 8 14
+</textarea><p>
+Changing the second argument of <code>wperfectE</code> to 6 causes
+it to stop as soon as the matching contains six edges.
+Changing the third argument to 1 causes it to return a maximum weight
+matching.
+
+<h2>Degree-Constrained Subgraphs</h2>
+
+A matching is a subgraph in which each vertex has degree at most one.
+In a <i>degree-constrained subgraph</i> (DCS) the objective is to find a
+subgraph of bounded degree, where each vertex may have its own bound.
+When edge weights are present, the objective is to maximize the edge
+weight of the subgraph. Otherwise, the objective is to maximize the
+number of subgraph edges. As with the matching problem, bipartite
+graphs are significantly easier than general graphs.
+
+<h3>Bipartite Graphs</h3>
+The flow-based method for finding a maximum size or maximum weight matching
+can be easily extended to the DCS problem.
+All that's required is to make the capacity of each source edge $(s,u)$
+in the flow graph equal to the degree bound on $u$ in the DCS graph,
+and the capacity of each sink edge $(v,t)$ equal to the bound on $v$.
+One can also handle minimum degree constraints by adding minimum flow
+requirements to the source and sink edges.
+An abridged <i>Javascript</i> implementation appears below.
+<p> <textarea rows="15" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function bidcsF(g, hi, lo=0 ..) {
+    // create flow graph, taking care to maintain edge numbers
+    let fg = new Flograph(g.n+2, g.n+g.edgeRange); fg.hasFloors = 1;
+    fg.source = g.n+1; fg.sink = g.n+2;
+    for (let e = g.first(); e; e = g.next(e)) {
+        let u = (g.isInput(g.left(e),1) ? g.left(e) : g.right(e));
+        fg.join(u,g.mate(u,e),e); fg.cap(e,1);
+        if (g.hasWeights) fg.cost(e, -g.weight(e));
+    }
+    for (let u = g.firstInput(); u; u = g.nextInput(u)) {
+        let e = fg.join(fg.source,u); fg.cap(e, hi[u]);
+        if (lo) fg.floor(e,lo[u]);
+    }
+    for (let u = g.firstOutput(); u; u = g.nextOutput(u)) {
+        let e = fg.join(u,fg.sink); fg.cap(e, hi[u]);
+        if (lo) fg.floor(e,lo[u]);
+    }
+
+    // compute flow(s)
+    if (lo) flowfloor(fg);
+    if (fg.hasCosts) ncrJEK(fg); // eliminate negative cost cycles
+    fg.hasCosts ?  mcflowJEK(fg,1) : maxflowD(fg);
+
+    // construct dcs from flow
+    let dcs = new Graph(g.n,g.edgeRange); let weight = 0;
+    for (let e = g.first(); e; e = g.next(e)) {
+        if (fg.f(e)) {
+            dcs.join(g.left(e),g.right(e),e);
+            if (g.hasWeights) {
+                dcs.weight(e, g.weight(e));
+                weight += dcs.weight(e);
+            }
+        }
+    }
+    return [dcs ..];
+}
+</textarea> <p>
+If you compare this to <code>bimatchF</code> you'll notice that they're
+quite similar. The following script can be used to demonstrate the program.
+<pre style="padding-left:5%">
+let g = randomBigraph(6,3); 
+let lo = new Int32Array(g.n+1); let hi = new Int32Array(g.n+1);
+for (let u = 1; u <= g.n; u++) {
+    lo[u] = randomInteger(0,Math.max(0,Math.min(2,g.degree(u)-1)));
+    hi[u] = randomInteger(Math.max(lo[u],1), g.degree(u));
+}
+let [,ts] = bidcsF(g,hi,lo,1); log(ts);
+</pre>
+Sample output appears below.
+The graph is shown at the top, with the bounds 
+for each vertex before its list of neighbors.
+The computed flow on the flow graph is shown at the center
+and the resulting subgraph at the bottom.
+<pre style="padding-left:5%">
+{
+a(2,4)[g h k l] b(0,1)[j k] c(0,1)[k l]
+d(1,3)[g i j l] e(0,3)[h j k] f(0,3)[g j k]
+g(0,1)[a d f] h(0,1)[a e] i(0,1)[d]
+j(2,3)[b d e f] k(1,5)[a b c e f] l(2,3)[a c d]
+}
+
+flow: {
+a[g:1/1 k:1/1 h:1/1 l:1/1] b[k:1/1] c[l:1/1]
+d[j:1/1 i:1/1 l:1/1] e[j:1/1 k:1/1] f[k:1/1 j:1/1]
+g[n:1/1] h[n:1/1] i[n:1/1]
+j[n:2-3/3] k[n:1-5/4] l[n:2-3/3]
+m->[a:2-4/4 b:1/1 c:1/1 d:1-3/3 e:3/2 f:3/2]
+}
+
+dcs: {
+a(2,4)[g k h l] b(0,1)[k] c(0,1)[l]
+d(1,3)[j i l] e(0,3)[j k] f(0,3)[k j]
+g(0,1)[a] h(0,1)[a] i(0,1)[d]
+j(2,3)[e d f] k(1,5)[a e f b] l(2,3)[c d a]
+}
+</pre>
+If random weights are assigned to the edges of the graph above and
+the program is run again, it produces results like those shown below.
+<pre style="padding-left:5%">
+{
+a(2,4)[g:3 h:1 k:1 l:1] b(0,1)[j:3 k:2] c(0,1)[k l:2]
+d(1,3)[g:2 i:2 j l:2] e(0,3)[h j:1 k] f(0,3)[g:2 j:3 k]
+g(0,1)[a:3 d:2 f:2] h(0,1)[a:1 e] i(0,1)[d:2]
+j(2,3)[b:3 d e:1 f:3] k(1,5)[a:1 b:2 c e f] l(2,3)[a:1 c:2 d:2]
+}
+
+flow: {
+a[g:1@-3/1 k:1@-1/1 h:1@-1/1 l:1@-1/1] b[j:1@-3/1] c[l:1@-2/1]
+d[i:1@-2/1 l:1@-2/1] e[j:1@-1/1] f[j:1@-3/1]
+g[n:1/1] h[n:1/1] i[n:1/1]
+j[n:2-3/3] k[n:1-5/1] l[n:2-3/3]
+m->[a:2-4/4 b:1/1 c:1/1 d:1-3/2 e:3/1 f:3/1]
+}
+
+dcs: {
+a(2,4)[g:3 k:1 h:1 l:1] b(0,1)[j:3] c(0,1)[l:2]
+d(1,3)[i:2 l:2] e(0,3)[j:1] f(0,3)[j:3]
+g(0,1)[a:3] h(0,1)[a:1] i(0,1)[d:2]
+j(2,3)[e:1 b:3 f:3] k(1,5)[a:1] l(2,3)[c:2 d:2 a:1]
+}
+</pre>
+
+
+<h3>General Graphs</h3>
+The case of general graphs with upper bounds only
+can be handled using a reduction from
+DCS to the matching problem [Tutte54].
+This variant is caled the UDCS problem.
+Let $G=(V,E)$ be a graph and let $T_G$ be a graph defined follows.
+For each $u\in V$, $T_G$ contains a <i>cluster</i> $C_u$ with
+$2d(u)-h(u)$ vertices, where $d(u)$ is the degree of $u$
+and $h(u)$ the upper bound on the subgraph degree at $u$.
+$C_u$ is a complete bipartite graph with $d(u)$ <i>external</i> vertices
+and $d(u)-h(u)$ <i>internal</i> vertices. For each edge $\{u,v\}$ in $G$,
+$T_G$ has an <i>external edge</i> linking an external vertex of $C_u$
+to an external vertex of $C_v$. Each external vertex is incident to exactly one
+of these edges.
+<p>
+Any matching in $T_G$ that matches all the internal vertices
+in each cluster can match at most $h(u)$ of the cluster's external edges.
+So, a maximum size matching that matches all the internal vertices
+defines external edges that form a maximum size UDCS in $G$.
+An example is shown below.
+<p>
+<div  style="text-align:center;">
+<img width="80%" src="figs/tutteGraph.png"><br>
+</div>
+<p>
+If one starts with an initial matching that matches all the
+internal vertices in all the clusters and extends it to a maximum
+size matching, the result is a maximum size UDCS.
+<p>
+For a weighted graph $G$, the edges in $T_G$ that correspond
+to edges in $G$ inherit their weights from $G$, while the internal
+edges are assigned a weight of $W+1$, where $W$ is the weight of the
+heaviest edge in $G$. A maximum weight matching for $T_G$ matches all
+the internal vertices and since they all have the same weight,
+a maximum weight matching for $T_G$ defines a maximum weight UDCS
+for $G$.
+One can also obtain a maximum size UDCS of maximum weight for $G$
+using this approach, by using a weighted perfect matching
+algorithm to find the required matching of $T_G$.
+<p>
+[Gabow83] shows how to convert an instance of DCS with lower bounds
+into an instance of UDCS.
+If $G$ is a DCS instance with upper and lower bounds $(h(\cdot),l(\cdot))$,
+let $B_G$ be defined by taking two
+copies of $G$ and for each vertex $u$ in $G$, adding $h(u)-l(u)$ chains
+of three edges each, joining the two copies of $u$ in $B_G$.
+Each vertex in $G$ is assigned an upper bound of $h(u)$ at each
+of its two copies in $B_G$.
+The internal vertices of the added chains are assigned an
+upper bound of 1.
+This is illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="70%" src="figs/gabowGraph.png"><br>
+</div>
+<p>
+Note that any subgraph $S$ of $G$ that respects the specified upper
+and lower bounds can be extended to a <i>complete</i> UDCS solution in $B_G$,
+where a complete solution is one with exactly $h(v)$ edges at each vertex $v$.
+The first step is to select the edges in $S$ in both copies of $G$.
+Then if $u$ is incident to $k\lt h(u)$ subgraph edges, add the outer two
+edges from $k$ of the chains connecting copies of $u$ to the subgraph,
+along with the inner edges of the remaining chains.
+This is illustrated by the heavy edges in the last figure.
+Note that if $B_G$ does not have a complete UDCS solution $G$ does not
+have a DCS solution (that is, a DCS that respects both upper and lower bounds).
+<p>
+If $B_G$ has a complete UDCS solution, then a maximum size UDCS solution
+yields a DCS solution for $G$ that respects both upper and lower bounds.
+However, this may not be a maximum size DCS for $G$.
+To obtain a maximum size DCS, one can use the the UDCS solution
+for $B_G$ to obtain an initial UDCS solution for $G$.
+This defines an initial matching of $T_G$ that can be extended to obtain
+a maximum size matching. Because the augmenting path algorithm never unmatches
+any vertex, this maximum size matching yields a maximum size
+DCS solution that respects all the bounds.
+<p>
+If $G$ is a weighted graph with upper and lower bounds, it suffices
+to find a complete maximum weight UDCS of $B_G$, where the chain edges
+in $B_G$ are assigned a weight of zero.
+The UDCS from one of the copies of $G$ in $B_G$ identifies a maximum
+weight DCS solution in $G$.
+<p>
+An abridged <I>Javascript</i> implementation of the DCS algorithm
+is shown below.
+<p> <textarea rows="15" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function dcsGT(g, hi, lo=0, ..) {
+    let sub = !lo ? (g.hasWeights ? wudcs(g,hi)   : udcs(g,hi)  ) :
+                    (g.hasWeights ? wdcs(g,hi,lo) : dcs(g,hi,lo));
+    return [sub ..];
+}
+
+function udcs(g, hi, isub=0) {
+    let tg = tutteGraph(g, hi);
+    let imatch = new Matching(tg);
+    if (isub) { // add initial subgraph edges to initial matching
+        for (let e = isub.first(); e; e = isub.next(e))
+            imatch.add(e);
+    }
+    for (let e = tg.first(); e; e = tg.next(e)) {
+        if (!g.validEdge(e) &&
+            !imatch.at(tg.left(e)) && !imatch.at(tg.right(e)))
+            imatch.add(e);
+    }
+    let [match] = matchEG(tg, imatch);
+    return match2sub(match, g);
+}
+
+/** Extract a subgraph from a matching.
+ *  @param match is a matching on subgraph
+ *  @param g is a matching which forms a subgraph of the graph on which
+ *  match is defined
+ *  @return the subgraph of g containing every edge of g that is also in match
+ */
+function match2sub(match, g) {
+    let sub = new Graph(g.n,g.edgeRange);
+    for (let e = g.first(); e; e = g.next(e)) {
+        if (match.contains(e)) {
+            sub.join(g.left(e), g.right(e), e);
+            if (g.hasWeights) sub.weight(e, g.weight(e));
+        }
+    }
+    return sub;
+}
+
+function wudcs(g, hi, complete=false) {
+    let tg = tutteGraph(g,hi);
+    let W = maxweight(g);
+    for (let e = tg.first(); e; e = tg.next(e)) {
+        if (!g.validEdge(e)) tg.weight(e, W+1);
+    }
+    let [match] = complete ? wperfectE(tg,0,1) : wmatchE(tg);
+    return match2sub(match, g);
+}
+
+function maxweight(g) {
+    let W = 0;
+    for (let e = g.first(); e; e = g.next(e))
+        W = Math.max(W,g.weight(e));
+    return W;
+}
+
+function dcs(g, hi, lo) {
+    // find complete udcs of Gabow graph
+    let [gg,gghi] = gabowGraph(g, hi, lo);
+    let cdcs = udcs(gg, gghi);
+    let sum = gghi.reduce((a,v)=>a+v, 0);
+    if (sum != 2*cdcs.m) return null;
+
+    // find largest udcs of g that includes edges from cdcs 
+    let isub = new Graph(g.n,g.edgeRange);
+    for (let e = g.first(); e; e = g.next(e)) {
+        if (cdcs.validEdge(e)) isub.join(g.left(e), g.right(e), e);
+    }
+    return udcs(g, hi, isub);
+}
+
+function wdcs(g, hi, lo) {
+    // find complete udcs of Gabow graph of maximum weight
+    let [gg,gghi] = gabowGraph(g, hi, lo);
+    let cdcs = wudcs(gg, gghi, true);
+    let sum = gghi.reduce((a,v)=>a+v, 0);
+    if (sum != 2*cdcs.m) return null;
+
+    // extract g's edges from cdcs
+    let sub = new Graph(g.n, g.edgeRange);
+    for (let e = g.first(); e; e = g.next(e)) {
+        if (cdcs.validEdge(e)) {
+            sub.join(g.left(e), g.right(e), e);
+            if (g.hasWeights) sub.weight(e, g.weight(e));
+        }
+    }
+    return sub;
+}
+
+/** Compute the Tutte graph for a given graph. */
+export function tutteGraph(g,hi) {
+    // preliminaries
+    let n = 0; let m = g.m;
+    let d = new Int32Array(g.n+1);    // d[u]=degree(u)
+    let base = new Int32Array(g.n+1); // base[u]=first vertex in u's cluster
+    let b = 1;
+    for (let u = 1; u <= g.n; u++) {
+        d[u] = g.degree(u); base[u] = b;
+        assert(0 <= hi[u] && hi[u] <= d[u]);
+        let nu = 2*d[u] - hi[u];
+        b += nu; n += nu; m += d[u]*(d[u]-hi[u]);
+    }
+    let tg = new Graph(n, m >= g.edgeRange ? m : g.edgeRange);
+    // define inter-custer edges
+    let offset = new Int32Array(g.n+1);
+        // offset[u] determines position of next edge in u's cluster
+    for (let e = g.first(); e; e = g.next(e)) {
+        let [u,v] = [g.left(e),g.right(e)];
+        tg.join(base[u] + offset[u]++, base[v] + offset[v]++, e); 
+    }
+    // define intra-cluster edges
+    for (let u = 1; u <= g.n; u++) {
+        let nu = (u < g.n ? base[u+1] : tg.n+1) - base[u];
+        for (let i = 0; i < d[u]; i++) { // i identifies external vertex
+            for (let j = d[u]; j < nu; j++) { // j identifies internal vertex
+                let me = tg.join(base[u]+i, base[u]+j);
+            }
+        }
+    }
+    return tg;
+}
+
+/** Compute Gabow reduction and return resulting graph and upper bounds. */
+export function gabowGraph(g, hi, lo) {
+    // determine size of Gabow Graph and instantiate it
+    let n = 2*g.n; let m = 2*g.m;
+    for (let u = 1; u <= g.n; u++) {
+        n += 2 * (hi[u] - lo[u]); m += 3 * (hi[u] - lo[u]);
+    }
+
+    if (m >= g.edgeRange ? m : g.edgeRange);
+    let gg = new Graph(n,m);
+
+    // first copy of g uses same edge numbers as g and inherits weights
+    for (let e = g.first(); e; e = g.next(e)) {
+        gg.join(g.left(e), g.right(e), e);
+        if (g.weight) gg.weight(e, g.weight(e));
+    }
+
+    // second copy can use any edge numbers and has zero weight
+    for (let e = g.first(); e; e = g.next(e)) {
+        gg.join(g.n+g.left(e), g.n+g.right(e));
+    }
+
+    // add chains linking copies
+    let gghi = new Int32Array(gg.n+1);
+    let v = 2*g.n+1; // used to enumerate chain vertices
+    for (let u = 1; u <= g.n; u++) {
+        gghi[u] = gghi[g.n+u] = hi[u];
+        for (let i = 1; i <= hi[u] - lo[u]; i++) {
+            gg.join(u,v); gg.join(v,v+1); gg.join(v+1,g.n+u);
+            gghi[v] = gghi[v+1] = 1; v += 2;
+        }
+    }
+    return [gg,gghi];
+}    
+</textarea> <p>
+The following script can be used to demonstrate <code>dcsGT</code>.
+<pre style="padding-left:5%">
+let g = randomGraph(16, 3);
+let hi = new Int32Array(g.n+1); let lo = new Int32Array(g.n+1);
+for (let u = 1; u <= g.n; u++) {
+    hi[u] = randomInteger(1, g.degree(u));
+    lo[u] = randomInteger(0, hi[u]);
+}
+let [,ts] = dcsGT(g,hi,0,1);  log(ts);
+    [,ts] = dcsGT(g,hi,lo,1); log(ts);
+</pre>
+
+Here is some sample output showing two solutions,
+the first using just the upper bounds and the second using
+both upper and lower bounds.
+<p> <textarea rows="15" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+{
+a(1)[b c f i] b(1)[a f] c(2)[a e m] d(2)[g o p]
+e(3)[c i p] f(4)[a b g o] g(2)[d f k] h(3)[j k o]
+i(2)[a e k p] j(2)[h p] k(1)[g h i n] l(2)[m o]
+m(2)[c l] n(1)[k] o(1)[d f h l] p(2)[d e i j]
+}
+
+dcs: {
+a(1)[f] b(1)[f] c(2)[e m] d(2)[g o]
+e(3)[i p c] f(4)[a b g] g(2)[d f] h(3)[j]
+i(2)[e k] j(2)[p h] k(1)[i] l(2)[m]
+m(2)[l c] o(1)[d] p(2)[j e]
+}
+ 
+dcs: {
+a(1,1)[f] b(1,0)[f] c(2,0)[e m] d(2,1)[g o]
+e(3,2)[i p c] f(4,0)[a b g] g(2,1)[d f] h(3,2)[j k]
+i(2,1)[e] j(2,2)[p h] k(1,0)[h] l(2,1)[m]
+m(2,1)[l c] o(1,1)[d] p(2,2)[j e]
+}
+</textarea> <p>
+
+The clusters in a Tutte graph $T_G$ that substitute for the vertices of $G$
+can be quite large, cause $T_G$ to be many times larger than $G$.
+This limits the use of this approach to fairly small graphs.
+[Gabow83] describes a more sophisticated version of this method,
+in which much smaller clusters are used.
+These clusters must be adjusted every time the matching changes,
+but the reduction in the cluster size enables a much more efficient
+computation.
+
 <h2>References</h2>
 <dl>
 <dt> [BM76]
@@ -1221,6 +2044,11 @@ matched edge, which is removed to accommodate the new match.
 <dd> &ldquo;Using Euler Partitions to Edge Color Multigraphs,&rdquo;
      by Harold Gabow. In <i>Journal of Computer and Information Sciences</i>,
      1976.
+<dt> [Gabow83]
+<dd> &ldquo;An efficient reduction technique for degree-constrained
+     subgraph and bidirected network flow problems,&rdquo;
+     by Harold Gabow.
+     In <i>ACM Symposium on the Theory of Computing</i> (STOC), 1983.
 <dt> [Okumura14]
 <dd> &ldquo;Priority Matchings Revisited&rdquo; by Yasunori Okumura.
      In <i>Games and Economic Behavior</i>, 2014.
@@ -1235,6 +2063,9 @@ matched edge, which is removed to accommodate the new match.
      Washington University Computer Science and Engineering technical
      report WUCSE-2015-08, 12/2015. Also available in Computing Research
      Repository (CoRR) arXiv:1512.09349 [cs.DS].
+<dt> [Tutte54]
+<dd> &ldquo;A short proof of the factor theorem for finite graphs,&rdquo;
+    by W. R. Tutte. In <i>Canadian Journal of Mathematics</i>, 1954.
 </dl>
 <hr> <h4>&copy; Jonathan Turner - 2022</h4>
 <script src="../../googleAnalytics.js"></script>

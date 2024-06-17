@@ -395,33 +395,12 @@ An initial collection of cycles can be obtained using essentially the
 same method that Karp uses. However, because the graph is undirected
 and has no edge costs, this method tends to produce lots of small cycles,
 not all of which can be readily patched into other cycles. For this
-reason, another method generally works better. [Tutte54] describes a
-general method for extracting a $d$-regular spanning subgraph of an
-arbitrary graph, by solving a matching problem on another graph.
-For the particular case of $d=2$, this yields a method for computing
-a collection of disjoint cycles that includes every vertex.
-<p>
-Let $G=(V,E)$ be a graph and let $G'$ be a graph defined follows.
-For each $u\in V$, $G'$ contains a <i>cluster</i> $C_u$ with
-$2d(u)-2$ vertices, where $d(u)$ is the degree of $u$.
-$C_u$ is a complete bipartite graph with $d$ <i>external</i> vertices
-and $d-2$ <i>internal</i> vertices. For each edge $\{u,v\}$ in $G$,
-$G'$ has an edge linking an external vertex of $C_u$ to an external
-vertex of $C_v$. Each external vertex is incident to exactly one
-of these inter-cluster edges.
-An example is shown below.
-<p>
-<div  style="text-align:center;">
-<img width="80%" src="figs/cycleCoverReduction.png"><br>
-</div>
-<p>
-The heavy weight edges in the diagram identify a perfect matching in $G'$.
-The external edges in this matching define a pair of disjoint cycles in $G$
-that includes every vertex. Since one edge of each internal vertex in a
-cluster must be matched, exactly two of its external vertices must be
-incident to inter-cluster edges in the matching.
-In general, a graph $G$ can be partitioned into disjoint cycles
-if and only if $G'$ has a perfect matching.
+reason, a better approach is to construct a degree-constrained
+subgraph of maximum size with a degree upper bound of two for every vertex.
+If the number of edges in this subgraph equals the number of vertices,
+the subgraph defines cycles that partition the vertices.
+If the subgraph has too few edges, then the graph cannot contain
+a Hamiltonian cycle.
 <p>
 Once an initial set of cycles is found, the algorithm identifies
 <i>compatible pairs</i> of cycles and combines them to form larger cycles,
@@ -437,19 +416,19 @@ This is illustrated below.
 <img width="60%" src="figs/patching.png"><br>
 </div>
 <p>
-The essential core of the <i>Javascript</i> implementation of the
+An abridged <i>Javascript</i> implementation of the
 algorithm is shown below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
-let g;           // shared reference to graph
+let g;
 let pi;          // permutation on 1..n that defines cycles in g
 let rpi;         // reverse of permutation pi
 let clist;       // List of the current valid cycle ids
 let clen;        // clen[u] is length of cycle identified by u
 let link;        // link[u][v] is edge number of connecting edge or 0
 
-export default function hpcKT(g0) {
-    g = g0; 
+export default function hpcKT(G ..) {
+    g = G; 
 
     pi  = new Int32Array(g.n+1);
     rpi = new Int32Array(g.n+1);
@@ -466,9 +445,12 @@ export default function hpcKT(g0) {
 
     let path = new Int32Array(g0.n);
 
-    if (!initialCycles()) return [path ..];
+    if (!initialCycles())
+        return [path, traceString, {'cycles': 0, 'length': 0}];
 
     while (clist.length > 1) {
+        if (trace == 1) traceString +=  traceCycles() + '\n';
+        else if (trace) traceString += cycleLengths() + '\n';
         let cp = compatiblePair();
         if (!cp) break;
         let [c1,c2,u,v] = cp;
@@ -480,77 +462,43 @@ export default function hpcKT(g0) {
     for (let u = clist.next(lc); u; u = clist.next(u))
         if (clen[u] > clen[lc]) lc = u;
 
-    // create array of edges in cycle
-    let v = lc; let i = 0;
+    // create array of edges in path/cycle, skipping added edges
+    let v0 = (s ? s : lc); let v = v0; let i = 0; let len = 0;
     do {
-        path[i++] = link[v][pi[v]]; v = pi[v];
-    } while(v != lc);
+        let e = link[v][pi[v]];
+        if (g0.validEdge(e)) { path[i++] = e; len++; }
+        v = pi[v];
+    } while(v != v0);
+
+    // reverse path in special case of HP where nextEdge[s] (in g) is not in g0
+    if (s && g.left(path[0]) != s && g.right(path[0]) != s && path[g0.n-2]) {
+        // special case requiring path reversal
+        for (let i = 0; i < (g0.n-2)-i; i++) 
+            [path[i],path[(g0.n-2)-i]] = [path[(g0.n-2)-i],path[i]]
+    }
 
     return [path ..];
 }
 
 function initialCycles() {
-    // preliminaries
-    let n = 0; let m = g.m;
-    let d = new Int32Array(g.n+1);    // d[u]=degree(u)
-    let base = new Int32Array(g.n+1); // base[u]=first vertex in u's cluster
-    let b = 1;
-    for (let u = 1; u <= g.n; u++) {
-        d[u] = g.degree(u); if (d[u] < 2) return false;
-        base[u] = b; let nu = 2*d[u]-2; b += nu;
-        n += nu; m += d[u]*(d[u]-2);
-    }
-
-    let mg = new Graph(n, m >= g.edgeRange ? m : g.edgeRange);
-    // define inter-custer edges
-    let offset = new Int32Array(g.n+1);
-        // offset[u] determines position of next edge in u's cluster
-    for (let e = g.first(); e; e = g.next(e)) {
-        let [u,v] = [g.left(e),g.right(e)];
-        mg.join(base[u] + offset[u]++, base[v] + offset[v]++, e); 
-    }
-
-    // define intra-cluster edges
-    for (let u = 1; u <= g.n; u++) {
-        for (let i = 0; i < d[u]; i++) {
-            for (let j = 0; j < d[u]-2; j++) {
-                let me = mg.join(base[u]+i, base[u]+d[u]+j);
-            }
-        }
-    }
-
-    let [match] = matchEG(mg);
-    if (match.size() != mg.n/2) return false;
-
-    let cycleEdges = new List(g.edgeRange);
-    for (let e = match.first(); e; e = match.next(e)) {
-        if (g.validEdge(e)) cycleEdges.enq(e);
-    }
-    // every vertex is incident to two edges in cycleEdges
+    let hi = new Int32Array(g.n+1); hi.fill(2,1);
+    let [sub] = dcsGT(g,hi);
+    if (sub.m != g.n) return false;
 
     pi.fill(0); rpi.fill(0);
-    while (!cycleEdges.empty()) {
-        let e = cycleEdges.first();
-        let u = g.left(e);
-        let v = u;
+    while (sub.m) {
+        let e = sub.first();
+        let u = g.left(e); let v = u;
         do {
             pi[v] = g.mate(v,e); rpi[g.mate(v,e)] = v;
-            cycleEdges.delete(e);
-            clen[u]++;
-            v = pi[v];
-            for (e = g.firstAt(v); e; e = g.nextAt(v,e))
-                if (cycleEdges.contains(e)) break;
+            sub.delete(e); clen[u]++;
+            v = pi[v]; e = sub.firstAt(v);
         } while (v != u);
         clist.enq(u);
     }
     return true;
 }
 
-/** Search for a compatible pair in clist.
- *  @return a tuple [c1,c2,u,v] on success, or null on failure;
- *  c1 and c2 are a pair of compatible cycles; u and v are vertices
- *  at which the cycles can be spliced.
- */
 function compatiblePair() {
     for (let c1 = clist.first(); c1; c1 = clist.next(c1)) {
         for (let c2 = clist.next(c1); c2; c2 = clist.next(c2)) {
@@ -564,12 +512,6 @@ function compatiblePair() {
     return null;
 }
 
-/** Determine if two cycles are compatible.
- *  @param c1 is a cycle
- *  @param c2 is a different cycle
- *  @return a vertex pair [x,y], one from each cycle that can be
- *  used to splice the cycles together; or null on failure
- */
 function compatible(c1,c2) {
     let u = c1;
     do {
@@ -586,10 +528,6 @@ function compatible(c1,c2) {
     return null;
 }
 
-/** Splice two cycles at a specified pair of vertices.
- *  @param u is a vertex in a cycle
- *  @param v is a vertex in a different cycle
- */
 function splice(u,v) {
     if (!link[u][pi[v]]) reverseCycle(v);
     if (!link[v][pi[u]]) reverseCycle(u);
@@ -597,9 +535,6 @@ function splice(u,v) {
     [pi[u], pi[v], rpi[pv], rpi[pu]] = [pv, pu, u, v];
 }
 
-/** Reverse a cycle.
- *  @paren u is a vertex on some cycle.
- */  
 function reverseCycle(u) {
     let v = u;
     do {
@@ -694,7 +629,7 @@ if $t$ is left unspecified.
     In <i>SIAM Journal on Computing</i> 1979. 
 
 <dt> [Posa76]
-<dd> &ldquo;Hamiltonian circuits in random graphd,&rdquo;
+<dd> &ldquo;Hamiltonian circuits in random graphs,&rdquo;
     by L. Posa.
     In <i>Discrete Mathematics</i>, 1976.
 
@@ -702,9 +637,6 @@ if $t$ is left unspecified.
 <dd> &ldquo;Almost all regular graphs are Hamiltonian,&rdquo;
     by R. W. Robinson and N. C. Wormald.
     In <i>Random Structures and Algorithms</i>, 1994.
-<dt> [Tutte54]
-<dd> &ldquo;A Short Proof of the Factor Theorem for Finite Graphs,&rdquo;
-    by W. T. Tutte. In <i>Canadian Journal of Mathematics</i>, 1954.
 </dl>
 <hr> <h4>&copy; Jonathan Turner - 2024</h4>
 <script src="../../googleAnalytics.js"></script>
