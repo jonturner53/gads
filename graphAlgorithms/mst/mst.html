@@ -271,7 +271,7 @@ it produces a minimum spanning forest of the graph.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function mstP(g,d,trace) {
+export default function mstP(g,d) {
     let link = new Int32Array(g.n+1).fill(-1);
     let border = new ArrayHeap(g.n, d);
     for (let s = 1; s <= g.n; s++) {
@@ -300,7 +300,7 @@ export default function mstP(g,d,trace) {
 <p>
 <p>
 In the common case of a connected graph, the body of the
-outer <code>for</code>-loop
+outer <i>for</i>-loop
 is executed one time, producing a minimum spanning tree starting
 from the first vertex.
 For a disconnected graph, each iteration of the outer loop
@@ -339,7 +339,7 @@ b (a,b,3) {}
 </textarea>
 <p>
 The graph is shown at the top.
-On each iteration of the inner <code>while</code> loop,
+On each iteration of the inner <i>while</i> loop,
 the border vertex with the lightest edge
 connecting it to the partially constructed forest
 is shown, along with its lightest edge, and the heap.
@@ -358,10 +358,10 @@ log(`prim time=${t1-t0}ms steps/m=${(stats.steps/g.m).toFixed(2)}`);
 t0 = Date.now(); [,,stats] = mstP(g,2); t1 = Date.now();
 log(`prim_2 time=${t1-t0}ms steps/m=${(stats.steps/g.m).toFixed(2)}`);
 </pre>
-When $m=n(n-1)/2$, the function <code>hardcaseP(n,m)</code> produces
+When $m=n(n-1)/2$, the function $\textit{hardcaseP}(n,m)$ produces
 a graph like the worst-case example shown earlier,
 with $n$ vertices and $m$ edges.
-The optional third argument to <code>mstP</code> specifies the
+The optional third argument to <i>mstP</i> specifies the
 heap parameter $d$.
 When it is omitted, $d$ is chosen to match the edge density.
 Running this code on graphs of increasing size produces the output
@@ -403,7 +403,7 @@ line of the code in the web app with
 <pre style="padding-left:5%;">
 let g = randomGraph(n,d); g.randomWeights(randomFraction);
 </pre>
-The <code>randomWeights</code> function takes a random number generator
+The <i>randomWeights</i> function takes a random number generator
 as its first argument. In this case, the specified function
 generates uniform random numbers in $[0,1]$.
 Running this on graphs of increasing size produces the output
@@ -455,7 +455,7 @@ implementation (abridged for clarity).
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function mstK(g,trace) {
+export default function mstK(g) {
     // first make a sorted list of the edges in g
     let edges = [];
     for (let e = g.first(); e; e = g.next(e)) edges.push(e);
@@ -515,7 +515,7 @@ A <i>Javascript</i> implementation of the algorithm appears below.
 <p>
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function mstCT(g,trace) {
+export default function mstCT(g) {
     let trees = new MergeSets(g.n); // one subset for each mst subtree
 
     // initialize collection of edge endpoint heaps
@@ -597,7 +597,7 @@ selected edge, queue, tree vertex sets
 {f,g,2} [i e] {[a b c d] [e f g h] [i j]}
 </textarea>
 <p>
-The trace string returned by <code>mstCT</code>
+The trace string returned by <i>mstCT</i>
 shows the graph and for each iteration of the
 main loop, it shows the edge selected in that iteration,
 plus the resulting queue state and the vertex sets for the trees that

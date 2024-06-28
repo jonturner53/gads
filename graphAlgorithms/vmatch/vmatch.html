@@ -43,6 +43,7 @@
 \newcommand{\size}{\texttt{size}}
 \newcommand{\weight}{\texttt{weight}}
 \newcommand{\find}{\textit{find}}
+\newcommand{\prio}{\textit{prio}}
 \)
 
 <h1>Variations on Matching<sup>&copy;</sup></h1>
@@ -165,8 +166,8 @@ In this case, it produces the maximum priority matching that has the
 largest weight among all such matchings.
 When solving this problem, the vertex priorities are used to
 modify the provided edge weights. Specifically, for edge $e=\{u,v\}$,
-<code>(prio[u]+prio[v])*C</code> is added to the weight of $e$,
-where <code>C=n*W/2</code> and <code>W</code> is the largest edge weight.
+$(\prio[u]+\prio[v])*C$ is added to the weight of $e$,
+where $C=nW/2$ and $W$ is the largest edge weight.
 <p>
 The example below shows a priority matching of an unweighted graph,
 followed by a matching of a weighted version of the same graph.
@@ -889,7 +890,7 @@ log(`hkt/r n=${g.n} m=${g.m} pmax=${pmax} passes=${stats.passes} ` +
     `paths=${stats.paths} steps=${stats.steps} ${t}ms`);
 </pre>
 In the sample results shown below, the <i>passes</i> field refers to
-the number of iterations performed by the  Hopcroft-Karp-Turner algorithm
+the number of iterations performed by <i>pbimatchHKT</i>
 and paths refers to the number of paths found.
 <pre style="padding-left:5%">
 o/h   n=2000 m=3000 pmax= 5                     steps=9302599 157ms 
@@ -1610,12 +1611,12 @@ augment: {n,p,3}
 final matching:
     [bl:1 ae:1 cj:2 np:3 fm:2 ho:3 ik:1 dg:1] 8 14
 </textarea><p>
-Changing the second argument of <code>wperfectE</code> to 6 causes
+Changing the second argument of <i>wperfectE</i> to 6 causes
 it to stop as soon as the matching contains six edges.
 Changing the third argument to 1 causes it to return a maximum weight
 matching.
 
-<h2>Degree-Constrained Subgraphs</h2>
+<a id=dcs><h2>Degree-Constrained Subgraphs</h2></a>
 
 A matching is a subgraph in which each vertex has degree at most one.
 In a <i>degree-constrained subgraph</i> (DCS) the objective is to find a
@@ -1673,7 +1674,7 @@ export default function bidcsF(g, hi, lo=0 ..) {
     return [dcs ..];
 }
 </textarea> <p>
-If you compare this to <code>bimatchF</code> you'll notice that they're
+If you compare this to <i>bimatchF</i> you'll notice that they're
 quite similar. The following script can be used to demonstrate the program.
 <pre style="padding-left:5%">
 let g = randomBigraph(6,3); 
@@ -1983,7 +1984,7 @@ export function gabowGraph(g, hi, lo) {
     return [gg,gghi];
 }    
 </textarea> <p>
-The following script can be used to demonstrate <code>dcsGT</code>.
+The following script can be used to demonstrate <i>dcsGT</i>.
 <pre style="padding-left:5%">
 let g = randomGraph(16, 3);
 let hi = new Int32Array(g.n+1); let lo = new Int32Array(g.n+1);

@@ -30,38 +30,38 @@
 
 <body bgcolor=ffffff>
 \(
-\newcommand{\key}{\texttt{key}}
-\newcommand{\changekey}{\texttt{changekey}}
-\newcommand{\addtokeys}{\texttt{add2keys}}
-\newcommand{\insert}{\texttt{insert}}
-\newcommand{\insertAfter}{\texttt{insertAfter}}
-\newcommand{\delete}{\texttt{delete}}
-\newcommand{\findmin}{\texttt{findmin}}
-\newcommand{\deletemin}{\texttt{deletemin}}
-\newcommand{\divide}{\texttt{divide}}
-\newcommand{\minkey}{\texttt{minkey}}
-\newcommand{\activate}{\texttt{activate}}
-\newcommand{\deactivate}{\texttt{deactivate}}
-\newcommand{\refresh}{\texttt{refresh}}
-\newcommand{\findroot}{\texttt{findroot}}
-\newcommand{\findcost}{\texttt{findcost}}
-\newcommand{\addcost}{\texttt{addcost}}
-\newcommand{\graft}{\texttt{graft}}
-\newcommand{\prune}{\texttt{prune}}
-\newcommand{\expose}{\texttt{expose}}
-\newcommand{\succ}{\texttt{succ}}
-\newcommand{\findpath}{\texttt{findpath}}
-\newcommand{\findtail}{\texttt{findtail}}
-\newcommand{\findpathcost}{\texttt{findpathcost}}
-\newcommand{\addpathcost}{\texttt{addpathcost}}
-\newcommand{\join}{\texttt{join}}
-\newcommand{\split}{\texttt{split}}
-\newcommand{\cost}{\texttt{cost}}
-\newcommand{\dmin}{\texttt{dmin}}
-\newcommand{\dcost}{\texttt{dcost}}
-\newcommand{\mincost}{\texttt{mincost}}
-\newcommand{\splay}{\texttt{splay}}
-\newcommand{\rank}{\texttt{rank}}
+\newcommand{\key}{\textit{key}}
+\newcommand{\changekey}{\textit{changekey}}
+\newcommand{\addtokeys}{\textit{add2keys}}
+\newcommand{\insert}{\textit{insert}}
+\newcommand{\insertAfter}{\textit{insertAfter}}
+\newcommand{\delete}{\textit{delete}}
+\newcommand{\findmin}{\textit{findmin}}
+\newcommand{\deletemin}{\textit{deletemin}}
+\newcommand{\divide}{\textit{divide}}
+\newcommand{\minkey}{\textit{minkey}}
+\newcommand{\activate}{\textit{activate}}
+\newcommand{\deactivate}{\textit{deactivate}}
+\newcommand{\refresh}{\textit{refresh}}
+\newcommand{\findroot}{\textit{findroot}}
+\newcommand{\findcost}{\textit{findcost}}
+\newcommand{\addcost}{\textit{addcost}}
+\newcommand{\graft}{\textit{graft}}
+\newcommand{\prune}{\textit{prune}}
+\newcommand{\expose}{\textit{expose}}
+\newcommand{\succ}{\textit{succ}}
+\newcommand{\findpath}{\textit{findpath}}
+\newcommand{\findtail}{\textit{findtail}}
+\newcommand{\findpathcost}{\textit{findpathcost}}
+\newcommand{\addpathcost}{\textit{addpathcost}}
+\newcommand{\join}{\textit{join}}
+\newcommand{\split}{\textit{split}}
+\newcommand{\cost}{\textit{cost}}
+\newcommand{\dmin}{\textit{dmin}}
+\newcommand{\dcost}{\textit{dcost}}
+\newcommand{\mincost}{\textit{mincost}}
+\newcommand{\splay}{\textit{splay}}
+\newcommand{\rank}{\textit{rank}}
 \)
 
 <a id=groupHeap><h1>Specialty Data Structures<sup>&copy;</sup></h1></a>
@@ -79,7 +79,7 @@ category.
 The <i>group heap</i> data structure was originally devised to enable a
 specific algorithm for the weighted matching problem in general graphs [GMG86].
 The version described here uses a different implementation to make it easier
-to explain, and to get a better fit with the other data structures in
+to explain, and to take advantage of the other data structures in
 this collection.
 <p>
 The group heap implements a collection of items
@@ -289,22 +289,21 @@ log(gh.toString(0));
 </pre>
 This produces the output shown below.
 <pre style="padding-left:5%;">
-{1[*a:3 b:2] 2@![c:2 *d:5 e:1 j:7] 4@[i:10] 6[*f:6 g:3]} 
-{1@[*a:3 b:2] 2@![c:2 *d:5 e:1 j:7] 4@[i:10] 6[*f:6 g:3]} 
+{1[a:3 b:2] 2@![c:2 d:5 e:1 j:7] 4@[i:10] 6[f:6 g:3]} 
+{1@[a:3 b:2] 2@![c:2 d:5 e:1 j:7] 4@[i:10] 6[f:6 g:3]} 
 e 
-{1@[*a:3 b:2] 2@![c:2 *d:5 j:7] 4@[i:10] 6[*f:6 g:3]} 
-{1@![*a:3 b:2] 2@[*d:5 j:7] 4@[i:10] 6[*f:6 g:3]}
-[a:3 *b:2 d:5 j:7 i:10]
+{1@[a:3 b:2] 2@![c:2 d:5 j:7] 4@[i:10] 6[f:6 g:3]} 
+{1@![a:3 b:2] 2@[d:5 j:7] 4@[i:10] 6[f:6 g:3]}
+[a:3 b:2 d:5 j:7 i:10]
 </pre>
 By default, the state of the data structure is shown as a collection of
 groups, with each group preceded by its group number and
 each item shown with its key.
 Active groups are marked with an at symbol &lsquo;@&rsquo;
 and the active group containing the smallest key is
-also marked with a bang &lsquo;!&rsquo;.
-The last line shows a more concise representation, in which the
-groups are hidden, and only the minimum key item of each active group is
-shown, with an asterisk highlighting the item with the smallest key.
+also marked with a exclamation point &lsquo;!&rsquo;.
+The last line shows a more concise representation in which the
+groups are hidden and only the active items are shown.
 
 <a id=OrderedHeaps><h2>Ordered Heaps</h2></a>
 
@@ -519,7 +518,7 @@ An example is shown below, illustrating the effects of a few
 of the operations.
 <p>
 <div  style="text-align:center;">
-<img width="40%" src="figs/dtrees1.png"><br>
+<img width="35%" src="figs/dtrees1.png"><br>
 </div>
 <p>
 In the maximum flow problem, the dynamic trees data structure is
@@ -599,7 +598,7 @@ The expose operation is the key to the dynamic trees data structure.
 The diagram below illustrates how it works.
 <p>
 <div  style="text-align:center;">
-<img width="60%" src="figs/expose.png"><br>
+<img width="50%" src="figs/expose.png"><br>
 </div>
 <p>
 An $\expose(u)$ operation proceeds up the path from $u$ to the root,
@@ -687,13 +686,15 @@ This produces the output shown below.
 <pre style="padding-left:5%;">
 {[c:4(f:2(a:5 b:1))] [e:4(g:3(d:2 i:3(h:2)))]} 
 {f[b:1] [a:5 f:2 *c:4] [d:2 g:3 *e:4] i[h:2] g[i:3]} 
-{f[b:1] [d:2 g:3 *e:4] i[h:2] g[*i:3 a:8 f:5 c:7]} 
+{f[b:1] [*c:4 i:3 g:3 e:4] g[d:2] c[a:5 *f:2] i[h:2]} 
 </pre>
 The first line shows a pair of trees in a concise format,
 with each node followed by a parenthesized list of its children.
-The remaining lines show each tree as a linked collection of paths.
-So for example, the <code>f</code> preceding the path <code>[b:1]</code>
-indicates that the <code>f</code> is the successor of this path.
+The remaining lines show each tree as a linked collection of paths,
+where an asterisk marks the node used to identify each path
+and each path is preceded by its successor in its larger tree.
+So in the last line, the path $[a f]$ identified by $f$ has $c$
+as its successor.
 
 <a id=PathSets><h2>Path Sets</h2></a>
 The <i>path sets</i> data structure was introduced in the last section.
@@ -940,7 +941,7 @@ Before proceeding with that analysis, it's useful to consider two
 alternate ways to look at dynamic trees, illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="60%" src="figs/viewpoints.png"><br>
+<img width="55%" src="figs/viewpoints.png"><br>
 </div>
 <p>
 The <i>tree of paths</i> viewpoint was used earlier, when describing how
@@ -969,7 +970,7 @@ with their individual weights, while those in the tree of trees are
 labeled with their total weights.
 <p>
 <div  style="text-align:center;">
-<img width="60%" src="figs/dtreeWeights.png"><br>
+<img width="55%" src="figs/dtreeWeights.png"><br>
 </div>
 <p>
 Observe that within each path tree, the rank of a node is no larger

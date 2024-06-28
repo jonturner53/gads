@@ -29,39 +29,39 @@
 </head>
 <body bgcolor=ffffff>
 \(
-\newcommand{\Forest}{\textit{Forest}}
-\newcommand{\BinaryForest}{\texttt{BinaryForest}}
-\newcommand{\BalancedForest}{\texttt{BalancedForest}}
-\newcommand{\SplayForest}{\texttt{SplayForest}}
-\newcommand{\p}{\texttt{p}}
-\newcommand{\firstChild}{\texttt{firstChild}}
-\newcommand{\nextSibling}{\texttt{nextSibling}}
-\newcommand{\root}{\texttt{root}}
-\newcommand{\first}{\texttt{first}}
-\newcommand{\next}{\texttt{next}}
-\newcommand{\firstLeaf}{\texttt{firstLeaf}}
-\newcommand{\nextLeaf}{\texttt{nextLeaf}}
-\newcommand{\cut}{\texttt{cut}}
-\newcommand{\link}{\texttt{link}}
-\newcommand{\equals}{\texttt{equals}}
-\newcommand{\setEquals}{\texttt{setEquals}}
-\newcommand{\listEquals}{\texttt{listEquals}}
-\newcommand{\joinGroups}{\texttt{joinGroups}}
-\newcommand{\ungroup}{\texttt{ungroup}}
-\newcommand{\left}{\texttt{left}}
-\newcommand{\right}{\texttt{right}}
-\newcommand{\insertAfter}{\texttt{insertAfter}}
-\newcommand{\delete}{\texttt{delete}}
-\newcommand{\search}{\texttt{search}}
-\newcommand{\rotate}{\texttt{rotate}}
-\newcommand{\sibling}{\texttt{sibling}}
-\newcommand{\side}{\texttt{side}}
-\newcommand{\join}{\texttt{join}}
-\newcommand{\split}{\texttt{split}}
-\newcommand{\insertByKey}{\texttt{insertByKey}}
-\newcommand{\key}{\texttt{key}}
-\newcommand{\refresh}{\texttt{refresh}}
-\newcommand{\property}{\texttt{property}}
+\newcommand{\Forest}{\textit{forest}}
+\newcommand{\BinaryForest}{\textit{binary forest}}
+\newcommand{\BalancedForest}{\textit{balanced forest}}
+\newcommand{\SplayForest}{\textit{splay forest}}
+\newcommand{\p}{\textit{p}}
+\newcommand{\firstChild}{\textit{firstChild}}
+\newcommand{\nextSibling}{\textit{nextSibling}}
+\newcommand{\root}{\textit{root}}
+\newcommand{\first}{\textit{first}}
+\newcommand{\next}{\textit{next}}
+\newcommand{\firstLeaf}{\textit{firstLeaf}\,}
+\newcommand{\nextLeaf}{\textit{nextLeaf}\,}
+\newcommand{\cut}{\textit{cut}}
+\newcommand{\link}{\textit{link}}
+\newcommand{\equals}{\textit{equals}}
+\newcommand{\setEquals}{\textit{setEquals}}
+\newcommand{\listEquals}{\textit{listEquals}}
+\newcommand{\joinGroups}{\textit{joinGroups}}
+\newcommand{\ungroup}{\textit{ungroup}}
+\newcommand{\left}{\textit{left}}
+\newcommand{\right}{\textit{right}}
+\newcommand{\insertAfter}{\textit{insertAfter}}
+\newcommand{\delete}{\textit{delete}}
+\newcommand{\search}{\textit{search}}
+\newcommand{\rotate}{\textit{rotate}}
+\newcommand{\sibling}{\textit{sibling}}
+\newcommand{\side}{\textit{side}}
+\newcommand{\join}{\textit{join}}
+\newcommand{\split}{\textit{split}}
+\newcommand{\insertByKey}{\textit{insertByKey}}
+\newcommand{\key}{\textit{key}}
+\newcommand{\refresh}{\textit{refresh}}
+\newcommand{\property}{\textit{property}}
 \)
 
 <h1>Trees and Forests<sup>&copy;</sup></h1>
@@ -272,7 +272,7 @@ straightforward. Others require more explanation. The figure below
 illustrates the operation $\insertAfter(c,a,n)$ operation.
 <p>
 <div  style="text-align:center;">
-<img width="65%" src="figs/insertAfter.png"><br>
+<img width="70%" src="figs/insertAfter.png"><br>
 </div>
 <p>
 The inserted vertex $c$ becomes the leftmost leaf in the
@@ -1007,9 +1007,9 @@ export default class SplayForest extends BinaryForest {
     split(u) { this.splay(u); return super.split(u); }
 }
 </textarea> <p>
-In most situtions, balanced binary trees are generally more efficient than
-the splay trees, since they requires far fewer rotations.
-While a single rotation does take constant time, it is still a
+In most situtions, balanced binary trees are more efficient than
+splay trees, since they requires far fewer rotations.
+While a single rotation does take constant time, it is a
 fairly expensive operation.
 Still, there are some situations where splay trees can out-perform
 explicitly balanced trees.

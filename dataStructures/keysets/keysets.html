@@ -29,28 +29,29 @@
 </head>
 <body bgcolor=ffffff>
 \(
-\newcommand{\contains}{\texttt{contains}}
-\newcommand{\lookup}{\texttt{lookup}}
-\newcommand{\insert}{\texttt{insert}}
-\newcommand{\delete}{\texttt{delete}}
-\newcommand{\join}{\texttt{join}}
-\newcommand{\split}{\texttt{split}}
-\newcommand{\KeySets}{\texttt{KeySets}}
-\newcommand{\DualKeySets}{\texttt{DualKeySets}}
-\newcommand{\Map}{\texttt{Map}}
-\newcommand{\get}{\texttt{get}}
-\newcommand{\put}{\texttt{put}}
-\newcommand{\deletePair}{\texttt{deletePair}}
-\newcommand{\first}{\texttt{first}}
-\newcommand{\next}{\texttt{next}}
-\newcommand{\size}{\texttt{size}}
-\newcommand{\BalancedForest}{\texttt{BalancedForest}}
-\newcommand{\findmin}{\texttt{findmin}}
+\newcommand{\contains}{\textit{contains}}
+\newcommand{\lookup}{\textit{lookup}}
+\newcommand{\insert}{\textit{insert}}
+\newcommand{\delete}{\textit{delete}}
+\newcommand{\join}{\textit{join}}
+\newcommand{\split}{\textit{split}}
+\newcommand{\KeySets}{\textit{key sets}}
+\newcommand{\DualKeySets}{\textit{dual key sets}}
+\newcommand{\Map}{\textit{Map}}
+\newcommand{\get}{\textit{get}}
+\newcommand{\put}{\textit{put}}
+\newcommand{\deletePair}{\textit{deletePair}}
+\newcommand{\first}{\textit{first}}
+\newcommand{\next}{\textit{next}}
+\newcommand{\size}{\textit{size}}
+\newcommand{\BinaryForest}{\textit{binary forest}}
+\newcommand{\BalancedForest}{\textit{balanced forest}}
+\newcommand{\findmin}{\textit{findmin}}
 \newcommand{\limit}{\textit{limit}}
 \newcommand{\left}{\textit{left}}
 \newcommand{\key}{\textit{key}}
 \newcommand{\Min}{\textit{min}}
-\newcommand{\getPair}{\texttt{getPair}}
+\newcommand{\getPair}{\textit{getPair}}
 \)
 
 <h1>Key Sets and Maps<sup>&copy</sup></h1>
@@ -70,8 +71,8 @@ and can be efficiently implemented using a key set.
 
 <h2><a label="keySets">Key Sets</a></h2>
 
-The <i>key sets</i> data structure represents a collection of key sets,
-and can be implemented using binary forest.
+The $\KeySets$ data structure represents a collection of key sets,
+and can be implemented using a $\BinaryForest$.
 A typical implementation supports the following methods.
 <ul>
 <li> $\contains(i,s)$ returns true if item $i$ is
@@ -140,11 +141,8 @@ $\findmin(limit)$ that returns an item of minimum
 $\key_2$ value from among the items with primary key
 values $\leq\limit$.
 <p>
-Hence, it can be viewed as a heap, with respect to the second key,
-and it can be implemented in a way that is similar to that of the
-<a href="./heaps.html#orderedHeaps"><i>ordered heaps</i></a>
-data structure.
-In particular, it can use an auxiliary field $\Min_2(u)$ that gives
+Hence, it can be viewed as a heap, with respect to the second key.
+It is implemented using an auxiliary field $\Min_2(u)$ that gives
 the smallest $\key_2$ value in the subtree of node $u$.
 An example appears below.
 <p>
@@ -163,13 +161,12 @@ On the other hand, if $u$ is eligible then every node in its
 left subtree is also eligible and one can use the $\Min_2$
 value of the subtree to determine its smallest $\key_2$ value.
 As the search progresses, for each eligible node $u$ with
-left child $l$, $b_2(u)=\min(\key_2(u),\Min_2(l))$ is computed
-and the node on the path with the smallest $b_2$ value is
-identified.
-If $u$ has the smallest $c_2$ value when the search reaches
-the leaf, then either $u$ is the target, or the target is in
-$u$'s left subtree and can be quickly identified by a search
-of the subtree using the just the $\Min_2$ values.
+left child $l$, $b(u)=\min(\key_2(u),\Min_2(l))$ is computed
+and the node $v$ on the path with the smallest $b(v)$ is identified.
+When the search reaches a leaf, then either $v$ is the target
+or the target is in
+$v$'s left subtree and can be quickly identified by a search
+of that subtree using just the $\Min_2$ values.
 <p>
 Note that rotation operations must be extended
 to update $\Min_2$ value.

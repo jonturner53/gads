@@ -29,16 +29,7 @@ MathJax.Hub.Config({
 </head>
 <body bgcolor=ffffff>
 \(
-\newcommand{\color}{\textit{color}}
-\newcommand{\avail}{\textit{avail}}
-\newcommand{\np}{\textit{NP}}
-
-\newcommand{\Proc}{\textbf{procedure}}
-\newcommand{\Func}{\textbf{function}}
-\newcommand{\flip}{\textit{flip}}
-\newcommand{\bmax}{b_{\textit{max}}}
-
-\newcommand{\proof}{\noindent\textit{proof}}
+\newcommand{\selectLimit}{\textit{selectLimit}}
 \)
 
 <h1>Hamiltonian Paths and Cycles<sup>&copy;</sup></h1>
@@ -165,7 +156,7 @@ let g = hpcRandom(10, 3);
 let [path,ts,stats] = hpcPAV(g,1,0,0,1);
 log(ts + (stats.length==g.n ? 'success' : 'failure'));
 </pre> <p>
-The function <code>hpcRandom</code> returns a random graph that
+The function <i>hpcRandom</i> returns a random graph that
 contains a Hamiltonian cycle and has
 10 vertices and average vertex degree 3.
 Here is the output from a sample (successful) execution of the script.
@@ -194,7 +185,7 @@ that reversed the order of the last five vertices,
 exposing $c$.
 The last step closed the cycle with edge $\{c,d\}$.
 <p>
-Increasing the second argument of <code>hpcPAV</code> to 2 allows
+Increasing the second argument of <i>hpcPAV</i> to 2 allows
 each edge to be selected twice. Here is an example showing the
 effect of this change, with an asterisk marking the edges selected
 for the second time.
@@ -297,7 +288,7 @@ it is able to find the cycles roughly half the time.
 Increasing the limit to 2 allows it to match this performance level
 for degree 12 graphs. Further increases enable it to reach this
 performance level for degree values as small as 5, a three-to-one
-improvement over the <code>selectLimit=1</code> case.
+improvement over the $\selectLimit=1$ case.
 Also, note that in most cases, the number of rotations is smaller than
 the number of edges and it is never than four times the number of edges,
 even when the selection limit is 20.
@@ -338,21 +329,21 @@ hpcPAV n=200 selectLimit=10 dmin= 7
 hpcPAV n=400 selectLimit=10 dmin= 8 
 hpcPAV n=800 selectLimit=10 dmin= 9
 </pre> <p>
-Observe that when <code>selectLimit=1</code>, each doubling of $n$
-produces an average increase of 3 in <code>dmin</code>.
+Observe that when $\selectLimit=1$, each doubling of $n$
+produces an average increase of 3 in <i>dmin</i>.
 The incremental difference appears essentially constant,
 suggesting a logarithmic growth rate.
 Note that the random graph generator guarantees that there
 is a Hamiltonian cycle in all cases, so these results imply that the
 algorithm struggles to find cycles until the higher density
 makes them more plentiful.
-When <code>selectLimit=10</code>, each doubling of $n$
-produces an average increase of about 0.75 in <code>dmin</code>.
+When $\selectLimit=10$, each doubling of $n$
+produces an average increase of about 0.75 in <i>dmin</i>.
 <p>
-One can easily modify the script to use the <code>randomGraph</code>
-function in place of <code>hpcRandom</code>. This produces larger
-<code>dmin</code> values.
-Alternatively, <code>randomRegularGraph</code> produces smaller values.
+One can easily modify the script to use the <i>randomGraph</i>
+function in place of <i>hpcRandom</i>. This produces larger
+<i>dmin</i> values.
+Alternatively, <i>randomRegularGraph</i> produces smaller values.
 These differences are consistent with the differences in the variance of
 the vertex degrees in the different random graph models.
 In general, one can expect performance to deteriorate as variance increases.
@@ -597,11 +588,11 @@ hpcKT n=200 dmin=5
 hpcKT n=400 dmin=6 
 hpcKT n=800 dmin=8 
 </pre> <p>
-This is a bit better than <code>hpcPAV</code> for the smaller graphs,
+This is a bit better than <i>hpcPAV</i> for the smaller graphs,
 even when the selection limit is quite large.
 For larger graphs, the performance of the two is roughly comparable.
 <p>
-The complete implementation of <code>hpcKT</code> includes code to support
+The complete implementation of <i>hpcKT</i> includes code to support
 Hamiltonian paths as well as cycles. This is done using a general reduction
 from the Hamilonian path problem to the Hamiltonian cycle problem.
 When both $s$ and $t$ are specified, an extra vertex is added to the

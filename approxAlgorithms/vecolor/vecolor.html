@@ -39,6 +39,25 @@ MathJax.Hub.Config({
 \newcommand{\bmax}{b_{\textit{max}}}
 
 \newcommand{\proof}{\noindent\textit{proof}}
+
+\newcommand{\group}{\textit{group}}
+\newcommand{\Input}{\textit{input}}
+\newcommand{\output}{\textit{output}}
+\newcommand{\hub}{\textit{hub}}
+\newcommand{\fanout}{\textit{fanout}}
+\newcommand{\groupCount}{\textit{groupCount}}
+\newcommand{\firstGroup}{\textit{firstGroup}}
+\newcommand{\nextGroup}{\textit{nextGroup}}
+\newcommand{\firstGroupAt}{\textit{firstGroupAt}}
+\newcommand{\nextGroupAt}{\textit{nextGroupAt}}
+\newcommand{\firstInGroup}{\textit{firstInGroup}}
+\newcommand{\nextInGroup}{\textit{proof}}
+\newcommand{\add}{\textit{add}}
+\newcommand{\delete}{\textit{delete}}
+\newcommand{\layer}{\textit{layer}}
+\newcommand{\firstInLayer}{\textit{firstInLayer}}
+\newcommand{\nextInLayer}{\textit{nextInLayer}}
+\newcommand{\usage}{\textit{usage}}
 \)
 
 <h1>Variations on Edge Coloring<sup>&copy;</sup></h1>
@@ -90,7 +109,7 @@ For so-called <i>input queued</i> switches,
 the focus has been on ensuring bounded waiting times in systems
 subjected to random input traffic.
 Many scheduling algorithms have been shown to meet this 
-objective [Leonardi01,Mckeown99a, Mckeown99b].
+objective [Leonardi01, Mckeown99a, Mckeown99b].
 More compelling, worst-case results have been shown for
 <i>combined input and output queued</i>
 switches, in which the crossbar is capable of transferring packets
@@ -100,7 +119,7 @@ Some scheduling algorithms can match the performance of an
 idealized <i>output-queued</i>
 switch when the crossbar is capable of processing packets
 twice as fast as the can arrive at the inputs
-[Attiya06,Chuang-99,Krishna-99].
+[Attiya06, Chuang-99, Krishna-99].
 
 <h3>Lower Bounds</h3>
 This section introduces several methods to compute lower bounds on $C^\ast$.
@@ -557,8 +576,7 @@ algorithms, but experiments demonstrate that the priority matching
 algorithm can produce solutions that closely track the best lower bounds.
 
 <h3>Experimental Evaluation</h3>
-The following script can be used to evaluate the algorithms'
-performance on graphs $B_n$.
+The following script can be used to evaluate the algorithms on graphs $B_n$.
 <p> <pre style="padding-left:5%">
 let n = 8; let g = hardCase(n);
 let [color,ts,stats] = becolorSplit(g);
@@ -581,7 +599,7 @@ B_16 pmatch  C= 22 flowBound=21
 B_32 pmatch  C= 42 flowBound=42 
 B_64 pmatch  C= 84 flowBound=83
 </pre>
-The max degree matching algorithm produces coloring $(3/2)n$ colors.
+The max degree matching algorithm produces colorings with about $(3/2)n$ colors.
 The priority matching algorithm closely tracks
 the flow lower bound and for the larger cases,
 its largest color is less than $n+\lceil (n-1)/3 \rceil$.
@@ -913,52 +931,52 @@ function color(thickness, strict) {
     return egc;
 }
 </textarea><p>
-The <code>strict</code> argument to <code>egcT1</code> is used to
+The <i>strict</i> argument to <i>egcT1</i> is used to
 force the layers to use disjoint color sets. By default, the color sets
 are allowed to overlap.
 <p>
 The implementation uses three data structures.
-The <code>EdgeGroups</code> data structure maintains the structure of
+The <i>edge groups</i> data structure maintains the structure of
 the edge groups and includes the following methods.
 <ul>
-<li> <code>group(e)</code> returns the group that contains edge $e$.
-<li> <code>input(e)</code> returns the endpoint of $e$ in the input set.
-<li> <code>output(e)</code> returns the endpoint of $e$ in the output set.
-<li> <code>hub(g)</code> returns the input at the hub of group $g$.
-<li> <code>fanout(g)</code> returns the number of outputs in group $g$.
-<li> <code>groupCount(u)</code> returns the number of groups at input $u$.
-<li> <code>firstGroup()</code> returns the first group in the list of groups.
-<li> <code>nextGroup(g)</code> returns the next group in the list following $g$.
-<li> <code>firstGroupAt(u)</code> returns the first group in the list of groups
+<li> $\group(e)$ returns the group that contains edge $e$.
+<li> $\Input(e)$ returns the endpoint of $e$ in the input set.
+<li> $\output(e)$ returns the endpoint of $e$ in the output set.
+<li> $\hub(g)$ returns the input at the hub of group $g$.
+<li> $\fanout(g)$ returns the number of outputs in group $g$.
+<li> $\groupCount(u)$ returns the number of groups at input $u$.
+<li> $\firstGroup()$ returns the first group in the list of groups.
+<li> $\nextGroup(g)$ returns the next group in the list following $g$.
+<li> $\firstGroupAt(u)$ returns the first group in the list of groups
     at input $u$.
-<li> <code>nextGroupAt(u,g)</code> returns the next group in the list at u
+<li> $\nextGroupAt(u,g)$ returns the next group in the list at u
     following $g$.
-<li> <code>firstInGroup(g)</code> returns the first edge in group $g$.
-<li> <code>nextInGroup(g,e)</code> returns the next edge in $g$ following $e$.
-<li> <code>add(e,g)</code> adds an unassigned edge $e$ to a group $g$.
-<li> <code>delete(e)</code> from its group.
+<li> $\firstInGroup(g)$ returns the first edge in group $g$.
+<li> $\nextInGroup(g,e)$ returns the next edge in $g$ following $e$.
+<li> $\add(e,g)$ adds an unassigned edge $e$ to a group $g$.
+<li> $\delete(e)$ from its group.
 </ul>
-The <code>EdgeGroupLayers</code> data structure maintains the structure of
+The <i>edge group layers</i> data structure maintains the structure of
 the layers and includes the following methods.
 <ul>
-<li> <code>layer(g)</code> returns the layer containing group $g$.
-<li> <code>firstInLayer(l)</code> returns the first group in layer $l$.
-<li> <code>nextInLayer(l,g)</code> returns the first group in layer $l$
+<li> $\layer(g)$ returns the layer containing group $g$.
+<li> $\firstInLayer(l)$ returns the first group in layer $l$.
+<li> $\nextInLayer(l,g)$ returns the first group in layer $l$
     following $g$.
-<li> <code>add(g,l)</code> adds group $g$ to layer $l$.
-<li> <code>delete(g)</code> deletes group $g$ from its assigned layer.
+<li> $\add(g,l)$ adds group $g$ to layer $l$.
+<li> $\delete(g)$ deletes group $g$ from its assigned layer.
 </ul>
-The <code>EdgeGroupColors</code> data structure maintains the edge group
+The <i>edge group colors</i> data structure maintains the edge group
 coloring and includes the following methods.
 <ul>
-<li> <code>usage(c,v)</code> returns the number of times color $c$ is used
+<li> $\usage(c,v)$ returns the number of times color $c$ is used
     at vertex $v$.
-<li> <code>avail(c,e)</code> returns true if $c$ is a color that can be used
+<li> $\avail(c,e)$ returns true if $c$ is a color that can be used
     for edge $e$.
-<li> <code>color(e,c)</code> returns the color of edge $e$ and if the second
+<li> $\color(e,c)$ returns the color of edge $e$ and if the second
     argument is present, it first assigns color $c$ to $e$.
 </ul>
-The <code>buildLayers</code> method starts by finding an input with
+The <i>buildLayers</i> method starts by finding an input with
 $\Gamma_i$ groups, and assigns these groups to distinct layers,
 giving a partial layering.
 It then assigns the remaining groups to layers in decreasing order of their
@@ -976,7 +994,7 @@ If every layer is thick with respect to $g$, then $g$ is assigned to
 a layer with the smallest thickness.
 Otherwise, it is assigned to a thin layer with the smallest thickness.
 <p>
-The following script can be used to demonstrate <code>egcT1</code>.
+The following script can be used to demonstrate <i>egcT1</i>.
 <p> <pre style="padding-left:5%">
 let eg = new EdgeGroups();
 eg.fromString('{a[(e k o p) (f g j m) (l)] b[(e n o p) (h k) (m i l)] ' +
@@ -1025,21 +1043,21 @@ let t = Date.now(); let [egc,,stats] = egcT1(eg); t = Date.now() - t;
 log(`io=(${n_i},${n_o}) GD=(${Gamma_i},${Delta_o}) X=${X} :: ` +
     `C=${stats.C} R=${stats.R} T=${stats.thickness} ${t}ms`);
 </pre> <p>
-The function call <code>egcRandomCase(n_i, Gamma_i, n_o, Delta_o, X)</code>
+The function call $\textit{egcRandomCase}(n_i, \Gamma_i, n_o, \Delta_o, X)$
 starts by generating a random regular bipartite graph,
-with <code>n_i</code> inputs and <code>n_o</code> outputs.
-The outputs have degree <code>Delta_o</code>.
+with $n_i$ inputs and $n_o$ outputs.
+The outputs have degree $\Delta_o$.
 For each output, it assigns distinct random colors between 1 and
-<code>X</code> to the incident edges.
+$X$ to the incident edges.
 At each input it then forms groups from all the
 edges assigned the same color.
-For inputs that have more than <code>Gamma_i</code> groups, it merges pairs
-of groups until the number of groups per input does not exceed <code>Gamma_i</code>.
+For inputs that have more than $\Gamma_i$ groups, it merges pairs
+of groups until the number of groups per input does not exceed $\Gamma_i$.
 It then discards the random coloring.
 <p>
 Note that this ensures that there is a proper edge group coloring with
-<code>X</code> colors and that every proper coloring must have at least
-<code>Cmin=min(Gamma_i,Delta_o)</code> colors.
+$X$ colors and that every proper coloring must have at least
+$C_{\textit{min}}=\min(\Gamma_i,\Delta_o)$ colors.
 The sample runs below show the effect of increasing the asymmetry between
 inputs and outputs.
 <p> <pre style="padding-left:5%">
@@ -1050,11 +1068,11 @@ io=(40, 320) GD=(20,20) X=22 :: C=39 R=1.95 T=59 11ms
 io=(40, 640) GD=(20,20) X=22 :: C=46 R=2.30 T=68 25ms 
 io=(40,1280) GD=(20,20) X=22 :: C=51 R=2.55 T=78 48ms 
 </pre> <p>
-Here, the pair <code>io</code> is the number of inputs and outputs,
-<code>GD</code> is the pair <code>(Gamma_i,Delta_o)</code>
+Here, the pair <i>io</i> is the number of inputs and outputs,
+<i>GD</i> is the pair $(\Gamma_i,\Delta_o)$
 and $X$ is the upper bound on the number of colors required.
-<code>C</code> is the number of colors used by the algorithm,
-<code>R</code> is the performance ratio and $T$ the total thickness
+$C$ is the number of colors used by the algorithm,
+$R$ is the performance ratio and $T$ the total thickness
 of the layers.
 Each doubling of the input/output asymmetry leads to an incremental increase
 in the performance ratio, suggesting that the performance ratio is roughly
@@ -1102,7 +1120,7 @@ io=(40,320) GD=(20,20) X=38 :: C=39 R=1.95 T=53  7ms
 io=(40,320) GD=(20,20) X=42 :: C=38 R=1.90 T=57 13ms
 </pre> <p>
 Here too, there is no apparent relationship between the
-number of colors used by <code>egcLayer</code> and the number
+number of colors used by <i>egcLayer</i> and the number
 used to generate the graph.
 <p>
 One can construct different variants of the layer method,
@@ -1534,7 +1552,8 @@ io=(40,1280) GD=(20,20) X=22 :: C=45 R=2.25 247ms
 
 <h3>Hybrid Algorithm</h3>
 
-Our final algorithm combines elements of the YM and KKP algorithms.
+One can combines elements of the YM and KKP algorithms to produce
+a hybrid.
 For each value of $C$ considered during the binary search,
 it first attempts to find a coloring using the YM
 algorithm. If this fails, it attempts to expand the palettes

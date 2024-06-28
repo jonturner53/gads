@@ -85,7 +85,7 @@ A cut of minimum capacity is called a <i>minimum cut</i>.
 The dashed line in the diagram below defines a minimum cut.
 <p>
 <div  style="text-align:center;">
-<img width="25%" src="figs/maxflow-cut.png"><br>
+<img width=25%" src="figs/maxflow-cut.png"><br>
 </div>
 <p>
 The flow conservation property implies that for any cut $(X,Y)$,
@@ -231,8 +231,8 @@ function augment(g, link) {
 </textarea> <p>
 As usual, the code has been abridged for clarity. The complete version includes
 execution tracing and performance statistics.
-Notice that the inner <code>for</code> loop of the <code>findpath</code>
-function iterates over all edges incident to vertex <code>u</code>,
+Notice that the inner <i>for</i> loop of the <i>findpath</i>
+function iterates over all edges incident to vertex $u$,
 both incoming and outgoing.
 <p>
 The following script can be used to run the program in the web app.
@@ -395,7 +395,7 @@ to keep track of vertices at the border of a tree whose paths
 are all maximum capacity paths. A border vertex $u$ is stored in the
 heap using a key matching the residual capacity of the best edge 
 examined so far from a tree vertex to $u$.
-A <i>Javascript</i> implementation of the <code>findpath</code>
+A <i>Javascript</i> implementation of the <i>findpath</i>
 function used by the maximum capacity augmenting
 path algorithm is shown below.
 <p> <textarea rows="14" cols="80" readonly
@@ -509,11 +509,11 @@ function findpath(s) {
     return false;
 }
 </textarea> <p>
-Note how the <code>findpath</code> method uses breadth-first search
-over the edges with residual capacity larger than the <code>scale</code>
+Note how the <i>findpath</i> method uses breadth-first search
+over the edges with residual capacity larger than the <i>scale</i>
 threshold. If it fails to find a path at the current scale value,
 it halves the value and tries again.
-Running <code>maxflowFFcs</code> in place of <code>maxflowFFmc</code>
+Running <i>maxflowFFcs</i> in place of <i>maxflowFFmc</i>
 in the web app produces the same output as for the maximum capacity
 algorithm. In general, the scaling algorithm may use more augmenting
 steps, although the number remains $O(m\log C)$.
@@ -534,25 +534,25 @@ function hardTest(algo, label, g, k1, k2) {
 let k1=10; let k2=10; let g = maxflowHardcase(k1, k2); 
 hardTest(maxflowFFsp, 'FFsp', g, k1, k2);
 </pre>
-The function <code>maxflowHardcase</code> produces graphs that are
-similar to the example given above. Indeed, if <code>k1=k2=3</code>,
+The function <i>maxflowHardcase</i> produces graphs that are
+similar to the example given above. Indeed, if $k_1=k_2=3$,
 it produces exactly the graph shown in the example.
 The two parameters allow one to separately control the number
-of distinct path lengths (<code>k1</code>) and the size of the
-central subgraph (<code>k2</code>).
-The results below show the effect of increasing <code>k1</code> from
-10 to 80, while holding <code>k2</code> fixed.
+of distinct path lengths ($k_1$) and the size of the
+central subgraph ($k_2$).
+The results below show the effect of increasing $k_1$ from
+10 to 80, while holding $k_2$ fixed.
 <pre style="padding-left:5%">
 FFsp k1=10 k2=10   44ms paths= 2000 steps/path= 575 
 FFsp k1=20 k2=10  127ms paths= 4000 steps/path= 866 
 FFsp k1=40 k2=10  426ms paths= 8000 steps/path=1446 
 FFsp k1=80 k2=10 1524ms paths=16000 steps/path=2606 
 </pre>
-Note that the number of augmenting paths grows directly with <code>k1</code>,
+Note that the number of augmenting paths grows directly with $k_1$,
 and as the paths get longer, so does the average number of steps per path. 
 Consequently, the running time grows quadratically.
-The results below show the effect of increasing <code>k2</code> from
-10 to 80, while holding <code>k1</code> fixed.
+The results below show the effect of increasing $k_2$ from
+10 to 80, while holding $k_1$ fixed.
 <pre style="padding-left:5%">
 FFsp k1=10 k2=10     46ms paths=  2000 steps/path=  575 
 FFsp k1=10 k2=20    254ms paths=  8000 steps/path= 1255 
@@ -560,8 +560,8 @@ FFsp k1=10 k2=40   2491ms paths= 32000 steps/path= 3814
 FFsp k1=10 k2=80  37982ms paths=128000 steps/path=13732 
 </pre>
 In this case, the number of augmenting paths grows quadratically with
-<code>k2</code> as does the number of steps per path.
-Consequently, the run time grows as the fourth power of <code>k2</code>.
+$k_2$ as does the number of steps per path.
+Consequently, the run time grows as the fourth power of $k_2$.
 <p>
 While these graphs are not really worst case for the max capacity and
 capacity scaling algorithms, it's still interesting to see how they
@@ -595,8 +595,8 @@ FFcs k1=10 k2=40 11ms paths= 80 steps/path= 3727
 FFcs k1=10 k2=80 47ms paths=160 steps/path=13397 
 </pre>
 For capacity scaling, the number of paths
-grows directly with <code>k1</code> but the number
-of steps per path grows quadratically with <code>k2</code>,
+grows directly with $k_1$ but the number
+of steps per path grows quadratically with $k_2$,
 as most path searches must examine the edges in the central
 subgraph to determine that their residual capacity falls below
 the scale threshold. The use of the heap in the max capacity
@@ -622,7 +622,7 @@ randomTest(maxflowFFsp, 'FFsp', g, d);
 randomTest(maxflowFFmc, 'FFmc', g, d);
 randomTest(maxflowFFcs, 'FFcs', g, d);
 </pre>
-The <code>randomFlograph()</code> function produces a graph on $n$ vertices
+The <i>randomFlograph()</i> function produces a graph on $n$ vertices
 with average out-degree $d$ and a built-in &ldquo;small cut&rdquo;.
 In this case, that small cut contains 125 edges and splits the vertex
 set in half. (This function can also be used to generate graphs with multiple
@@ -734,14 +734,14 @@ function findpath(u) {
     nextEdge[u] = 0; return false;
 }
 </textarea> <p>
-The <code>findpath</code> function uses depth-first search,
+The <i>findpath</i> function uses depth-first search,
 returning true whenever it finds an augmenting path and false, otherwise.
-Note that <code>nextedge[u]</code> specifies the next edge to be processed at
-<code>u</code> within a phase. It is intialized to the
-first vertex on <code>u</code>'s adjacency list at the start of the
+Note that $\textit{nextedge}[u]$ specifies the next edge to be processed at
+<i>u</i> within a phase. It is intialized to the
+first vertex on $u$'s adjacency list at the start of the
 phase and is advanced
 to the next vertex on the list whenever the search determines that
-the current <code>nextedge</code> value leads to a dead end.
+the current <i>nextedge</i> value leads to a dead end.
 <p>
 From the earlier analysis of the shortest augmenting path algorithm,
 the value of $\level(t)$ increases with each phase of Dinic's algorithm,
@@ -750,13 +750,13 @@ The computation of $\level$ at the start of each phase takes $O(m)$ time
 and the number of path searches per phase is at most $m$. To determine
 the number of steps required for the path searches, let $N_i$ be
 the number of edges examined by the $i$-th top-level call to
-<code>findpath</code> and note that the time required for all calls to
-<code>findpath</code> is $O(\sum N_i)$. The <code>nextedge</code> pointer
+<i>findpath</i> and note that the time required for all calls to
+<i>findpath</i> is $O(\sum N_i)$. The <i>nextedge</i> pointer
 is advanced to the next edge for every edge examined that is not part of
-the path returned by <code>findpath</code>. Since the path length is
+the path returned by <i>findpath</i>. Since the path length is
 at most $n$, pointers are advanced at least $N_i-n$ times during the
-$i$-th call to <code>findpath</code>. But during the phase, the
-<code>nextedge</code> pointers can be advanced at most $2m$ time,
+$i$-th call to <i>findpath</i>. But during the phase, the
+<i>nextedge</i> pointers can be advanced at most $2m$ time,
 so $\sum_{1\leq i\leq m} (N_i-n) \leq 2m$ and $\sum N_i = O(mn)$. 
 Thus, the overall running time is $O(mn^2)$
 <p>
@@ -801,7 +801,7 @@ flow to all the edges on the path in the flow graph.
 </div>
 <p>
 <p>
-The <code>findpath</code> function uses the dynamic trees data structure
+The <i>findpath</i> function uses the dynamic trees data structure
 to take shortcuts through the flow graph, linking trees together until
 there is a tree path from the source to the sink. When dead ends are
 discovered, they are pruned from the tree.
@@ -935,10 +935,10 @@ function newphase() {
     return false;
 }
 </textarea> <p>
-The first of the two inner loops in the <code>findpath</code>
+The first of the two inner loops in the <i>findpath</i>
 method combines trees in the dynamic trees data structure
 in order to create a tree path from the source to the sink.
-The <code>extend</code> method makes the required changes to
+The <i>extend</i> method makes the required changes to
 the tree and sets the cost to reflect the residual capacity.
 If it fails to extend the tree containing the source vertex
 at some point, the loop terminates and the second of the two
@@ -946,12 +946,12 @@ inner loops is executed. This loop prunes the dead end encountered
 in the first loop. This involves removing all the tree
 edges entering the dead end vertex and transferring the flow
 information for these tree edges to the corresponding flow graph edges.
-The <code>prune</code> method handles these details.
+The <i>prune</i> method handles these details.
 <p>
-During one phase, <code>prune</code> is called at most $m$ times.
-To see this, note that whenever it is called from <code>findpath</code>
-or <code>augment</code>, one of the <code>nextEdge</code> pointers is
-advanced. The number of calls to <code>extend</code> is also at most
+During one phase, <i>prune</i> is called at most $m$ times.
+To see this, note that whenever it is called from <i>findpath</i>
+or <i>augment</i>, one of the <i>nextEdge</i> pointers is
+advanced. The number of calls to <i>extend</i> is also at most
 $m$ since no edge is added to the dynamic trees data structure more than once.
 This means that there are $O(m)$ operations performed on the dynamic trees
 data structure during a phase and that the running time contributed by
@@ -1322,8 +1322,8 @@ export default function maxflowPPf(fg, relabThresh=fg.m) {
     return maxflowPP(fg, getUnbal, putUnbal, relabThresh);
 }
 </textarea> <p>
-The function <code>putUnbal</code> adds a vertex to the set of
-unbalanced vertices and the function <code>getUnbal</code> removes
+The function <i>putUnbal</i> adds a vertex to the set of
+unbalanced vertices and the function <i>getUnbal</i> removes
 a vertex from the unbalanced set and returns it.
 These functions are passed to the core module, which calls them
 as needed.
@@ -1457,7 +1457,7 @@ export function relabelAll() {
     }
 }
 </textarea> <p>
-The <code>balance()</code> function attempts to balance flow at a vertex
+The <i>balance</i>() function attempts to balance flow at a vertex
 by pushing flow out on its admissible edges.
 It returns when it has balanced the vertex or examined
 all of its admissible edges.
@@ -1468,17 +1468,17 @@ without doing any incremental relabeling operations.
 When not in batch mode, each unsuccessful balance attempt
 causes a vertex to be relabeled.
 <p>
-The optional parameter <code>relabThresh</code> determines when the
+The optional parameter <i>relabThresh</i> determines when the
 program switches from incremental relabeling to batch relabeling.
-The <code>incrRelabelSteps</code> counter is incremented for each edge
-examined by the <code>minlabel</code> method.
+The <i>incrRelabelSteps</i> counter is incremented for each edge
+examined by the <i>minlabel</i> method.
 Whenever batch relabeling is performed, incremental relabeling is
 enabled until the number of additional computational steps performed
-by the incremental relabeling code exceeds <code>relabThresh</code>.
+by the incremental relabeling code exceeds <i>relabThresh</i>.
 At that point, the program switches to batch mode, suspending
 incremental relabeling until all unbalanced vertices have been processed
 and another batch relabeling has been performed.
-Note that the default value for <code>relabThresh</code> is <code>g.m</code>.
+Note that the default value for <i>relabThresh</i> is $g.m$.
 This choice ensures that the total amount of computation done for
 incremental relabeling roughly matches that for batch relabeling.
 <p>
@@ -1564,13 +1564,13 @@ export default function maxflowPPhl(fg, relabThresh=fg.m, trace) {
     return maxflowPP(fg, getUnbal, putUnbal, relabThresh, trace);
 }
 </textarea> <p>
-Observe that a singe call to the <code>getUnbal</code> function
+Observe that a singe call to the <i>getUnbal</i> function
 can require up to $2n$ iterations of the while loop.
 However, the total number of iterations over all calls can be bounded by
 the total increase in the distance labels. This implies that the
 total time spent in the while loop is $O(n^2)$.
 <p>
-The trace output from <code>maxflowPPhl</code>
+The trace output from <i>maxflowPPhl</i>
 when run on the sample graph from the last section
 is shown below.
 <pre style="padding-left:5%">
@@ -1604,7 +1604,7 @@ g[e:3/1 f:2/2 h:1/1] h[f:3 i:4/3 j:5/5] i[g:5 j:6/3] ->j
 
 <h3>Performance Comparisons</h3>
 The following script can be used to compare different
-choices of the <code>relabThresh</code> parameter
+choices of the <i>relabThresh</i> parameter
 for random graphs.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
@@ -1637,7 +1637,7 @@ testrun(maxflowPPf, 'PPf', g, d, 100*g.m);
 The first line below shows results for the pure batch relabeling approach,
 the last line shows the pure incremental approach and the
 middle line shows the mixed approach using the default value of
-<code>relabThresh</code>.
+<i>relabThresh</i>.
 Note that each batch relabeling operation contributes $2m$ relabeling steps.
 <pre style="padding-left:5%">
 PPf n=1002 d=25  21ms rcount=   11 rsteps= 550550 bcount= 2249 bsteps=  86598  
@@ -1726,12 +1726,13 @@ an edge $e=(u,v)$, $\res_e(v,u)=f_e(u,v) - floor(e)$.
 This prevents the max flow algorithm from reducing the flow on
 an edge below its floor value.
 <p>
-The <code>Flograph</code> data structure can be extended to support flow floors
-using the method <code>addFloors()</code> or by setting a floor value using
-<code>setFloor()</code>. In a graph that has not been extended to
+The <a href="../../dataStructures/graphs/graphs.html#Flograph">flow graph</a>
+data structure can be extended to support flow floors
+using the method <i>addFloors</i> or by setting a floor value using
+<i>setFloor</i>. In a graph that has not been extended to
 support floors,
-the method <code>floor(e)</code> returns 0 for all edges.
-The <i>Javascript</i> function <code>flowfloor()</code> shown below,
+the method $\textit{floor}(e)$ returns 0 for all edges.
+The <i>Javascript</i> function $\textit{flowfloor}()$ shown below,
 attempts to find a feasible flow for a flow graph with specified floor values.
 <p> <textarea rows="14" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">

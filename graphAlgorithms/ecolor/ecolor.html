@@ -159,9 +159,8 @@ function recolor(e) {
     emap[w][c] = 0; avail[w].push(c);
 }
 </textarea> <p>
-Notice that edges are colored using assignments like
-<code>g.color(e,c);</code>. The <code>color</code> method of
-the <code>Graph</code> class is just a synonymn for the <code>weight</code>
+The $\color$ method of the <i>graph</i> class is just a synonymn
+for the <i>weight</i>
 method. This allows edge colors to be stored with the graph.
 <p>
 The following script can be used to demonstrate the program.
@@ -456,7 +455,7 @@ function eulerPartition() {
     return [part1,part2];
 }
 </textarea> <p>
-Notice that rather than create multiple <code>Graph</code> objects,
+Notice that rather than create multiple <i>graph</i> objects,
 the implementation uses a single <i>working copy</i> of the original graph
 which is modified as needed.
 In particular when edges are colored they are permanently deleted
@@ -467,8 +466,8 @@ These are used later to reconstruct the two required halves of
 the working copy that are needed for the recursive computation.
 The edge lists are returned as arrays of equal (or nearly equal) length.
 The total length of all these arrays $O(\Delta m)$.
-The working copy is maintained using two methods <code>addEdge</code>
-and <code>dropEdge</code> which also maintain the vertex degrees of the
+The working copy is maintained using two methods <i>addEdge</i>
+and <i>dropEdge</i> which also maintain the vertex degrees of the
 vertices in the working copy. They also maintain a list of
 <i>active</i> vertices, which are simply vertices with at least
 one incident edge. This allows the algorithm to conveniently iterate

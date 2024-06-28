@@ -29,27 +29,27 @@
 </head>
 <body bgcolor=ffffff>
 \(
-\newcommand{\siftup}{\texttt{siftup}}
-\newcommand{\siftdown}{\texttt{siftdown}}
-\newcommand{\key}{\texttt{key}}
-\newcommand{\insert}{\texttt{insert}}
-\newcommand{\deletemin}{\texttt{deletemin}}
-\newcommand{\changekey}{\texttt{changekey}}
-\newcommand{\empty}{\texttt{empty}}
-\newcommand{\contains}{\texttt{contains}}
-\newcommand{\findmin}{\texttt{findmin}}
-\newcommand{\delete}{\texttt{delete}}
-\newcommand{\addtokeys}{\texttt{add2keys}}
-\newcommand{\meld}{\texttt{meld}}
-\newcommand{\rank}{\texttt{rank}}
-\newcommand{\heapify}{\texttt{heapify}}
-\newcommand{\lazyMeld}{\texttt{lazyMeld}}
-\newcommand{\retire}{\texttt{retire}}
-\newcommand{\Forest}{\texttt{Forest}}
-\newcommand{\ArrayHeap}{\texttt{ArrayHeap}}
-\newcommand{\FibHeaps}{\texttt{FibHeaps}}
-\newcommand{\LeftistHeaps}{\texttt{LeftistHeaps}}
-\newcommand{\LazyHeaps}{\texttt{LeftistHeaps}}
+\newcommand{\siftup}{\textit{siftup}}
+\newcommand{\siftdown}{\textit{siftdown}}
+\newcommand{\key}{\textit{key}}
+\newcommand{\insert}{\textit{insert}}
+\newcommand{\deletemin}{\textit{deletemin}}
+\newcommand{\changekey}{\textit{changekey}}
+\newcommand{\empty}{\textit{empty}}
+\newcommand{\contains}{\textit{contains}}
+\newcommand{\findmin}{\textit{findmin}}
+\newcommand{\delete}{\textit{delete}}
+\newcommand{\addtokeys}{\textit{add2keys}}
+\newcommand{\meld}{\textit{meld}}
+\newcommand{\rank}{\textit{rank}}
+\newcommand{\heapify}{\textit{heapify}}
+\newcommand{\lazyMeld}{\textit{lazyMeld}}
+\newcommand{\retire}{\textit{retire}}
+\newcommand{\Forest}{\textit{Forest}}
+\newcommand{\ArrayHeap}{\textit{array heap}}
+\newcommand{\FibHeaps}{\textit{Fibonacci heaps}}
+\newcommand{\LeftistHeaps}{\textit{leftist heaps}}
+\newcommand{\LazyHeaps}{\textit{lazy heaps}}
 \)
 
 <h1>Heaps<sup>&copy;</sup></h1>
@@ -93,9 +93,9 @@ three standard ones mentioned earlier.
         to the keys of all heap items.
 </ul>
 <p>
-The property <code>d</code> is the &ldquo;arity&rdquo;
+The property $d$ is the &ldquo;arity&rdquo;
 of the heap-ordered tree.
-The <code>size</code> property is the number of items in the heap.
+The <i>size</i> property is the number of items in the heap.
 The web app  can be used to construct a heap from a string and
 try out its methods as shown below.
 <pre style="padding-left:5%;">
@@ -103,7 +103,7 @@ let h = new ArrayHeap(10);
 h.fromString('{e:1 f:2 c:5 a:5 d:2 h:7 i:7 j:8 b:6 g:4}');
 log(h.toString(1));
 let u = h.deletemin();
-log(h.index2string(u), h.key(u), ''+h);
+log(h.x2s(u), h.key(u), ''+h);
 </pre>
 This produces the output
 <pre style="padding-left:5%;">
@@ -151,7 +151,7 @@ all move down one level in the tree. So for example, inserting item $l$
 with key 5 into the previous example heap yields the following.
 <p>
 <div  style="text-align:center;">
-<img width="40%" src="figs/dheap2.png"><br>
+<img width="45%" src="figs/dheap2.png"><br>
 </div>
 <p>
 The insertion is done with the assistance of a helper method
@@ -173,7 +173,7 @@ So for example, a $\deletemin$ on the heap
 from the last example, yields the configuration shown below.
 <p>
 <div  style="text-align:center;">
-<img width="40%" src="figs/dheap3.png"><br>
+<img width="45%" src="figs/dheap3.png"><br>
 </div>
 <p>
 The search process described above is implemented by
@@ -301,7 +301,7 @@ at the expense of the others.
 
 <a id=FibHeaps><h2>Fibonacci Heaps</h2></a>
 
-The Fibonacci heaps [FreTar87] data structure represents a collection
+The $\FibHeaps$ [FreTar87] data structure represents a collection
 of heaps that define a partition over a common index range $1\ldots n$.
 Each heap is identified by one of its items.
 The data structure supports an efficient <i>meld</i> operation which
@@ -310,8 +310,8 @@ It also can implement a <i>changekey</i> operation that takes
 essentially constant time when the key value is reduced;
 operations that increase the key value take $O(\log n)$ time.
 More precisely, in a sequence of $m$ heap operations including
-$d$ <i>delete</i>, <i>deletemin</i> and increasing <i>changekey</i>
-operations, the total running time is $O(m + d\log n)$.
+$k$ <i>delete</i>, <i>deletemin</i> and increasing <i>changekey</i>
+operations, the total running time is $O(m + k\log n)$.
 <p>
 The provided <i>Javascript</i> implementation extends the
 <a href="../trees/trees.html#Forest">forest data structure</a> and
@@ -702,7 +702,7 @@ export default class FibHeaps extends Forest {
 
 <a id=LeftistHeaps><h2>Leftist Heaps</h2></a>
 
-As with Fibonacci heaps, the leftist heaps [Crane72, Knuth73] data structure
+As with $\FibHeaps$, the $\LeftistHeaps$ [Crane72, Knuth73] data structure
 maintains a collection of meldable heaps which define a partition over a
 common index range $1\ldots n$.
 Each heap is identified by one of its items.
@@ -750,7 +750,7 @@ left and right children as needed to ensure that the larger rank value
 is always to the left. This is illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="90%" src="figs/lheap2.png"><br>
+<img width="85%" src="figs/lheap2.png"><br>
 </div>
 <p>
 The $\insert$ operation is implemented by treating the item

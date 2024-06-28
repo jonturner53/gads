@@ -225,7 +225,7 @@ It uses two mappings, a <i>parent</i> mapping that maps a vertex $u$ to $p(u)$,
 its tentative parent in the current subtree, and a
 <i>distance</i> mapping that maps vertex $u$ to $\dist(u)$,
 the distance from the source vertex to $u$ in the current subtree.
-Initially, $p(u)=\textbf{null}$ for all $v$ and $\dist(u)=\infty$
+Initially, $p(u)=\textit{null}$ for all $v$ and $\dist(u)=\infty$
 for all $u$ except the source $s$, for which $\dist(s)=0$.
 It then repeatedly applies the following labeling step.
 <p style="padding-left:5%;">
@@ -284,7 +284,7 @@ function that implements a topological sort.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function sptDag(g, s, trace) {
+export default function sptDag(g, s) {
     let topo = toposort(g); // sorted list of vertices
     if (!topo) assert(0, 'graph is not acyclic');
 
@@ -381,7 +381,7 @@ A <i>Javascript</i> version is shown below.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function sptD(g, s, trace) {
+export default function sptD(g, s) {
     let link = new Int32Array(g.n+1);
     let dist = new Array(g.n+1).fill(Infinity);
     let border = new ArrayHeap(g.n, 2+Math.floor(g.m/g.n));
@@ -447,7 +447,7 @@ A <i>Javascript</i> version appears below.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function sptBM(g, s, trace) {
+export default function sptBM(g, s) {
     let link = new Int32Array(g.n+1);
     let dist = new Array(g.n+1).fill(Infinity);
 
@@ -533,7 +533,7 @@ and a corresponding array of distances.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function allpairsEK(g, trace) {
+export default function allpairsEK(g) {
     let dist = []; dist.push(null);
     let link = []; link.push(null);
     
@@ -633,7 +633,7 @@ A <i>Javascript</i> implementation is shown below.
 <p>
 <textarea id="components" rows="15" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
-export default function allpairsF(g, trace) {
+export default function allpairsF(g) {
     let dist = []; dist.push(null);
     let link = []; link.push(null);
     

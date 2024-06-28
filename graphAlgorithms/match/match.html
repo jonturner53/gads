@@ -29,20 +29,47 @@
 </head>
 <body bgcolor=ffffff>
 \(
+\newcommand{\base}{\textit{base}}
 \newcommand{\mate}{\textit{mate}}
 \newcommand{\match}{\textit{match}}
 \newcommand{\bridge}{\textit{bridge}}
 \newcommand{\link}{\textit{link}}
 \newcommand{\state}{\textit{state}}
-\newcommand{\first}{\texttt{first}}
-\newcommand{\next}{\texttt{next}}
-\newcommand{\at}{\texttt{at}}
-\newcommand{\contains}{\texttt{contains}}
-\newcommand{\add}{\texttt{add}}
-\newcommand{\drop}{\texttt{drop}}
-\newcommand{\size}{\texttt{size}}
-\newcommand{\weight}{\texttt{weight}}
-\newcommand{\find}{\textit{find}}
+\newcommand{\first}{\textit{first}}
+\newcommand{\next}{\textit{next}}
+\newcommand{\at}{\textit{at}}
+\newcommand{\contains}{\textit{contains}}
+\newcommand{\add}{\textit{add}}
+\newcommand{\drop}{\textit{drop}}
+\newcommand{\size}{\textit{size}}
+\newcommand{\weight}{\textit{weight}}
+\newcommand{\Blossoms}{\textit{blossoms}}
+\newcommand{\Matching}{\textit{matching}}
+\newcommand{\euh}{\textit{euh}}
+\newcommand{\eeh}{\textit{eeh}}
+\newcommand{\outer}{\textit{outer}}
+\newcommand{\firstOuter}{\textit{firstOuter}}
+\newcommand{\nextOuter}{\textit{nextOuter}}
+\newcommand{\firstIn}{\textit{firstIn}}
+\newcommand{\nextIn}{\textit{nextIn}}
+\newcommand{\addBranch}{\textit{addBranch}}
+\newcommand{\addBlossom}{\textit{addBlossom}}
+\newcommand{\expand}{\textit{expand}}
+\newcommand{\expandOdd}{\textit{expandOdd}}
+\newcommand{\Forest}{\textit{forest}}
+\newcommand{\ArrayHeap}{\textit{array heap}}
+\newcommand{\evh}{\textit{evh}}
+\newcommand{\ovh}{\textit{ovh}}
+\newcommand{\findmin}{\textit{findmin}}
+\newcommand{\nextedge}{\textit{nextedge}}
+\newcommand{\parent}{\textit{parent}}
+\newcommand{\fromString}{\textit{fromString}}
+\newcommand{\bloss}{\textit{bloss}}
+\newcommand{\findEdge}{\textit{findEdge}}
+\newcommand{\ebh}{\textit{ebh}}
+\newcommand{\obh}{\textit{obh}}
+\newcommand{\exh}{\textit{exh}}
+\newcommand{\divide}{\textit{divide}}
 \)
 
 <h1>Matchings in Graphs<sup>&copy;</sup></h1>
@@ -59,11 +86,56 @@ maximum size, or maximum weight, in the case of edge-weighted graphs.
 Edge weights are assumed to be non-negative. In applications where
 negative edge weights arise, a simple weight transformation can be
 applied that yields the desired matching without the need for
-negative edge weights.
-In bipartite graphs, finding matchings can be done more simply than
-in general graphs, so there are specialized algorithms for this case.
+negative edge weights. Also, while edge weights may be real valued,
+numerical problems can arise from inexact representation of real-valued
+weights by floating point numbers. All test cases used here use
+integer-valued weights.
+
+<h3>Augmenting Paths in Matchings</h3>
+Augmenting paths were introduced in the context of the maximum flow problem.
+A similar idea is also useful for solving matching problems.
+Let $M$ be a matching in a graph. An <i>alternating path</i> with respect
+to $M$ is a path in which every other edge is in the matching and
+the remainder are not. If both endpoints of an alternating path are
+unmatched, the size of the matching can be increased by flipping the
+status of the edges on the path, as illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="50%" src="figs/augmentingPath.png"><br>
+</div>
+<p>
+This observation suggests that maximum matchings can be found by
+repeatedly identifying
+augmenting paths and expanding the current matching by reversing the
+status of the path's edges.
+<p>
+To justify this approach, let $M$ be a matching and $M'$ be a matching with
+exactly $k$ more edges than $M$. Let $N$ be the graph consisting of edges
+that are either in $M$ or $M'$ but not both. Since the vertices in $N$
+have a maximum degree of 2, $N$ consists of vertex-disjoint paths that are
+alternating with respect to $M$ and possibly some cycles that are
+alternating with respect to $M$. Since $M'$ has $k$ more edges than $M$,
+$k$ of the alternating paths must be augmenting paths with respect to $M$
+so their edges can all be flipped, yielding a matching of the same
+size as $M'$. This argument establishes the following theorem.
+<p>
+<i>Theorem 1</i>. A matching $M$ is a maximum size matching for a graph
+$G$ if and only if $G$ has no augmenting paths with respect to $M$.
+<p>
+For weighted graphs, the next theorem suggests a similar approach for
+finding maximum weighted matchings.
+<p>
+<i>Theorem 2</i>. If $M$ is a maximum weight matching among all matchings of
+size $k$, then the matching obtained by augmenting $M$ using
+a maximum weight augmenting path is a maximum weight matching among
+all matchings of size $k+1$.
+<p>
+The algorithms described below all use the augmenting path strategy,
+but they differ in how they identify augmenting paths.
 
 <h2>Matchings in Bipartite Graphs</h2>
+In bipartite graphs, finding matchings can be done more simply than
+in general graphs, so there are specialized algorithms for this case.
 The maximum size matching problem can be reduced to a maximum flow
 problem using the transformation sketched below.
 <p>
@@ -78,9 +150,13 @@ also included from a source vertex to each vertex in $X$ and from
 each vertex in $Y$ to a sink vertex. All edges are assigned a capacity
 of 1, which creates a one-to-one correspondence between matchings in
 the original graph and integer flows in the flow graph.
+Also, the augmenting paths in the flow graph correspond
+directly to augmenting paths in the original graph.
 In the weighted case, the edge weights in the flow graph are negated,
-turning the maximum weight matching problem into a minimum cost flow problem
-and the algorithm terminates early if it finds an augmenting path with
+turning the maximum weight matching problem into a minimum cost flow problem.
+The minimum cost augmenting paths in the flow graph correspond to maximum
+weight augmenting paths in the original graph.
+The algorithm terminates early if it finds an augmenting path with
 non-negative cost.
 <p>
 The maximum size matching problem can be solved using any max flow algorithm,
@@ -96,11 +172,11 @@ performed by Dinic's algorithm is $O(\sqrt{n})$ and the time per phase
 is $O(m)$. This reduces the run time from $O(mn^2)$ to $O(m\sqrt{n})$.
 <p>
 To analyze the time per phase, let $N_i$ be the number of edges examined
-by the $i$-th top level call to <code>findpath</code> in a phase
-and note that a <code>nextedge</code> pointer is advanced for every edge
+by the $i$-th top level call to <i>findpath</i> in a phase
+and note that a <i>nextedge</i> pointer is advanced for every edge
 that is not returned as part of the augmenting path. If $k_i$ is the length
-of the returned path, the <code>nextedge</code> pointers are advanced
-$N_i-k_i$ times during the $i$-th execution of <code>findpath</code> and
+of the returned path, the <i>nextedge</i> pointers are advanced
+$N_i-k_i$ times during the $i$-th execution of <i>findpath</i> and
 all $k_i$ edges on the path are saturated. Consequently, $\sum_i k_i\leq m$
 and $\sum_i(N_i-k_i)\leq 2m$.
 This implies that $\sum_i N_i\leq 2m+\sum_ik_i \leq 3m$ and so the
@@ -132,7 +208,7 @@ Even and Tarjan later noted the connection to the maximum flow problem.
 The Hopcroft-Karp version is significantly faster, as it avoids the
 substantial overhead associated with the use of flow graphs.
 The <i>Javascript</i> implementation of the Hopcroft-Karp algorithm
-uses a special <code>Matching</code> data structure that
+uses a special <i>matching</i> data structure that
 includes the following methods.
 <ul>
 <li> $\at(u)$ returns the matching edge incident to vertex $u$.
@@ -153,8 +229,8 @@ let level;        // level[u] is distance to u from a root vertex
 let nextedge;     // nextedge[u] is next edge at u to be processed
 let q;            // q is List used by newPhase
 
-export default function bimatchHK(g0) {
-    g = g0; match = initialMatch(g0);
+export default function bimatchHK(G) {
+    g = G; match = initialMatch(g);
 
     link = new Int32Array(g.n+1);
     level = new Int32Array(g.n+1);
@@ -253,7 +329,7 @@ function augment(u) {
     }
 }
 </textarea> <p>
-The function <code>initialMatch</code> constructs an initial matching
+The function <i>initialMatch</i> constructs an initial matching
 by simply scanning the graph looking for edges that can be included
 in the matching without a path search.
 This is a simple optimization that can avoid a large fraction
@@ -268,13 +344,13 @@ When a path is found, it is specified by an array of
 Observe that the code effectively mimics Dinic's maxflow algorithm.
 <p>
 There is a subtlety associated with the $\add$ method of
-the <code>Matching</code> class.
+the <i>matching</i> class.
 If an edge is added to the matching that conflicts with some other edge
 already in the matching, the $\add$ method accepts the new edge but does
 not remove the conflicting edge.
 It is the client code's responsibility to do this.
 <p>
-The unabridged version of <code>bimatchHK</code> includes two more
+The unabridged version of <i>bimatchHK</i> includes two more
 arguments: an optional initial matching, a trace flag.
 On success, it returns a trace string and
 a statistics object, in addition to the matching.
@@ -282,7 +358,7 @@ The following script can be used to demonstrate the operation of the
 algorithm.
 <p> <pre style="padding-left:5%">
 let g = randomBigraph(5,3);
-let [match,ts] = bimatchHK(g,0,0,1);
+let [match,ts] = bimatchHK(g,0,1);
 log(ts);
 </pre> <p>
 Here is some sample output.
@@ -291,17 +367,17 @@ Here is some sample output.
 a[j k l] b[h j k] c[h j] d[g h i] e[g h i j l] f[g i]
 g[d e f] h[b c d e] i[d e f] j[a b c e] k[a b] l[a e]
 }
-initial matching: [aj bh dg ei] 4
+initial matching: [aj bh dg ei]
 
 augmenting paths
 [c h b k]
 [f i e l]
 
-final matching: [aj dg bk ch el fi] 6
+final matching: [aj dg bk ch el fi]
 </pre> <p>
 In this case, the initial matching has four edges,
 requiring two augmenting path searches to match the
-previously unmatched vertices $d$, $e$, $h$ and $j$.
+previously unmatched vertices $c$, $k$, $f$ and $l$.
 Just the vertices of the paths are shown.
 <p>
 The following script can be used to evaluate the performance
@@ -369,182 +445,163 @@ algorithm is substantially times faster than the flow-based algorithm.
 32000 48000 14839 1457323 53ms 4461024 193ms 
 </pre> <p>
 There are some advantages to the flow-based algorithm. In particular,
-it can be used to solve a more general version of the matching problem
-in which the objective is to find a maximum size subgraph with at
-most $b$ edges per vertex, rather than at most 1 edge per vertex. This is
-done simply by making the capacities of the source/sink edges $b$.
-This generalized matching is known as a $b$-matching, where $b$ can be
-a constant or an integer function on the vertices.
-One can also find subgraphs with a minimum number of edges at some vertices,
-by specifying flow floors on some source/sink edges.
+it is easy to implement and one can conveniently combine the maximum size
+and maximum weight computations in the same program,
+since there is so little difference between the two.
+It can also readily be extended to solve a generalization of the matching
+problem called the <i>degree-constrained subgraph problem</i>
+as discussed in the <a href="../vmatch/vmatch.html#dcs">next chapter</a>.
 <p>
-A <i>Javascript</i> implementation that supports $b$-matching is
-shown below. In this implementation, the optional arguments <code>dmin</code>
-and <code>dmax</code> are arrays with <code>dmin[u]</code> specifying a minimum
-degree for vertex $u$, while <code>dmax[u]</code> specifies a maximum degree.
+An abridged <i>Javascript</i> implementation of the flow-based
+algorithm is shown below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
-export default function bimatchF(g, subsets=null, dmin=null, dmax=null) {
-    // divide vertices into two independent sets
-    if (!subsets) subsets = findSplit(g);
-    assert(subsets != null, "bimatchF: graph not bipartite");
-
+export default function bimatchF(g ..) {
     // create flow graph, taking care to maintain edge numbers
     let fg = new Flograph(g.n+2, g.n+g.edgeRange);
-    if (dmin) fg.addFloors();
-    fg.setSource(g.n+1); fg.setSink(g.n+2);
-    for (let e = g.first(); e != 0; e = g.next(e)) {
-        let u = (subsets.in1(g.left(e)) ? g.left(e) : g.right(e));
+    fg.source = g.n+1; fg.sink = g.n+2;
+    for (let e = g.first(); e; e = g.next(e)) {
+        let u = g.isInput(g.left(e)) ? g.left(e) : g.right(e);
         fg.join(u,g.mate(u,e),e); fg.cap(e,1);
+        if (g.hasWeights) fg.cost(e, -g.weight(e));
     }
-    for (let u = subsets.first1(); u != 0; u = subsets.next1(u)) {
-        let e = fg.join(fg.source,u); fg.cap(e, (dmax ? dmax[u] : 1));
-        if (dmin) fg.setFloor(e,dmin[u]);
+    for (let u = g.firstInput(); u; u = g.nextInput(u)) {
+        let e = fg.join(fg.source,u); fg.cost(e, 0);
+        fg.cap(e, 1);
     }
-    for (let u = subsets.first2(); u != 0; u = subsets.next2(u)) {
-        let e = fg.join(u,fg.sink);
-        fg.cap(e, (dmax!=null ? dmax[u] : 1));
-        if (dmin) fg.setFloor(e,dmin[u]);
+    for (let u = g.firstOutput(); u; u = g.nextOutput(u)) {
+        let e = fg.join(u,fg.sink); fg.cost(e, 0);
+        fg.cap(e, 1);
     }
 
-    // compute flow(s)
-    if (dmin) flowfloor(fg);
-    maxflowD(fg);
+    (g.hasWeights ? mcflowJEK(fg) : maxflowD(fg));
 
     // construct matching from flow
-    let match = (dmax ? new Graph(g.n,g.edgeRange) : new Matching(g));
-    for (let e = g.first(); e != 0; e = g.next(e)) {
-        if (fg.f(e) != 0) {
-            if (dmax) { // b-matching
-                match.join(g.left(e),g.right(e),e);
-            } else {
-                match.add(e);
-            }
-        }
+    let match = new Matching(g);
+    for (let e = g.first(); e; e = g.next(e)) {
+        if (fg.f(e)) match.add(e);
     }
-    return [match];
+    return [match ..];
 }
 </textarea> <p>
-The flow-based algorithm for weighted graphs is similar and
-includes the same extensions for $b$-matchings.
-Since the flow graph is acyclic, there are no unsaturated negative
+For weighted graphs, a maximum weight matching is returned.
+Note that since the flow graph is acyclic, there are no unsaturated negative
 cycles at the start.
-Consequently, it can be implemented to run in $O((m+n\log n)n)$ time when
-applied to the ordinary matching problem, if one uses Jewell's
-minimum cost flow algorithm, with the Edmonds/Karp edge cost transform
-to enable the use of Dijkstra's algorithm for the shortest path
-computations (because the graph is acyclic, the initial edge cost
+Consequently, the minimum cost flow can be computed $O((m+n\log n)n)$ time,
+if one uses Jewell's minimum cost flow algorithm, with the
+Edmonds/Karp edge cost transform
+(because the graph is acyclic, the initial edge cost
 computation takes $O(m)$ time, not $O(mn)$).
-For $b$-matchings, the time bound becomes
-$O((m+n\log n)M)$ where $M$ is the number of edges in the resulting
-$b$-matching, which for constant (or uniform) $b$ is $O(bn)$.
 <p>
-In the weighted case also, the flow-based algorithm was preceded by
+The flow-based algorithm for maximum weight matchings was preceded by
 one that operates directly on the original graph, finding a series
 of maximum weight augmenting paths to extend the matching.
 This algorithm was first described by Kuhn who called it
 the Hungarian algorithm in honor of earlier work on matching
 by Konig and Egervary [Kuhn55].
-A <i>Javascript</i> implementation
+An abridged <i>Javascript</i> implementation
 is shown below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 let g;            // shared copy of graph
-let match;        // match[u] is edge incident to u in matching or 0
+let weight;       // copy of edge weights
+let match;        // match is a Matching object
 let lab;          // lab[u] is vertex label at u
 let link;         // link[u] is edge to parent of u in shortest path forest
 let free;         // list containing free vertices in first subset
-let leaves;       // heap containing leaves in forest
+let border;       // heap containing border in forest
 let cost;         // cost[u]=cost of shortest path to u in forest
 
-export default function wbimatchH(bg) {
-    g = bg;
+export default function wbimatchH(G ..) {
+    g = G; match = new Matching(g);
+
     link = new Int32Array(g.n+1);
-    match = new Int32Array(g.n+1);
-    lab = new Int32Array(g.n+1);
-    free = new List(g.n); free.addPrev();
-    leaves = new ArrayHeap(g.n,4);
+    lab = new Float32Array(g.n+1);
+    free = new List(g.n); free.hasReverse = true
+    border = new ArrayHeap(g.n,4);
     cost = new Float32Array(g.n+1);
 
-    // divide vertices into two independent sets
-    let subsets = findSplit(g);
-
     // add unmatched vertices from first subset to free
-    for (let u = subsets.first1(); u != 0; u = subsets.next1(u)) {
+    for (let u = g.firstInput(); u; u = g.nextInput(u)) {
         if (g.firstAt(u)) free.enq(u);
     }
 
     // initialize vertex labels
-    initLabels(subsets);
+    initLabels();
 
     // augment the matching until no augmenting path remains
     let u = findpath();
-    while (u != 0) {
+    while (u) {
         augment(u); u = findpath();
     }
-    return [match];
+    return [match ..];
 }
 
-function initLabels(subsets) {
+
+/** Compute values for labels that give non-negative transformed costs.
+ *  The labels are the least cost path distances from an imaginary
+ *  vertex with a length 0 edge to every input vertex in g.
+ *  Edges are treated as directed from inputs to outputs.
+ */
+function initLabels() {
     lab.fill(0);
-    for (let u = subsets.first1(); u != 0; u = subsets.next1(u)) {
-        for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
+    for (let u = g.firstInput(); u; u = g.nextInput(u)) {
+        for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
             let v = g.mate(u,e);
-            if (lab[v] > lab[u] - g.weight(e))
-                lab[v] = lab[u] - g.weight(e);
+            if (lab[v] > lab[u] - weight[e]) {
+                lab[v] = lab[u] - weight[e];
+            }
         }
     }
 }
 
+/** Find a least cost augmenting path.
+ *  Unmatched edges are "directed" from io's set1 to its set2.
+ *  Matched edges are "directed" from set2 to set1.
+ *  The cost of a path is the weight of its matched edges minus the
+ *  weight of its unmatched edges.
+ *  @returns the sink vertex of the path found, or 0 if no such path
+ */
 function findpath() {
-    link.fill(0); cost.fill(Infinity); leaves.clear();
-    for (let u = free.first(); u != 0; u = free.next(u)) {
-        cost[u] = 0; leaves.insert(u,0); 
+    link.fill(0); cost.fill(Infinity); border.clear(); border.clearStats();
+    for (let u = free.first(); u; u = free.next(u)) {
+        cost[u] = 0; border.insert(u,0); steps++;
     }
 
     let bestSink = 0; let bestPathCost = Infinity;
     let maxcost = -Infinity;
-    while (!leaves.empty()) {
-        let u = leaves.deletemin(); // u is in set1
+    while (!border.empty()) {
+        let u = border.deletemin(); // u is in set1
         maxcost = Math.max(maxcost, cost[u]);
-        for (let e = g.firstAt(u); e != 0; e = g.nextAt(u,e)) {
-            if (e == match[u]) continue;
+        for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+            if (e == match.at(u)) continue;
             let v = g.mate(u,e);
-            if (cost[v] > (cost[u]-g.weight(e)) + (lab[u]-lab[v])) {
+            if (cost[v] > cost[u] + (-weight[e] + (lab[u]-lab[v]))) {
                 link[v] = e;
-                cost[v] = (cost[u]-g.weight(e)) + (lab[u]-lab[v]);
-                let ee = match[v];
+                cost[v] = cost[u] + (-weight[e] + (lab[u]-lab[v]));
+                let ee = match.at(v);
                 if (ee == 0) {
+                    // select best sink based on "true path cost"
                     if (cost[v] + lab[v] < bestPathCost) {
-                        bestSink = v; bestPathCost = cost[v] + lab[v];
+                        bestSink = v; bestPathCost = cost[v] + lab[v] ;
                     }
                     continue;
                 }
                 let x = g.mate(v,ee);
                 link[x] = ee;
-                cost[x] = cost[v]+g.weight(ee) + (lab[v]-lab[x]);
-                if (!leaves.contains(x)) leaves.insert(x,cost[x]);
-                else leaves.changekey(x,cost[x]);
+                cost[x] = cost[v] + weight[ee] + (lab[v]-lab[x]);
+                if (!border.contains(x)) border.insert(x,cost[x]);
+                else border.changekey(x,cost[x]);
             }
         }
     }
-    if (bestSink == 0) return 0;
-
     // update labels for next round
     for (let u = 1; u <= g.n; u++) {
-        lab[u] += Math.min(cost[u],maxcost);
+        lab[u] += (cost[u] == Infinity ? maxcost : cost[u]);
     }
 
-    // determine true weight of path
-    let u = bestSink; let e = link[u]; let pathCost = 0;
-    while (e != 0) {
-        pathCost += g.weight(e);
-        u = g.mate(u,e); e = link[u];
-        if (e == 0) break;
-        pathCost -= g.weight(e);
-        u = g.mate(u,e); e = link[u];
-    }
-    if (pathCost <= 0) return 0;
+    if (bestSink == 0 || bestPathCost >= 0) return 0;
+
     return bestSink;
 }
 
@@ -554,18 +611,18 @@ function findpath() {
  */
 function augment(u) {
     let e = link[u];
-    while (e != 0) {
-        match[u] = e; u = g.mate(u,e); match[u] = e; e = link[u];
-        if (e == 0) break;
-        u = g.mate(u,e); e = link[u];
+    while (e) {
+        match.add(e);  u = g.mate(u,e); e = link[u];
+        if (!e) break;
+        match.drop(e); u = g.mate(u,e); e = link[u];
     }
     free.delete(u);
 }
 </textarea> <p>
 This implementation mimic's Jewell's minimum cost flow algorithm, with
 the edge transform of Edmonds and Karp.
-However, it is simpler
-in one particular. Because the flow graph is acyclic, it has no unsaturated
+However, it is simpler in one particular.
+Because the flow graph is acyclic, it has no unsaturated
 negative cycles at the start, so there is no need to eliminate negative cycles.
 Also, because the graph is acyclic, the initial computation of the labels
 can be simplified.
@@ -579,21 +636,19 @@ log(ts);
 Sample output appears below.
 <p> <pre style="padding-left:5%">
 {
-a[g:2 h:4 j:5] b[h:7 k:8 l:7] c[k:1 l:6]
-d[g:5 l:2] e[g:2 h:5 i:3 k:6] f[g:9 i:3 k:8 l:4]
-g[a:2 d:5 e:2 f:9] h[a:4 b:7 e:5] i[e:3 f:3]
-j[a:5] k[b:8 c:1 e:6 f:8] l[b:7 c:6 d:2 f:4]
+a[g:8 h:5 k:5 l:6] b[i:7 j:7] c[j:3 k:8 l:4] d[i:2 k:7]
+e[i:3 j:2 k:9 l:7] f[g:2 h l:4] g[a:8 f:2] h[a:5 f]
+i[b:7 d:2 e:3] j[b:7 c:3 e:2] k[a:5 c:8 d:7 e:9] l[a:6 c:4 e:7 f:4]
 }
 
 augmenting path, path weight
-f {f,g,9} g 9
-b {b,k,8} k 8
-c {c,l,6} l 6
-a {a,j,5} j 5
-e {e,h,5} h 5
-d {d,g,5} {f,g,9} {f,k,8} {b,k,8} {b,h,7} {e,h,5} {e,i,3} i 1
+[ek] 9
+[ag] 8
+[bi] 7
+[ck ek el] 6
+[di bi bj] 2
 
-matching: [{d,g,5} {f,k,8} {c,l,6} {b,h,7} {e,i,3} {a,j,5}]
+matching: [ag:8 el:7 ck:8 bj:7 di:2] 5 32
 </pre> <p>
 The following script can be used to evaluate the performance of the
 Hungarian algorithm and compare it to the similar algorithm
@@ -605,7 +660,7 @@ g.randomWeights(randomInteger, 0, 999);
 let t0; let t1; let stats;
 t0 = Date.now(); [,,stats] = wbimatchH(g); t1 = Date.now();
 let s = `${n} ${d} H ${stats.paths} ${(stats.steps/g.m).toFixed()} ${t1-t0}ms`;
-t0 = Date.now(); [,,stats] = wbimatchF(g); t1 = Date.now();
+t0 = Date.now(); [,,stats] = bimatchF(g); t1 = Date.now();
 log(`${s}    F ${stats.paths} ${(stats.steps/g.m).toFixed()} ${t1-t0}ms `);
 </pre> <p>
 Some sample results appear below.
@@ -620,51 +675,36 @@ of steps per edge grows directly slightly faster than the number of vertices.
 </pre>
 
 <h2>Maximum Size Matchings in General Graphs</h2>
-Finding a maximum matching in a general graph is more complicated
+Finding a matching in a general graph is more complicated
 than for bipartite graphs, due to the presence of odd length cycles.
-A cycle with $2k+1$ edges and $k$ matching edges in the cycle,
-has one vertex that is either unmatched or connected to a vertex
-outside the cycle by a matching edge. The choice of matching edges
-within the cycle determines which vertices in the cycle can have
-matching edges outside the cycle, making the task of finding a maximum
-matching very dependent on how the odd cycles are matched.
-This is fundamentally why odd cycles make the task of finding matchings
-more challenging.
-
-<h3>Augmenting Paths in Matchings</h3>
-Augmenting paths were introduced in the context of the maximum flow problem.
-A similar idea is also useful for solving matching problems.
-Let $M$ be a matching in a graph. An <i>alternating path</i> with respect
-to $M$ is a path in which every other edge is in the matching and
-the remainder are not. If both endpoints of an alternating path are
-unmatched, the size of the matching can be increased by flipping the
-status of the edges on the path, as illustrated below.
+Such cycles complicate the usual search procedure,
+which explores the graph, while constructing a subtree
+on the vertices visited so far.
+When odd length cycles are present, it can be hard to determine
+how the tree should be structured.
+This situation is illustrated below. Imagine an augmenting path search
+that starts from vertex $a$.
 <p>
 <div  style="text-align:center;">
-<img width="50%" src="figs/augmentingPath.png"><br>
+<img width="24%" src="figs/oddCycleIssue.png"><br>
 </div>
 <p>
-Such paths are referred to as augmenting paths.
-This observation suggests that maximum matchings can be found by
-repeatedly identifying
-augmenting paths and expanding the current matching by reversing the
-status of the path's edges.
-<p>
-To justify this method, let $M$ be a matching and $M'$ be a matching with
-exactly $k$ more edges than $M$. Let $N$ be the graph consisting of edges
-that are either in $M$ or $M'$ but not both. Since the vertices in $N$
-have a maximum degree of 2, $N$ consists of vertex-disjoint paths that are
-alternating with respect to $M$ and possibly some cycles that are
-alternating with respect to $M$. Since $M'$ has $k$ more edges than $M$,
-$k$ of the alternating paths must be augmenting paths with respect to $M$
-so their edges can all be flipped, yielding a matching of the same
-size as $M'$. This argument establishes the following theorem.
-<p>
-<i>Theorem 1</i> A matching $M$ is a maximum size matching for a graph
-$G$ if and only if $G$ has no augmenting paths with respect to $M$.
-<p>
-What remains is to find an efficient algorithm for finding an augmenting
-path when one exists.
+When the path search reaches the cycle $[u,v,x,y,z]$, there
+are two options for how to proceed beyond the cycle.
+If one chooses to continue towards $h$, an alternating
+path back to $a$ must pass through vertices $z,y,x,v,u$.
+If one chooses to continue towards $d$, an alternating
+path back to $a$ must pass through $v,x,y,z,u$.
+Because these two path segments traverse the cycle
+edges in opposite directions, it's not immediately obvious how to
+structure the search tree while allowing for both possibilities.
+The solution to this puzzle is to defer the decision by collapsing
+the cycle into a single <i>pseudo-vertex</i> and continuing the
+search on the resulting graph. If this search leads to an augmenting
+path that includes the cycle, that path can be extended to include
+the appropriate subset of cycle edges, and at that point there is
+no ambiguity about which way to proceed.
+This idea is at the heart of Edmond's algorithm.
 
 <h3>Edmond's Algorithm</h3>
 Most algorithms for finding maximum matchings can be viewed as
@@ -693,7 +733,8 @@ trees and that the path from $i$ to the root of its tree can be
 linked to the path from $m$ to the root of its tree through $\{i,m\}$
 yielding an augmenting path from $a$ to $j$.
 <p>
-For bipartite graphs, the algorithm starts by making every vertex a
+It's helpful to introduce the algorithm by considering the bipartite case first.
+The algorithm starts by making every vertex a
 tree root and placing every edge in a queue of <i>pending edges</i>.
 In general, the pending queue contains edges with at least
 one even endpoint.
@@ -712,7 +753,7 @@ apply the appropriate case from the list below.
      path can be formed by linking the tree path from $u$ to the root
      of its tree to the tree path from $v$ to the root of its tree
      through $e$. Augment the matching, then discard the current set of
-     trees and the contents of the pending queue. Now, make every unmatched
+     trees and the contents of the pending queue. Make every unmatched
      vertex a tree root and add every edge incident to an unmatched vertex
      to the pending queue.
 </ul>
@@ -766,24 +807,25 @@ This means that at the time a blossom is formed, the base is even;
 consequently, the blossom is also considered even.
 Also notice that for an even vertex on a blossom cycle,
 the even length path to the base of the blossom goes up the tree,
-but for an odd vertex on a blossom cycle, the path must pass through
+but for an odd vertex on a blossom cycle, the even length path must pass through
 the edge that led to the formation of the blossom.
 This edge is referred to as the <i>bridge</i> of the blossom.
 <p>
 Vertices contained in blossoms are called <i>inner</i> vertices; those that
 are not in any blossom are called <i>outer</i> vertices.
-Blossoms can be similarly classified as inner or outer.
-Edges joining vertices within a common blossom are called inner,
+Since blossoms may be contained in other blossoms, they can be similarly
+classified as inner or outer.
+Edges joining vertices within a common outer blossom are called inner,
 while the others are called outer.
 The graph consisting of outer vertices, blossoms and edges is
-the referred to as the outer graph.
+referred to as the outer graph.
 As the algorithm proceeds, new blossoms may be formed,
 leading to an ongoing evolution of the outer graph.
 When an augmenting path in the outer graph is discovered,
 it is expanded into an augmenting path on the original graph.
 This may require expanding nested blossoms as well.
 <p>
-The general version of the algorithm is similar to the bipartite version.
+The general version of Edmond's algorithm is similar to the bipartite version.
 To simplify the presentation, let $U$ denote the outer blossom
 containing a vertex $u$ (if $u$ is an outer vertex, let $U=u$).
 The algorithm builds alternating trees as before and an outer blossom
@@ -852,8 +894,8 @@ the vertices in different blossoms and sub-blossoms.
 <p>
 Observe that the algorithm maintains the following two properties
 <ol>
-<li> If a vertex $v$ is in a tree and matched, $\mate(v)$ is also in a tree,
-    it is in the same tree as $v$.
+<li> If a vertex $v$ is in a tree and matched, $\mate(v)$ is in the same
+    tree.
 <li> If $v$ is an unmatched vertex contained in an outer blossom $B$,
     then $B$ is unmatched (in the outer graph).
 </ol>
@@ -984,7 +1026,7 @@ is $O(m+n)$, so the time contributed by these operations is
 $O(m \alpha(m,n))$. This also bounds the time for the complete phase,
 yielding a bound of $O(mn\alpha(m,n))$ on the time to compute the matching.
 <p>
-A <i>Javascript</i> implementation of Gabow's version of Edmond's algorithm
+An abridged <i>Javascript</i> implementation of Gabow's version of Edmond's algorithm
 appears below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
@@ -1000,8 +1042,8 @@ let bridge;       // bridge[x] is pair [e,u] where e is bridge in x's blossom
 let state;        // state[u] is 0 if u is unbound, +1 if even, -1 if odd
 let mark;         // mark[u] is a flag used when computing nca
 
-export default function matchEG(mg) {
-    g = mg;
+export default function matchEG(G) {
+    g = G;
     match = new Matching(g);
     link = new Int32Array(g.n+1);
     q = new List(g.edgeRange);
@@ -1208,14 +1250,14 @@ Note that the program first computes an initial matching by sequentially
 adding non-conflicting edges. This eliminates many augmenting path searches,
 and often has a large impact on the running time, since the initialization
 overhead for each path search is significant.
-Also note that the program uses a <code>ReverseLists</code> object
+Also note that the program uses a <i>ReverseLists</i> object
 and a recursive path construction method to
 construct the list of edges that form each augmenting path.
 <p>
 The following script can be used to demonstrate the program.
 <p> <pre style="padding-left:5%">
-let g = randomGraph(20,2);
-let [,ts] = matchEG(g,1);
+let g = randomGraph(20,3);
+let [,ts] = matchEG(g,0,1);
 log(ts);
 </pre> <p>
 A sample of the trace output appears below.
@@ -1223,46 +1265,46 @@ A sample of the trace output appears below.
         style="font-size: 95%;background-color:lightCyan">
 matchEG(small random (20,3))
 {
-a[d h] b[f k m o] c[l] d[a e j] e[d m q r s]
-f[b k m q] g[j p] h[a] i[m p q r] j[d g p]
-k[b f] l[c r t] m[b e f i t] o[b p t] p[g i j o]
-q[e f i r s] r[e i l q] s[e q] t[l m o]
+a[b l] b[a k] c[e k p t] d[f g j] e[c i m]
+f[d h n] g[d q] h[f j o] i[e j m p q] j[d h i s]
+k[b c] l[a r] m[e i o t] n[f r] o[h m r t]
+p[c i] q[g i] r[l n o s t] s[j r] t[c m o r]
 }
-initial matching: [ad bf cl em gj ip ot qr]
-branch: h--a--d
-branch: k--b--f
-blossom: {f,k} k [k b f]
-    {[f b k]}
-branch: s--e--m
-branch: s--q--r
-branch: d--j--g
-augment: bk bf fm em es
-    [ad cl gj ip ot qr bk fm es]
-branch: h--a--d
-branch: d--e--s
-branch: d--j--g
-branch: s--q--r
-branch: g--p--i
-blossom: {i,r} d [d j g p i r q s e]
-    {[i d e g j p q r s]}
-branch: r--l--c
-branch: i--m--f
-branch: p--o--t
-blossom: {f,q} d [d m f]
-    {[i d e f g j m p q r s]}
-branch: f--b--k
-blossom: {f,k} d [d k b]
-    {[i b d e f g j k m p q r s]}
-blossom: {m,t} d [d t o]
-    {[i b d e f g j k m o p q r s t]}
-final matching: [ad cl gj ip ot qr bk fm es]
+initial matching: [ab ce df gq hj im lr ot]
+
+branch: k b a
+branch: k c e
+branch: n f d
+branch: n r l
+branch: p i m
+branch: s j h
+augment: [k b a--l r n]
+    [ce df gq hj im ot bk al nr]
+
+branch: p c e
+branch: p i m
+branch: s j h
+branch: s r n
+blossom: {e,m} p [p c e--m i]
+branch: Pm o t
+blossom: {m,t} p [mPm--t o]
+branch: h f d
+augment: [s j h--o t m i p]
+    [ce df gq bk al nr js ho mt ip]
+
+final matching: [ce df gq bk al nr js ho mt ip]
 </textarea> <p>
-For each new blossom, the trace shows the edge that formed the blossom,
-the base of the new blossom and a list of the vertices on the blossom cycle;
-this is followed by the resulting state of
-the merge sets data structure.
-For each new augmenting path, the trace shows the edges in the path,
-followed by the updated matching.
+For each new blossom, the trace shows the edge that triggered the formation
+of the blossom, the base of the blossom, and a list of the outer vertices
+or blossoms that were combined to form the new blossom, with the location
+of the bridge highlighted. When a blossom appears on a new blossom cycle,
+it is identified by a capital letter, corresponding to the blossom's base
+and is decorated with the endpoints of its edges on the blossom cycle.
+(So, in the second blossom above, both of the edges on the cycle that
+are incident to blossom $P$ are incident to vertex $m$.)
+Augmenting paths are shown as a list of the vertices on the path,
+with the location of the edge joining the two trees highlighted by
+a double-dash.
 <p>
 The following script can be used to observe the performance
 on random graphs.
@@ -1307,14 +1349,6 @@ path searches drops off quickly, as it becomes easy to find
 non-conflicting matching edges.
 When the degree gets smaller, the matching size drops and degree one edges
 become common, both of which reduce the number of path searches.
-<p>
-Micali and Vazirani [MZ80] contrived an algorithm that allows weighted
-matchings in bipartite graphs to be found in $O(m \sqrt{n})$ time,
-matching the time bound for the unweighted case.
-The central idea is to construct multiple disjoint augmenting paths in
-each phase, rather than just one.
-This reduces the number of phases required and the average time consumed
-to produce each augmenting path.
 
 <h2>Maximum Weight Matchings in General Graphs</h2>
 The maximum weight matching problem on general graphs is considerably
@@ -1761,68 +1795,66 @@ no matching edge on the cycle.
 
 <h4>Implementation of the General Algorithm</h4>
 The implementation of Edmond's algorithm uses a special-purpose
-<code>Blossoms</code> data structure to keep track of the structure
+<i>Blossoms</i> data structure to keep track of the structure
 of the alternating path trees and the blossoms.
 It supports the following methods.
 <ul>
-<li>    <code>base(b)</code> returns the base of blossom <code>b</code>
+<li>    $\base(b)$ returns the base of blossom $b$
         in the context of the outer graph (if the blossom is matched,
         this is the endpoint of the matching edge incident to the blossom);
         this method can also be used to change the base.
-<li>    <code>state(b)</code> returns the state of outer blossom
-        <code>b</code> ($-1$ for odd, 0 for unbound, $+1$ for even);
+<li>    $\state(b)$ returns the state of outer blossom
+        $b$ ($-1$ for odd, 0 for unbound, $+1$ for even);
         can also be used to change the state.
-<li>    <code>link(b)</code> returns a pair <code>[v,e]</code> where
-        <code>v</code> is a vertex in blossom <code>b</code> and
-        <code>e</code> is an edge incident to <code>v</code> and
-        to <code>b</code>; if <code>b</code> is an outer blossom,
-        <code>e</code> is an edge to its parent in the alternating
-        path tree; if <code>b</code> is an inner blossom,
-        <code>e</code> is an edge to the next blossom in the blossom
-        cycle of <code>b's</code> parent;
+<li>    $\link(b)$ returns a pair $[v,e]$ where
+        $v$ is a vertex in blossom $b$ and
+        $e$ is an edge joining $v$ to a vertex
+        not in $b$; if $b$ is an outer blossom,
+        $e$ is an edge to its parent in the alternating
+        path tree; if $b$ is an inner blossom,
+        $e$ is an edge to the next blossom in the blossom
+        cycle of $b$'s parent;
         this method can also be used to set the link.
-<li>    <code>parent(b)</code> returns the innermost blossom that contains
-        <code>b</code> as a sub-blossom.
-<li>    <code>outer(b)</code> returns the outer blossom containing blossom
-        <code>b</code>.
-<li>    <code>firstOuter()</code> returns the first outer blossom.
-<li>    <code>nextOuter(b)</code> returns the next outer blossom after
-        <code>b</code>.
-<li>    <code>firstIn(b)</code> returns the first vertex in outer
-        blossom <code>b</code>.
-<li>    <code>nextIn(b,u)</code> returns the next vertex in outer
-        blossom <code>b</code> following <code>u</code>.
-<li>    <code>addBranch(e,v)</code> adds a branch to an alternating path
-        tree; <code>e</code> is a edge incident to an even vertex
-        or blossom and <code>v</code> is an endpoint of <code>e</code> in an
-        unbound blossom <code>V</code>; <code>V</code> and the blossom
-        <code>W</code> at the other endpoint of its incident matching edge
+<li>    $\parent(b)$ returns the innermost blossom that contains
+        $b$ as a sub-blossom.
+<li>    $\outer(b)$ returns the outer blossom containing blossom
+        $b$.
+<li>    $\firstOuter()$ returns the first outer blossom.
+<li>    $\nextOuter(b)$ returns the next outer blossom after
+        $b$.
+<li>    $\firstIn(b)$ returns the first vertex in
+        blossom $b$.
+<li>    $\nextIn(b,u)$ returns the next vertex in
+        blossom $b$ following $u$.
+<li>    $\addBranch(e,v)$ adds a branch to an alternating path
+        tree; $e$ is a edge incident to an even vertex
+        or blossom and $v$ is an endpoint of $e$ in an
+        unbound blossom $V$; $V$ and the blossom
+        $W$ at the other endpoint of its incident matching edge
         are added to the tree.
-<li>    <code>addBlossom(e,A)</code> forms a new blossom from the outer blossoms
-        on the cycle connecting the endpoints of <code>e</code> to their nearest
-        common ancester <code>A</code> in the outer graph.
-<li>    <code>expand(B)</code> expands an outer blossom <code>B</code> and
-        propagates the matching in the outer graph to <code>B</code>'s
+<li>    $\addBlossom(e,A)$ forms a new blossom from the outer blossoms
+        on the cycle connecting the endpoints of $e$ to their nearest
+        common ancester $A$ in the outer graph.
+<li>    $\expand(B)$ expands an outer blossom $B$ and
+        propagates the matching in the outer graph to $B$'s
         blossom cycle; also makes the unmatched sub-blossoms tree roots and the
         matched blossoms unbound.
-<li>    <code>expandOdd(B)</code> expands an odd outer blossom <code>B</code>.
+<li>    $\expandOdd(B)$ expands an odd outer blossom $B$.
         If $u$ and $v$ are the endpoints of the two outer edges incident to
         $B$ that are in its tree, then after the blossom is expanded,
         $U$ and $V$ are the new outer-blossoms containing $u$ and $v$.
         The new outer blossoms along the even length segment of 
         of the blossom cycle connecting $U$ and $V$ are integrated into
         the tree, while the remaining new outer blossoms become unbound.
-        Outer edges incident to the new outer blossoms that become even
-        are added to the pending queue.
 </ul>
 There are also several other helper methods that assist with details
 of the methods described above.
 The structure of the blossoms and sub-blossoms is maintained as a
-<code>Forest</code> object, with the parent of a blossom <code>b</code> in
-its tree being the smallest blossom that contains <code>b</code>.
+$\Forest$ object, with the parent of a blossom $b$ in
+its tree being the smallest blossom that contains $b$.
 <p>
-The <code>Blossoms</code> object can be configured to use one of
-three different methods to compute <code>outer(b)</code>.
+The $\Blossoms$ object can be configured to use one of
+three different methods to compute $outer(b)$.
 The simplest simply goes up the blossom structure tree to its root.
 The next simplest maintains an array mapping
 a vertex or blossom to its outer blossom.
@@ -1830,7 +1862,7 @@ This array is modified whenever
 a new blossom is formed or an existing blossom is expanded.
 The third method is discussed in the next section.
 <p>
-The <i>Javascript</i> implementation of the <code>Blossoms</code>
+The (abridged) <i>Javascript</i> implementation of the $\Blossoms$
 data structure appears below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
@@ -1843,24 +1875,63 @@ export default class Blossoms extends Top {
 
     State;          // State[b] is state of outer blossom b; for inner
                     // blossoms, State[b] is undefined
-    Base;            // if b is a matched blossom (or sub-blossom), Base[b]
-                    // is the vertex v in b that terminates the matching
-                    // edge incident to b; if b is unmatched, Base[b] is
-                    // unique vertex in b that is unmatched
+    Base;            // if b is an outer blossom, Base[b] identifies the unique
+                    // vertex in b that has no matching edge with both
+                    // endpoints in b's vertex set
     Link;           // Link[b] is pair [v,e] where e is an edge incident to
                     // b and v is the endpoint of e in b; if undefined: [0,0];
                     // for an external blossom b, e is the edge to b's
                     // tree parent; for an internal blossom, e is an edge to
                     // next internal blossom in the blossom cycle of b's parent
 
-    outerMethod;    // method used to compute outer: 0: find root of bsf,
-                    // 1: use static map, 2: find root of balanced forest
+    outerMethod;    // method used to compute outer: 0 for find root of bsf,
+                    // 1 for static map method, 2 find root of balanced forest
                     // where each tree enumerates vertices in an outer blossom
     Outer;          // reference to data structure used to compute outer
 
     ids;            // list of available blossom ids (reduced by n)
     blist;          // temporary list used when forming new blossom
-    
+
+    /** Constructor for Blossoms object.
+     *  @param g is the client's graph on which matching is computed
+     *  @param match is the client's matching object
+     */
+    constructor(g, match, outerMethod=0) {
+        super(g.n + ~~(g.n/2));
+        this.g = g;
+        this.match = match;
+        this.outerMethod = outerMethod;
+
+        this.bsf = new Forest(this.n);
+
+        this.Base = new Int32Array(this.n+1);
+        for (let i = 0; i <= this.g.n; i++) this.Base[i] = i;
+        this.State = new Int32Array(this.n+1).fill(1);
+        for (let e = match.first(); e != 0; e = match.next(e)) {
+            this.State[this.g.left(e)] = 0;
+            this.State[this.g.right(e)] = 0;
+        }
+        this.Link = new Array(this.n+1);
+        for (let b = 1; b <= this.n; b++) this.Link[b] = [0,0];
+
+        this.ids = new List(this.n - this.g.n);
+        for (let b = g.n+1; b <= this.n; b++) this.ids.enq(b-this.g.n);
+        this.blist = new List(this.n);
+
+        if (this.outerMethod == 1) {
+            this.Outer = new Int32Array(this.n+1);
+            for (let b = 1; b <= this.n; b++) this.Outer[b] = b;
+        } else if (this.outerMethod == 2) {
+            this.Outer = {
+                bf : new BalancedForest(this.n),
+                bid : new Int32Array(this.n+1),
+                root : new Int32Array(this.n+1)
+            }
+            for (let b = 1; b <= this.n; b++)
+                this.Outer.bid[b] = this.Outer.root[b] = b;
+        }
+    }
+
     validBid(b) { return 0 <= b && b <= this.n &&
                   !this.ids.contains(b-this.g.n); }
 
@@ -1941,7 +2012,6 @@ export default class Blossoms extends Top {
             subs.push(B);        // adds B to front of subs
             let [x,ee] = this.link(B);
             B = this.outer(this.g.mate(x,ee));
-            this.steps++;
         }
         subs.push(A);
         B = V;
@@ -1973,10 +2043,6 @@ export default class Blossoms extends Top {
         return [B, subs, U];
     }
 
-    /** Construct a blossom from a list (helper method).
-     *  @param subs is a list of outer blossoms
-     *  @return a new blossom obtained by combinining the blossoms in subs
-     */
     construct(subs) {
         let B = this.g.n + this.ids.deq();
         this.base(B, this.base(subs.first()));
@@ -2005,7 +2071,7 @@ export default class Blossoms extends Top {
         // now set sub-blossom links to [0,0] and states to 0 or +1
         for (let b = subs.first(); b; b = subs.next(b)) {
             this.state(b, this.match.at(this.base(b)) ?  0 : +1);
-            this.link(b,[0,0]); this.steps++;
+            this.link(b,[0,0]);
         }
         return subs;
     }
@@ -2052,14 +2118,6 @@ export default class Blossoms extends Top {
         return subs;
     }
 
-    /** Deconstruct an outer blossom (helper method).
-     *  @param B is blossom to be deconstructed; sub-blossoms of B become
-     *  outer blossoms and blossom id for B is recycled; matching edges in B
-     *  are adjusted to be consistent with outer graph
-     *  @return a pair [subs,bBsub] where subs is a reference to a list
-     *  of the former sub-blossoms of B and bBsub is the new outer blossom
-     *  containing the original base of B;
-     */
     deconstruct(B) {
         let bB = this.base(B);
         let subs = this.blist; subs.clear();
@@ -2069,13 +2127,12 @@ export default class Blossoms extends Top {
             subs.enq(b0);
             this.bsf.cut(b0);        // remove b0 from B's list of sub-blossoms
             b0 = this.firstSub(B);
-            this.steps++;
         }
         this.ids.enq(B-this.g.n); // return B to list of available ids
 
         if (this.outerMethod == 1) {
             for (let b = subs.first(); b; b = subs.next(b)) {
-                this.refreshOuter(b); this.steps++;
+                this.refreshOuter(b);
             }
         } else if (this.outerMethod == 2) {
             let bf = this.Outer.bf;
@@ -2092,7 +2149,6 @@ export default class Blossoms extends Top {
                 } else {
                     root[b] = bf.root(b); bid[root[b]] = b;
                 }
-                this.steps++;
             }
         }
 
@@ -2131,74 +2187,85 @@ export default class Blossoms extends Top {
     }
 }
 </textarea> <p>
-The following script can be used to demonstrate the <code>Blossoms</code>
+The following script can be used to demonstrate the $\Blossoms$
 data structure.
 <pre style="padding-left:5%">
 let g = new Graph();
 g.fromString('{a[b j k] b[a c] c[b d j h] d[c e f] e[d f] f[d e g i] g[f i] ' +
-             'h[i n] i[f g h] j[a c k] k[a j m] l[m n] m[k l n] n[h l m]}');  
+             'h[i n] i[f g h] j[a c k] k[a j m] l[m n] m[k l n] n[h l m]}');
 let match = new Matching(g);
-match.fromString('[{b,c} {e,f} {f,g} {h,i} {j,k} {m,n}]');
+match.fromString('[bc fg hi jk mn]');
 let bloss = new Blossoms(g,match);
-bloss.fromString('{{[A(d e !f)]} ' +
+bloss.fromString('{{[A(d e f!)]} ' +
                  '{[a(b(c(A{d,c}(g{g,f}))) j(k))] [l(m(n))]}}');
+log(bloss.toString();
 log(bloss.outerGraph2string());
 </pre>
-Notice that the <code>Blossoms</code> object is defined relative to
+It produces the output below.
+<pre style="padding-left:5%">
+{{[A(d e f!)]} {[a(b(c(A{d,c}(g{g,f}))) j(k))] [l(m(n))]}} 
+{
+a[b j k] b[a c] c[b A j h] g[A i]
+h[c i n] i[A g h] j[a c k] k[a j m]
+l[m n] m[k l n] n[h l m] A[c g i]
+} 
+</pre>
+Notice that the $\Blossoms$ object is defined relative to
 a previously defined graph and matching.
-The new object <code>bloss</code> is defined to include one non-trivial
+One need only specify the matching edges in the outer graph,
+as the matching edges within a blossom can be inferred.
+The new object $\bloss$ is defined to include one non-trivial
 blossom and two alternating path trees.
-In the <code>fromString</code> method, the first component of
-the string shows the blossom, designated by an upper-case <code>A</code>.
-The exclamation point identifies the base of <code>A</code>
+In the $\fromString$ method, the first component of
+the string shows the blossom, designated by an upper-case $A$.
+The exclamation point identifies the base of $A$
 (from the perspective of the outer graph).
+This is optional, as the base of the blossom can be inferred by the
+matching edge incident to the blossom (when there is no such matching
+edge, the base is the first sub-blossom in the list of sub-blossoms).
 The second component of the string shows the two trees,
 the first containing the blossom.
 The edges $\{d,c\}$ and $\{g,f\}$ joining
-<code>A</code> to its neighbors in its tree are shown explicitly.
-The diagram below shows the outer graph, the matching edges, blossom and trees
-defined by the script.
+$A$ to its neighbors in its tree are shown explicitly.
+The first line of the output matches the argument to the
+$\fromString()$ method and the second line shows
+the outer graph.
+The diagram below shows the outer graph,
+and highlights the outer matching edges, the blossom and tree edges.
 <p>
 <div  style="text-align:center;">
 <img width="40%" src="figs/Blossoms1.png">
 </div>
 <p>
-Note that the matching edge $\{e,f\}$ within blossom <code>A</code>
-conflicts with the outer matching edge $\{f,g\}$.
-This is permissible, so long as the conflict is resolved whenever the
-blossom is expanded.
-The output from running the script shows the outer graph.
-<pre style="padding-left:5%">
-{a[b j k] b[a c] c[b A j h] g[A i] h[c i n] i[A g h]
- j[a c k] k[j m] l[m n] m[k l n] n[h l m] A[c g i]} 
-</pre>
+Note that the base of blossom $A$ is highlighted.
 Replacing the last line of the script with the following four lines adds a
-branch and a blossoms to the graph.
+branch and a blossom to the graph.
 <pre style="padding-left:5%">
 bloss.addBranch(g.findEdge(3,8),8);       // {c,h} h
 bloss.addBlossom(g.findEdge(1,11),1);     // {a,k} 1
 log(bloss.blossoms2string());
 log(bloss.trees2string());
 </pre>
-and produces the following output.
+and produces the following additional output.
 <pre style="padding-left:5%">
-{[A(d e !f)] [B(!a k j)]} 
+{[A(d e f!)] [B(a k j)]} 
 {[l(m(n))] [B(b{b,a}(c(h(i) A{d,c}(g{g,f}))))]} 
-</pre>
+</pre><p>
+This is illustrated below.
 <p>
 <div  style="text-align:center;">
 <img width="40%" src="figs/Blossoms2.png">
 </div>
 <p>
 Let's go another step by inserting the following two lines before
-the calls to <code>log()</code>.
+the final calls to $\textit{log}()$.
 <pre style="padding-left:5%">
 bloss.expandOdd(g.n+1);                   // blossom A
-bloss.addBlossom(g.findEdge(12,14),12);   // {l,m} l
+bloss.addBlossom(g.findEdge(12,14),12);   // {l,n} l
 </pre>
 This produces the result below.
 <pre style="padding-left:5%">
-{[B(!a k j)] [C(!l n m)]} 
+{[B(a k j)] [C(l n m)]} 
 {[B(b{b,a}(c(d(e(f(g))) h(i))))]}
 </pre>
 <p>
@@ -2206,16 +2273,15 @@ This produces the result below.
 <img width="40%" src="figs/Blossoms3.png">
 </div>
 <p>
-Notice how the matching edges within the original odd blossom
-<code>A</code> have been adjusted to make them consistent with the
-outer graph and the vertices that were internal to <code>A</code>
-are now part of the first tree,
-and the vertices of the second tree have been collapsed into
-the new blossom <code>C</code>.
-Adding one more blossom using <code>bloss.addBlossom(g.findEdge(7,9),3)</code>
+Notice how the edge $\{d,e\}$ within former blossom
+$A$ has been added to the matching and the path from
+$d$ to $f$ has been inserted into the first tree.
+Also, the vertices of the second tree have been collapsed into
+the new blossom $C$.
+Adding one more blossom using $\bloss.\addBlossom(g.\findEdge(7,9),3)$
 produces
 <pre style="padding-left:5%">
-{[B(!a k j)] [C(!l n m)] [D(!c d e f g i h)]} 
+{[B(a k j)] [C(l n m)] [D(c d e f g i h)]} 
 {[B(b{b,a}(D{c,b}))]} 
 </pre>
 <p>
@@ -2228,13 +2294,13 @@ form augmenting path $[a,j,k,m,n,l]$, or alternatively,
 edge $\{h,n\}$ can be used to form the augmenting path
 $[a,b,c,d,e,f,g,i,h,n,m,l]$.
 <p>
-The <i>Javascript</i> implementation of Edmond's algorithm is
+An abridged <i>Javascript</i> implementation of Edmond's algorithm is
 shown below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 let g             // shared copy of graph
 let match;        // Matching object representing matching for graph
-let bloss;        // Blossoms0 object representing blossoms and matching trees
+let bloss;        // Blossoms object representing blossoms and alternating trees
 
 let z;            // z[b] is dual variable for blossom (or vertex) b
 let slack;        // slack[e] is slack of dual constraint for edge e
@@ -2243,98 +2309,91 @@ let blist;        // temporary list of blossoms
 let mark;         // temporary array of flags
 
 export default function wmatchE(G ..) {
-	g = G;
-	match = new Matching(g);
-	bloss = new Blossoms(g, match, 1);
-	z = new Float32Array(bloss.n+1);
-	slack = new Float32Array(g.edgeRange+1);
-	q = new List(g.edgeRange);
-	blist = new List(bloss.n);
-	mark = new Int8Array(bloss.n+1).fill(false);
+    g = G;
+    match = new Matching(g);
+    bloss = new Blossoms(g, match, 1);
+    z = new Float32Array(bloss.n+1);
+    slack = new Float32Array(g.edgeRange+1);
+    q = new List(g.edgeRange);
+    blist = new List(bloss.n);
+    mark = new Int8Array(bloss.n+1).fill(false);
 
-	let maxwt = 0;
-	for (let e = g.first(); e; e = g.next(e)) {
-		maxwt = Math.max(g.weight(e),maxwt);
-	}
-	if (maxwt == 0)
-		return [match, trace ? 'no positive weights' : '', {'weight':0}];
-	z.fill(maxwt/2.0,1,g.n+1);
+    let maxwt = 0;
+    for (let e = g.first(); e; e = g.next(e)) {
+        maxwt = Math.max(g.weight(e),maxwt);
+    }
+    if (maxwt == 0)
+        return [match, trace ? 'no positive weights' : '', {'weight':0}];
+    z.fill(maxwt/2.0,1,g.n+1);
 
-	for (let e = g.first(); e; e = g.next(e)) {
-		slack[e] = maxwt - g.weight(e);
-		if (slack[e] == 0) q.enq(e);
-	}
+    for (let e = g.first(); e; e = g.next(e)) {
+        slack[e] = maxwt - g.weight(e);
+        if (slack[e] == 0) q.enq(e);
+    }
 
-	while (true) {
-		while (!q.empty()) {
-			let e = q.deq();
-			let [u,v] = [g.left(e),g.right(e)];
-			let [U,V] = [bloss.outer(u),bloss.outer(v)];
-			let [sU,sV] = [bloss.state(U),bloss.state(V)];
-			if (U == V || sU + sV <= 0 || slack[e] > 0) continue;
-			// at least one even endpoint
-			if (sU + sV == 1 && sU == 0) {
-				[u,v] = [v,u]; [U,V] = [V,U]; [sU,sV] = [sV,sU];
-			}
+    while (true) {
+        while (!q.empty()) {
+            let e = q.deq();
+            let [u,v] = [g.left(e),g.right(e)];
+            let [U,V] = [bloss.outer(u),bloss.outer(v)];
+            let [sU,sV] = [bloss.state(U),bloss.state(V)];
+            if (U == V || sU + sV <= 0 || slack[e] > 0) continue;
+            // at least one even endpoint
+            if (sU + sV == 1 && sU == 0) {
+                [u,v] = [v,u]; [U,V] = [V,U]; [sU,sV] = [sV,sU];
+            }
 
-			// now e is tight, U is even and V is even or unbound
-			if (sV == +1) {
-				let A = nca(U,V);
-				if (A == 0) {
-					augment(e); newPhase();
-				} else {
-					let [B,subs,sb] = bloss.addBlossom(e,A); z[B] = 0;
-					let state = +1;
-					for (let b = subs.first(); b; b = subs.next(b)) {
-						if (state == -1) add2q(b);
-						state = (b == sb ? +1 : -state);
-					}
-				}
-			} else if (sV == 0) {
-				let W = bloss.addBranch(e,v,V); add2q(W);
-			}
-		}
-		if (relabel()) break;
-	}
+            // now e is tight, U is even and V is even or unbound
+            if (sV == +1) {
+                let A = nca(U,V);
+                if (A == 0) {
+                    augment(e); newPhase();
+                } else {
+                    let [B,subs,sb] = bloss.addBlossom(e,A); z[B] = 0;
+                    let state = +1;
+                    for (let b = subs.first(); b; b = subs.next(b)) {
+                        if (state == -1) add2q(b);
+                        state = (b == sb ? +1 : -state);
+                    }
+                }
+            } else if (sV == 0) {
+                let W = bloss.addBranch(e,v,V); add2q(W);
+            }
+        }
+        if (relabel()) break;
+    }
 
-	bloss.rematchAll();
-		// make matching consistent without expanding remaining blossoms
+    bloss.rematchAll();
+        // extend matching in outer graph to all blossoms and sub-blossoms
 
-	// verify solution when assertion checking is enabled
-	if (ea) {
-		let s = verifyInvariant(true);
-		assert(!s, `${s}\n${traceString}${match.toString()}\n` +
-				   `${bloss.toString()}\n${statusString()}`);
-	}
-	
     return [match ..];
 }
 
 function augment(e) {
-	// trace paths up to tree roots and update matching
-	match.add(e);
-	let x = g.left(e); let X = bloss.outer(x);
-	let [y,ee] = bloss.link(X);
-	while (y) {
-		if (match.contains(ee)) {
-			match.drop(ee); bloss.base(X,x);
-		} else {
-			match.add(ee); bloss.base(X,y);
-		}
-		x = g.mate(y,ee); X = bloss.outer(x); [y,ee] = bloss.link(X);
-	}
-	bloss.base(X,x);
+    // trace paths up to tree roots and update matching
+    match.add(e);
+    let x = g.left(e); let X = bloss.outer(x);
+    let [y,ee] = bloss.link(X);
+    while (y) {
+        if (match.contains(ee)) {
+            match.drop(ee); bloss.base(X,x);
+        } else {
+            match.add(ee); bloss.base(X,y);
+        }
+        x = g.mate(y,ee); X = bloss.outer(x); [y,ee] = bloss.link(X);
+    }
+    bloss.base(X,x);
 
-	x = g.right(e); X = bloss.outer(x); [y,ee] = bloss.link(X);
-	while (y) {
-		if (match.contains(ee)) {
-			match.drop(ee); bloss.base(X,x);
-		} else {
-			match.add(ee); bloss.base(X,y);
-		}
-		x = g.mate(y,ee); X = bloss.outer(x); [y,ee] = bloss.link(X);
-	}
-	bloss.base(X,x);
+    x = g.right(e); X = bloss.outer(x); [y,ee] = bloss.link(X);
+    while (y) {
+        if (match.contains(ee)) {
+            match.drop(ee); bloss.base(X,x);
+        } else {
+            match.add(ee); bloss.base(X,y);
+        }
+        x = g.mate(y,ee); X = bloss.outer(x); [y,ee] = bloss.link(X);
+    }
+    bloss.base(X,x);
 }
 
 /** Prepare for next phase, following an augmentation.
@@ -2343,120 +2402,120 @@ function augment(e) {
  *  Put all vertices in even blossoms into queue of even vertices.
  */
 function newPhase() {
-	// expand non-trivial outer blossoms with z == 0
-	q.clear(); blist.clear();
-	for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
-		if (z[b] == 0 && b > g.n) blist.enq(b);
-	}
-	while (!blist.empty()) {
-		let b = blist.deq();
-		let subs = bloss.expand(b); 
-		for (let sb = subs.first(); sb; sb = subs.next(sb)) {
-			if (z[sb] == 0 && sb > g.n) blist.enq(sb);
-		}
-	}
+    // expand non-trivial outer blossoms with z == 0
+    q.clear(); blist.clear();
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+        if (z[b] == 0 && b > g.n) blist.enq(b);
+    }
+    while (!blist.empty()) {
+        let b = blist.deq();
+        let subs = bloss.expand(b); 
+        for (let sb = subs.first(); sb; sb = subs.next(sb)) {
+            if (z[sb] == 0 && sb > g.n) blist.enq(sb);
+        }
+    }
 
-	// set state and link for remaining blossoms 
-	for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
-		bloss.state(b, match.at(bloss.base(b)) ? 0 : +1);
-		bloss.link(b,[0,0])
-	}
-	// and add eligible edges to q
-	for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b))
-		if (bloss.state(b) == +1) add2q(b);
+    // set state and link for remaining blossoms 
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+        bloss.state(b, match.at(bloss.base(b)) ? 0 : +1);
+        bloss.link(b,[0,0])
+    }
+    // and add eligible edges to q
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b))
+        if (bloss.state(b) == +1) add2q(b);
 }
 
 function relabel() {
-	let d1 = Infinity;
-	for (let u = 1; u <= g.n; u++) {
-		if (bloss.state(bloss.outer(u)) == +1) d1 = Math.min(d1, z[u]);
-	}
-	if (d1 == Infinity) d1 = 0;
+    let d1 = Infinity;
+    for (let u = 1; u <= g.n; u++) {
+        if (bloss.state(bloss.outer(u)) == +1) d1 = Math.min(d1, z[u]);
+    }
+    if (d1 == Infinity) d1 = 0;
 
-	let d2 = Infinity; let d3 = Infinity; let d4 = Infinity;
-	let smallOddBloss = 0; // odd blossom with smallest z[b]
-	for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
-		if (bloss.state(b) == +1) {
-			for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
-				for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
-					let v = g.mate(u,e); let V = bloss.outer(v);
-					if (V == b) continue;
-					let sV = bloss.state(V);
-						 if (sV == 0) d2 = Math.min(d2, slack[e]);
-					else if (sV == 1) d3 = Math.min(d3, slack[e]/2);
-				}
-			}
-		} else if (b > g.n && bloss.state(b) == -1) {
-			if (z[b]/2 < d4) {
-				d4 = z[b]/2; smallOddBloss = b;
-			}
-		}
-	}
+    let d2 = Infinity; let d3 = Infinity; let d4 = Infinity;
+    let smallOddBloss = 0; // odd blossom with smallest z[b]
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+        if (bloss.state(b) == +1) {
+            for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
+                for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+                    let v = g.mate(u,e); let V = bloss.outer(v);
+                    if (V == b) continue;
+                    let sV = bloss.state(V);
+                         if (sV == 0) d2 = Math.min(d2, slack[e]);
+                    else if (sV == 1) d3 = Math.min(d3, slack[e]/2);
+                }
+            }
+        } else if (b > g.n && bloss.state(b) == -1) {
+            if (z[b]/2 < d4) {
+                d4 = z[b]/2; smallOddBloss = b;
+            }
+        }
+    }
 
-	let delta = Math.min(d1,d2,d3,d4);
+    let delta = Math.min(d1,d2,d3,d4);
 
-	// adjust the dual variables for vertices
-	for (let u = 1; u <= g.n; u++) {
-		if (bloss.state(bloss.outer(u)) == +1) z[u] -= delta;
-		if (bloss.state(bloss.outer(u)) == -1) z[u] += delta;
-	}
+    // adjust the dual variables for vertices
+    for (let u = 1; u <= g.n; u++) {
+        if (bloss.state(bloss.outer(u)) == +1) z[u] -= delta;
+        if (bloss.state(bloss.outer(u)) == -1) z[u] += delta;
+    }
 
-	// adjust dual variables for outer blossoms and
-	// slacks of outer edge constraints (slacks for inner edges don't change)
-	for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
-		if (b > g.n) {
-			if (bloss.state(b) == +1) z[b] += 2*delta;
-			if (bloss.state(b) == -1) z[b] -= 2*delta;
-		}
-		for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
-			for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
-				if (u != g.left(e)) continue;
-				let v = g.right(e); let V = bloss.outer(v);
-				if (b == V) continue;
-				let ss = bloss.state(b) + bloss.state(V);
-				slack[e] -= ss * delta;
-				if (slack[e] == 0 && !q.contains(e))
-					ss == 2 ? q.push(e) : q.enq(e);
-			}
-		}
-	}
+    // adjust dual variables for outer blossoms and
+    // slacks of outer edge constraints (slacks for inner edges don't change)
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+        if (b > g.n) {
+            if (bloss.state(b) == +1) z[b] += 2*delta;
+            if (bloss.state(b) == -1) z[b] -= 2*delta;
+        }
+        for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
+            for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+                if (u != g.left(e)) continue;
+                let v = g.right(e); let V = bloss.outer(v);
+                if (b == V) continue;
+                let ss = bloss.state(b) + bloss.state(V);
+                slack[e] -= ss * delta;
+                if (slack[e] == 0 && !q.contains(e))
+                    ss == 2 ? q.push(e) : q.enq(e);
+            }
+        }
+    }
 
-	if (delta == d1) {
-		if (trace) traceString += ' and finished\n';
-		return true; // we have max weight matching
-	}
+    if (delta == d1) {
+        if (trace) traceString += ' and finished\n';
+        return true; // we have max weight matching
+    }
 
-	// now, add new even edges to q
-	if (delta == d2 || delta == d3) {
-		for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
-			if (bloss.state(b) == +1) add2q(b)
-		}
-	}
+    // now, add new even edges to q
+    if (delta == d2 || delta == d3) {
+        for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+            if (bloss.state(b) == +1) add2q(b)
+        }
+    }
 
-	if (delta == d4) {
-		// expand an odd blossom with zero z
-		let subs = bloss.expandOdd(smallOddBloss); deblossoms++;
-		for (let b = subs.first(); b; b = subs.next(b)) {
-			if (bloss.state(b) == +1) add2q(b);
-		}
-	}
+    if (delta == d4) {
+        // expand an odd blossom with zero z
+        let subs = bloss.expandOdd(smallOddBloss); deblossoms++;
+        for (let b = subs.first(); b; b = subs.next(b)) {
+            if (bloss.state(b) == +1) add2q(b);
+        }
+    }
 
-	return false;
+    return false;
 }
 
 /** Add edges incident to an even blossom to q.
  *  @param b is an even blossom or sub-blossom.
  */
 function add2q(b) {
-	let B = bloss.outer(b);
-	for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
-		for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
-			let v = g.mate(u,e); let V = bloss.outer(v);
-			if (bloss.state(V) >= 0 && V != B && slack[e] == 0) {
-				if (!q.contains(e)) q.enq(e);
-			}
-		}
-	}
+    let B = bloss.outer(b);
+    for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
+        for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+            let v = g.mate(u,e); let V = bloss.outer(v);
+            if (bloss.state(V) >= 0 && V != B && slack[e] == 0) {
+                if (!q.contains(e)) q.enq(e);
+            }
+        }
+    }
 }
 
 /** Find the nearest common ancestor of two vertices in
@@ -2469,37 +2528,37 @@ function add2q(b) {
  *  @returns the nearest common ancestor of u and v or 0 if none
  */
 function nca(U, V) {
-	let result;
-	// first pass to find the nca
-	let X = U; let [x,ex] = bloss.link(X);
-	let Y = V; let [y,ey] = bloss.link(Y);
-	while (true) {
-		steps++;
-		if (X == Y) { result = X; break; }
-		if (mark[X]) { result = X; break; }
-		if (mark[Y]) { result = Y; break; }
-		if (!x && !y) { result = 0; break; }
-		if (x) {
-			mark[X] = true;
-			X = bloss.outer(g.mate(x,ex)); [x,ex] = bloss.link(X);
-		}
-		if (y) {
-			mark[Y] = true;
-			Y = bloss.outer(g.mate(y,ey)); [y,ey] = bloss.link(Y);
-		}
-	}
-	// second pass to clear mark bits
-	X = U; [x,ex] = bloss.link(X);
-	while (mark[X]) {
-		mark[X] = false;
-		X = bloss.outer(g.mate(x,ex)); [x,ex] = bloss.link(X);
-	}
-	Y = V; [y,ey] = bloss.link(Y);
-	while (mark[Y]) {
-		mark[Y] = false;
-		Y = bloss.outer(g.mate(y,ey)); [y,ey] = bloss.link(Y);
-	}
-	return result;
+    let result;
+    // first pass to find the nca
+    let X = U; let [x,ex] = bloss.link(X);
+    let Y = V; let [y,ey] = bloss.link(Y);
+    while (true) {
+        steps++;
+        if (X == Y) { result = X; break; }
+        if (mark[X]) { result = X; break; }
+        if (mark[Y]) { result = Y; break; }
+        if (!x && !y) { result = 0; break; }
+        if (x) {
+            mark[X] = true;
+            X = bloss.outer(g.mate(x,ex)); [x,ex] = bloss.link(X);
+        }
+        if (y) {
+            mark[Y] = true;
+            Y = bloss.outer(g.mate(y,ey)); [y,ey] = bloss.link(Y);
+        }
+    }
+    // second pass to clear mark bits
+    X = U; [x,ex] = bloss.link(X);
+    while (mark[X]) {
+        mark[X] = false;
+        X = bloss.outer(g.mate(x,ex)); [x,ex] = bloss.link(X);
+    }
+    Y = V; [y,ey] = bloss.link(Y);
+    while (mark[Y]) {
+        mark[Y] = false;
+        Y = bloss.outer(g.mate(y,ey)); [y,ey] = bloss.link(Y);
+    }
+    return result;
 }
 </textarea> <p>
 The program can be demonstrated using the following script.
@@ -2517,78 +2576,71 @@ The output appears below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 {
-a[b:3 h:1 j:3 k:3]
-b[a:3 f:2 g:1 j:3 p:2]
-c[f:1 m:1]
-d[g:2]
-e[f:2 g:3 i:2 n:1]
-f[b:2 c:1 e:2 l:2 o:3 p:1]
-g[b:1 d:2 e:3 k:1 o:1]
-h[a:1]
-i[e:2]
-j[a:3 b:3]
-k[a:3 g:1 p:3]
-l[f:2 o:1]
-m[c:1 o:2 p:1]
-n[e:1]
-o[f:3 g:1 l:1 m:2]
-p[b:2 f:1 k:3 m:1]
+a[b:3 h:1 j:3 k:3] b[a:3 f:2 g:1 j:3 p:2] c[f:1 m:1] d[g:2]
+e[f:2 g:3 i:2 n:1] f[b:2 c:1 e:2 l:2 o:3 p:1] g[b:1 d:2 e:3 k:1 o:1] h[a:1]
+i[e:2] j[a:3 b:3] k[a:3 g:1 p:3] l[f:2 o:1]
+m[c:1 o:2 p:1] n[e:1] o[f:3 g:1 l:1 m:2] p[b:2 f:1 k:3 m:1]
 }
 eligible: [ab aj ak bj eg fo kp]
-augment: {a,b,3} a-ab!-b
-augment: {k,p,3} k-kp!-p
-augment: {f,o,3} f-fo!-o
-augment: {e,g,3} e-eg!-g
-branch: j-aj-a-ab-b
+
+augment: {a,b,3} a--b
+augment: {k,p,3} k--p
+augment: {f,o,3} f--o
+augment: {e,g,3} e--g
+
+branch: j a b
 blossom: {b,j,3} j A[j a b]
-branch: A-ak-k-kp-p
+branch: Aa k p
 relab(1.5 1 0.5 Infinity)
-    [bp]
-blossom: {b,p,2} A B[A p k]
+    [bp eg fo kp ak]
+blossom: {b,p,2} A B[aAb p k]
 relab(1 0.5 0.5 Infinity)
-    [mp ah cm dg ei fl mo bf]
-augment: {m,p,1} m-mp!-B
-    {[B(A(!j a b) !p k)]}
-branch: c-cm-m-mp-B
+    [mp ah cm dg eg ei fl fo mo bf]
+augment: {m,p,1} m--pB
+    {[B(A(j a b) p! k)]}
+
+branch: c m p.B
 augment: {a,h,1}
     {[c(m(B))]}
-    c-cm-m-mp-B-ah!-h
-    [fo:3 eg:3 ah:1 cm:1] 14
-    {[B(!A(!j a b) p k)]}
-branch: d-dg-g-eg-e
+    c m aBp--h
+    [fo eg ah cm]
+    {[B(A(j a! b) p k)]}
+
+branch: d g e
 augment: {e,i,2}
     {[d(g(e))]}
-    d-dg-g-eg-e-ei!-i
-    [fo:3 ah:1 cm:1 ei:2 dg:2] 15
-    {[B(!A(!j a b) p k)]}
-branch: l-fl-f-fo-o
-branch: o-mo-m-cm-c
+    d g e--i
+    [fo ah cm ei dg]
+    {[B(A(j a! b) p k)]}
+
+branch: l f o
+branch: o m c
 relab(0.5 1 0.5 Infinity) and finished
-final matching:
-    [fo:3 ah:1 cm:1 ei:2 dg:2 kp:3 bj:3] 15
+
+final matching: [fo ah cm ei dg kp bj]
 </textarea> <p>
 The output starts with the graph and a list of the
 edges that are initially eligible for use.
 Trivial augmenting paths (those with a single edge) are shown by
 lines like
 <pre style="padding-left:5%">
-augment: {a,b,3} a-ab!-b
+augment: {a,b,3} a--b
 </pre>
 which shows the edge joining the trees and the augmenting path.
 A non-trivial augmenting path produces more output.
 <pre style="padding-left:5%">
 augment: {a,h,1}
     {[c(m(B))]}
-    c-cm-m-mp-B-ah!-h
-    [fo:3 eg:3 ah:1 cm:1] 14
-    {[B(!A(!j a b) p k)]}
+    c m aBp--h
+    [fo eg ah cm]
+    {[B(A(j a! b) p k)]}
 </pre>
 Here, the first line shows the edge joining the two trees;
-the second shows the external trees before the matching is augmented;
+the second shows the nontrivial external trees before the matching is augmented;
 the third shows the augmenting path in the outer graph
-with the inter-tree edge marked with an exclamation point;
+with the inter-tree edge highlighted with a pair of dashes;
 the fourth line shows the matching edges in the outer graph
-resulting from the augmentation, including their total weight;
+resulting from the augmentation;
 and the last shows the unexpanded outer blossoms at the start of
 the next phase.
 <p>
@@ -2599,7 +2651,7 @@ If this results in an outer graph with
 non-trivial alternating path trees, they are shown on a separate line.
 For example:
 <pre style="padding-left:5%">
-blossom: {b,p,2} A B[A p k]
+blossom: {b,p,2} A B[aAb p k]
 </pre>
 When a relabeling operation occurs, the values of the $\delta_i$ are shown,
 followed by the eligible edges, the non-trivial blossoms (if any)
@@ -2693,7 +2745,7 @@ Once the number of weights becomes large enough for most edges to have
 distinct weights, the number of relabeling operations stops growing.
 So for random graphs, the number of blossoms and relabels both seem
 to grow no more than linearly in $n$, leading to an overall running
-time od $O(mn)$ for Edmonds algorithm on these random graphs.
+time of $O(mn)$ for Edmonds algorithm on these random graphs.
 
 <h3>Galil, Micali and Gabow's Algorithm</h3>
 While Edmond's algorithm performs quite well on random graphs, there is
@@ -2703,34 +2755,34 @@ could be improved to $O(mn\log n)$ with the help of some additional
 data structures.
 <p>
 First, the algorithm maintains several heaps to speedup the relabeling process.
-An <code>ArrayHeap</code> with an <code>add2keys</code>
+An $\ArrayHeap$ with an $\add2keys$
 method (allowing an offset to be added to the keys of all items in
 constant time) is suitable for this purpose.
 Here is a list of heaps that can be used.
 <ul>
-<li> <code>evh</code> contains all the even vertices,
-    where the key of vertex <code>u</code> is <code>z[u]</code>,
-    the dual variable for <code>u</code>.
-<li> <code>ovh</code> contains all the odd vertices,
-    where the key of vertex <code>u</code> is <code>z[u]</code>,
-    the dual variable for <code>u</code>.
-<li> <code>ebh</code> contains all the even non-trivial blossoms,
-    where the key of blossom <code>b</code> is <code>z[b]/2</code>,
-    the dual variable for <code>b</code>.
-<li> <code>obh</code> contains all the odd non-trivial blossoms,
-    where the key of vertex <code>b</code> is <code>z[b]/2</code>,
-    the dual variable for <code>b</code>.
-<li> <code>euh</code> contains all the external edges with one even
+<li> $\evh$ contains all the even vertices,
+    where the key of vertex $u$ is $z[u]$,
+    the dual variable for $u$.
+<li> $\ovh$ contains all the odd vertices,
+    where the key of vertex $u$ is $z[u]$,
+    the dual variable for $u$.
+<li> $\ebh$ contains all the even non-trivial blossoms,
+    where the key of blossom $b$ is $z[b]/2$,
+    the dual variable for $b$.
+<li> $\obh$ contains all the odd non-trivial blossoms,
+    where the key of vertex $b$ is $z[b]/2$,
+    the dual variable for $b$.
+<li> $\euh$ contains all the external edges with one even
     and one unbound endpoint,
-    where the key of edge <code>e</code> is <code>slack(e)</code>,
-    the slack of the dual constraint for <code>e</code>.
-<li> <code>eeh</code> contains all the external edges with two even endpoints,
-    where the key of edge <code>e</code> is <code>slack(e)/2</code>.
+    where the key of edge $e$ is $slack(e)$,
+    the slack of the dual constraint for $e$.
+<li> $\eeh$ contains all the external edges with two even endpoints,
+    where the key of edge $e$ is $slack(e)/2$.
 </ul>
-Notice that this allows $\delta_1$ to be computed as <code>findmin(evh)</code>,
-$\delta_2$ as <code>findmin(euh)</code> and 
-$\delta_3$ as <code>findmin(eeh)</code> and 
-$\delta_4$ as <code>findmin(obh)</code>.
+Notice that this allows $\delta_1$ to be computed as $\findmin(\evh)$,
+$\delta_2$ as $\findmin(\euh)$ and 
+$\delta_3$ as $\findmin(\eeh)$ and 
+$\delta_4$ as $\findmin(\obh)$.
 Also, dual variables can be effectively updated by adding or subtracting
 $\delta$ or $2\delta$ to all the keys in each of these heaps.
 This ensures that the key values in the heaps
@@ -2741,18 +2793,18 @@ This approach also incurs some additional overhead, since a change to the
 state of a vertex or blossom now requires updates to one or more heaps.
 Still, the overall effect is to significantly reduce the worst-case time bound.
 <p>
-Now, there is one issue with the heap <code>euh</code>.
+Now, there is one issue with the heap $\euh$.
 When an odd blossom $B$ is expanded, the sub-blossoms of $B$ can become
 even or unbound. The unbound sub-blossoms can later become odd.
 Consequently, vertices can alternate between odd and unreached many times
 during the course of a phase, and that means that edges may alternate
 between being even-to-odd and even-to-unbound many times per phase.
 That in turn means that they may have to be added and removed from
-<code>euh</code> many times, leading to a potentially large added overhead.
+$\euh$ many times, leading to a potentially large added overhead.
 <p>
-The issue can be addressed by replacing <code>euh</code> with a
+The issue can be addressed by replacing $\euh$ with a
 <a href="../../dataStructures/specialty/specialty.html#GroupHeap">group heap</a>,
-<code>exh</code>. 
+$\exh$. 
 Recall that in a group heap, the heap items are partitioned into groups
 that are classified as <i>active</i> or <i>inactive</i>.
 The usual heap operations effectively ignore inactive items, allowing one
@@ -2762,16 +2814,16 @@ the heap items are edges with one even endpoint and another that is
 either odd or unbound.
 There is a group for the edges incident to each odd or unbound outer blossom,
 with the groups for the edges at unbound blossoms treated as active.
-When an odd blossom is expanded, its edges in <code>exh</code> are
+When an odd blossom is expanded, its edges in $\exh$ are
 distributed according to which of the new outer blossoms they are incident to.
 <ul>
 <li> If the new outer blossom is odd, a new inactive group is created for it.
 <li> If the new outer blossom is unbound, a new active group is created for it.
-<li> If the new outer blossom is even, its edges are added to <code>eeh</code>,
+<li> If the new outer blossom is even, its edges are added to $\eeh$,
      the heap for even-to-even edges.
 </ul>
 To make this operation efficient, the algorithm uses the
-group heap's <code>divide</code> operation
+group heap's $\divide$ operation
 and orders the edges within each group so that those edges incident to
 a particular sub-blossom are grouped together.
 More precisely, if $e_1=\{u_1,v_1\}$ and $e_2=\{u_2,v_2\}$ are edges
@@ -2779,13 +2831,13 @@ incident to an odd or unbound outer blossom $B$,
 where $v_1$ and $v_2$ are the endpoints in $B$,
 and $v_1$ precedes $v_2$ in the blossom structure tree for $B$,
 then $e_1$ appears before $e_2$ in the group of edges for $B$'s group
-in <code>exh</code>. When an odd blossom is expanded, its blossom structure
-tree is split into smaller trees and its group in <code>exh</code> is
+in $\exh$. When an odd blossom is expanded, its blossom structure
+tree is split into smaller trees and its group in $\exh$ is
 similarly split into smaller groups. Because the edges for these smaller
 groups are ordered in the same way as the blossom structure tree,
 they can be separated using the divide operation.
 <p>
-There is another issue about the implementation of <code>exh</code>
+There is another issue about the implementation of $\exh$
 that must be addressed.
 There are times when an individual edge $e$ must be added to a group $g$
 associated with outer blossom $B$.
@@ -2829,7 +2881,7 @@ let match;        // Matching object representing matching for graph
 let bloss;        // Blossoms object representing blossoms and matching trees
 
 let Z;            // Z[b] is dual variable for blossom (or vertex) b
-				  // for all b not currently in a vertex or blossom heap
+                  // for all b not currently in a vertex or blossom heap
 let bq;           // temporary list of blossoms
 let mark;         // temporary array of flags
 
@@ -2839,156 +2891,156 @@ let obh;          // heap of odd outer blossoms, with key[b]=Z[b]/2
 let ebh;          // heap of even outer blossoms, with key[b]=Z[b]/2
 
 let eeh;          // heap of external edges with two even endpoints
-				  // key(e) = slack(e)/2
+                  // key(e) = slack(e)/2
 let exh;          // GroupHeap object containing a group of edges incident
-				  // to each odd or unbound blossom, key(e) = slack(e)
+                  // to each odd or unbound blossom, key(e) = slack(e)
 let firstVertex;  // firstVertex[b] is first vertex in blossom b
 
 export default function wmatchGMG(G ..) {
-	g = G;
-	match = new Matching(g);
-	bloss = new Blossoms(g, match, 2);
-	Z = new Float32Array(bloss.n+1);
-	bq = new List(bloss.n);
-	mark = new Int8Array(bloss.n+1).fill(false);
-	
-	ovh = new ArrayHeap(g.n);
-	evh = new ArrayHeap(g.n);
-	obh = new ArrayHeap(bloss.n);
-	ebh = new ArrayHeap(bloss.n);
-	eeh = new ArrayHeap(g.edgeRange);
-	exh = new GroupHeap(g.edgeRange+g.n, bloss.n);
-	firstVertex = new Int32Array(bloss.n+1);
+    g = G;
+    match = new Matching(g);
+    bloss = new Blossoms(g, match, 2);
+    Z = new Float32Array(bloss.n+1);
+    bq = new List(bloss.n);
+    mark = new Int8Array(bloss.n+1).fill(false);
+    
+    ovh = new ArrayHeap(g.n);
+    evh = new ArrayHeap(g.n);
+    obh = new ArrayHeap(bloss.n);
+    ebh = new ArrayHeap(bloss.n);
+    eeh = new ArrayHeap(g.edgeRange);
+    exh = new GroupHeap(g.edgeRange+g.n, bloss.n);
+    firstVertex = new Int32Array(bloss.n+1);
 
-	let maxwt = 0;
-	for (let e = g.first(); e; e = g.next(e)) {
-		maxwt = Math.max(g.weight(e),maxwt);
-	}
-	if (maxwt == 0)
-		return [match, trace ? 'no positive weights\n' : '', {'weight':0}];
-	Z.fill(maxwt/2.0,1,g.n+1);
+    let maxwt = 0;
+    for (let e = g.first(); e; e = g.next(e)) {
+        maxwt = Math.max(g.weight(e),maxwt);
+    }
+    if (maxwt == 0)
+        return [match, trace ? 'no positive weights\n' : '', {'weight':0}];
+    Z.fill(maxwt/2.0,1,g.n+1);
 
-	for (let u = 1; u <= g.n; u++) {
-		evh.insert(u,Z[u]); firstVertex[u] = u;
-	}
-	for (let e = g.first(); e; e = g.next(e)) {
-		eeh.insert(e,slack(e)/2);
-	}
+    for (let u = 1; u <= g.n; u++) {
+        evh.insert(u,Z[u]); firstVertex[u] = u;
+    }
+    for (let e = g.first(); e; e = g.next(e)) {
+        eeh.insert(e,slack(e)/2);
+    }
 
-	let finished = false;
-	while (!finished) {
-		// process eligible edges with an even endpoint
-		while (true) {
-			let ee = eeh.findmin();
-			let eu = exh.findmin();
-			if (ee && eeh.key(ee) == 0) {
-				eeh.delete(ee)
-				let [u,v] = [g.left(ee),g.right(ee)];
-				let [U,V] = [bloss.outer(u),bloss.outer(v)];
-				if (U == V) continue;
-				let A = nca(U,V);
-				if (A == 0) {
-					// augment matching and prepare for next phase
-					augment(ee); newPhase();
-					continue;
-				}
+    let finished = false;
+    while (!finished) {
+        // process eligible edges with an even endpoint
+        while (true) {
+            let ee = eeh.findmin();
+            let eu = exh.findmin();
+            if (ee && eeh.key(ee) == 0) {
+                eeh.delete(ee)
+                let [u,v] = [g.left(ee),g.right(ee)];
+                let [U,V] = [bloss.outer(u),bloss.outer(v)];
+                if (U == V) continue;
+                let A = nca(U,V);
+                if (A == 0) {
+                    // augment matching and prepare for next phase
+                    augment(ee); newPhase();
+                    continue;
+                }
 
-				// add new blossom
-				let [B,subs] = bloss.addBlossom(ee,A);
-				Z[B] = 0; ebh.insert(B,0);
-				firstVertex[B] = firstVertex[subs.first()];
+                // add new blossom
+                let [B,subs] = bloss.addBlossom(ee,A);
+                Z[B] = 0; ebh.insert(B,0);
+                firstVertex[B] = firstVertex[subs.first()];
 
-				// now update heaps for former outer blossoms
-				for (let b = subs.first(); b; b = subs.next(b)) {
-					if (b > g.n && ebh.contains(b)) {
-						// b no longer an outer blossom, but its vertices
-						// are still even
-						Z[b] = 2*ebh.key(b); ebh.delete(b);
-					} if (b >  g.n && obh.contains(b) ||
-						  b <= g.n && ovh.contains(b)) {
-						if (b > g.n) {
-							Z[b] = 2*obh.key(b); obh.delete(b);
-						}
-						for (let u = bloss.firstIn(b); u;
-									 u = bloss.nextIn(b,u)) {
-							Z[u] = ovh.key(u); ovh.delete(u);
-							evh.insert(u, Z[u]);
-						}
-						exh.clear(b); addEXedges(b)
-					}
-				}
-			} else if (eu && eu <= g.edgeRange) {
-				let [u,v] = [g.left(eu),g.right(eu)];
-				let [U,V] = [bloss.outer(u),bloss.outer(v)];
-				if (bloss.state(U) != +1) [u,v,U,V] = [v,u,V,U];
-				if (exh.key(eu, V) != 0) break;
-				let W = bloss.addBranch(eu,v,V);
+                // now update heaps for former outer blossoms
+                for (let b = subs.first(); b; b = subs.next(b)) {
+                    if (b > g.n && ebh.contains(b)) {
+                        // b no longer an outer blossom, but its vertices
+                        // are still even
+                        Z[b] = 2*ebh.key(b); ebh.delete(b);
+                    } if (b >  g.n && obh.contains(b) ||
+                          b <= g.n && ovh.contains(b)) {
+                        if (b > g.n) {
+                            Z[b] = 2*obh.key(b); obh.delete(b);
+                        }
+                        for (let u = bloss.firstIn(b); u;
+                                     u = bloss.nextIn(b,u)) {
+                            Z[u] = ovh.key(u); ovh.delete(u);
+                            evh.insert(u, Z[u]);
+                        }
+                        exh.clear(b); addEXedges(b)
+                    }
+                }
+            } else if (eu && eu <= g.edgeRange) {
+                let [u,v] = [g.left(eu),g.right(eu)];
+                let [U,V] = [bloss.outer(u),bloss.outer(v)];
+                if (bloss.state(U) != +1) [u,v,U,V] = [v,u,V,U];
+                if (exh.key(eu, V) != 0) break;
+                let W = bloss.addBranch(eu,v,V);
 
-				// update heaps
-				if (V > g.n)
-					obh.insert(V, Z[V]/2);
-				for (let u = bloss.firstIn(V); u; u = bloss.nextIn(V,u))
-					ovh.insert(u,Z[u]);
-				exh.delete(eu, V); exh.deactivate(V);
+                // update heaps
+                if (V > g.n)
+                    obh.insert(V, Z[V]/2);
+                for (let u = bloss.firstIn(V); u; u = bloss.nextIn(V,u))
+                    ovh.insert(u,Z[u]);
+                exh.delete(eu, V); exh.deactivate(V);
 
-				if (W > g.n) ebh.insert(W, Z[W]/2);
-				for (let u = bloss.firstIn(W); u; u = bloss.nextIn(W,u))
-					evh.insert(u,Z[u]);
-				exh.clear(W); addEXedges(W);
-			} else {
-				break;
-			}
-		}
+                if (W > g.n) ebh.insert(W, Z[W]/2);
+                for (let u = bloss.firstIn(W); u; u = bloss.nextIn(W,u))
+                    evh.insert(u,Z[u]);
+                exh.clear(W); addEXedges(W);
+            } else {
+                break;
+            }
+        }
 
-		// adjust vertex/blossom labels, creating more eligible edges
-		// and/or reducing number of vertices in odd blossoms
-		finished = relabel();
-	}
+        // adjust vertex/blossom labels, creating more eligible edges
+        // and/or reducing number of vertices in odd blossoms
+        finished = relabel();
+    }
 
-	bloss.rematchAll(); // make matching consistent
+    bloss.rematchAll(); // make matching consistent
 
-	return [match ..];
+    return [match ..];
 }
 
 function slack(e) {
-	return s = z(g.left(e)) + z(g.right(e)) - g.weight(e);
+    return s = z(g.left(e)) + z(g.right(e)) - g.weight(e);
 }
 
 function z(b) {
-	if (b <= g.n) {
-		return  evh.contains(b) ? evh.key(b) :
-			   (ovh.contains(b) ? ovh.key(b) : Z[b]);
-	} else {
-		return  ebh.contains(b) ? 2*ebh.key(b) :
-			   (obh.contains(b) ? 2*obh.key(b) : Z[b]);
-	}
+    if (b <= g.n) {
+        return  evh.contains(b) ? evh.key(b) :
+               (ovh.contains(b) ? ovh.key(b) : Z[b]);
+    } else {
+        return  ebh.contains(b) ? 2*ebh.key(b) :
+               (obh.contains(b) ? 2*obh.key(b) : Z[b]);
+    }
 }
 
 function augment(e) {
-	// trace paths up to tree roots and update matching
-	match.add(e);
-	let x = g.left(e); let X = bloss.outer(x);
-	let [y,ee] = bloss.link(X);
-	while (y) {
-		if (match.contains(ee)) {
-			match.drop(ee); bloss.base(X,x);
-		} else {
-			match.add(ee); bloss.base(X,y);
-		}
-		x = g.mate(y,ee); X = bloss.outer(x); [y,ee] = bloss.link(X);
-	}
-	bloss.base(X,x);
+    // trace paths up to tree roots and update matching
+    match.add(e);
+    let x = g.left(e); let X = bloss.outer(x);
+    let [y,ee] = bloss.link(X);
+    while (y) {
+        if (match.contains(ee)) {
+            match.drop(ee); bloss.base(X,x);
+        } else {
+            match.add(ee); bloss.base(X,y);
+        }
+        x = g.mate(y,ee); X = bloss.outer(x); [y,ee] = bloss.link(X);
+    }
+    bloss.base(X,x);
 
-	x = g.right(e); X = bloss.outer(x); [y,ee] = bloss.link(X);
-	while (y) {
-		if (match.contains(ee)) {
-			match.drop(ee); bloss.base(X,x);
-		} else {
-			match.add(ee); bloss.base(X,y);
-		}
-		x = g.mate(y,ee); X = bloss.outer(x); [y,ee] = bloss.link(X);
-	}
-	bloss.base(X,x);
+    x = g.right(e); X = bloss.outer(x); [y,ee] = bloss.link(X);
+    while (y) {
+        if (match.contains(ee)) {
+            match.drop(ee); bloss.base(X,x);
+        } else {
+            match.add(ee); bloss.base(X,y);
+        }
+        x = g.mate(y,ee); X = bloss.outer(x); [y,ee] = bloss.link(X);
+    }
+    bloss.base(X,x);
 }
 
 /** Prepare for next phase, following an augmentation.
@@ -2996,124 +3048,124 @@ function augment(e) {
  *  blossoms to unbound or even and their links to null.
  */
 function newPhase() {
-	// expand outer blossoms with z == 0 (note: these are even)
-	bq.clear();
-	for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
-		if (b > g.n && z(b) == 0) bq.enq(b);
-	}
-	while (!bq.empty()) {
-		let b = bq.deq();
-		let subs = bloss.expand(b); 
-		for (let sb = subs.first(); sb; sb = subs.next(sb)) {
-			if (z(sb) == 0 && sb > g.n) bq.enq(sb);
-		}
-	}
+    // expand outer blossoms with z == 0 (note: these are even)
+    bq.clear();
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+        if (b > g.n && z(b) == 0) bq.enq(b);
+    }
+    while (!bq.empty()) {
+        let b = bq.deq();
+        let subs = bloss.expand(b); 
+        for (let sb = subs.first(); sb; sb = subs.next(sb)) {
+            if (z(sb) == 0 && sb > g.n) bq.enq(sb);
+        }
+    }
 
-	// set states/links of remaining outer blossoms based on matching status
-	for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
-		bloss.state(b, match.at(bloss.base(b)) ? 0 : +1); bloss.link(b,[0,0]);
-	}
+    // set states/links of remaining outer blossoms based on matching status
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+        bloss.state(b, match.at(bloss.base(b)) ? 0 : +1); bloss.link(b,[0,0]);
+    }
 
-	// rebuild the heaps from scratch
-	// update the z variables while clearing the vertex and blossom heaps
-	for (let u = evh.findmin(); u; u = evh.findmin()) {
-		Z[u] = evh.key(u); evh.delete(u);
-	}
-	for (let u = ovh.findmin(); u; u = ovh.findmin(u)) {
-		Z[u] = ovh.key(u); ovh.delete(u);
-	}
-	for (let b = ebh.findmin(); b; b = ebh.findmin(b)) {
-		Z[b] = 2*ebh.key(b); ebh.delete(b);
-	}
-	for (let b = obh.findmin(); b; b = obh.findmin(b)) {
-		Z[b] = 2*obh.key(b); obh.delete(b);
-	}
-	exh.clear(); eeh.clear();
-	// rebuild vertex heaps and edge heaps, using new states
-	for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
-		if (bloss.state(b) == +1) {
-			if (b > g.n) ebh.insert(b, Z[b]/2);
-			// add ee edges to eeh
-			for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
-				evh.insert(u,Z[u]);
-				for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
-					let v = g.mate(u,e); let V = bloss.outer(v);
-					if (V != b && bloss.state(V) == +1 && !eeh.contains(e))
-						eeh.insert(e, slack(e)/2);
-				}
-			}
-		} else {
-			// build subheaps for unbound blossoms in exh
-			// order of edges with subheaps matches order of vertices within
-			// outer blossoms
-			let laste = 0;
-			for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
-				// insert dummy edge for u in b's subheap within exh
-				let e = u + g.edgeRange;
-				exh.insertAfter(e, b, Infinity, laste); laste = e;
-				for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
-					let v = g.mate(u,e); let V = bloss.outer(v);
-					if (bloss.state(V) == +1) {
-						exh.insertAfter(e, b, slack(e), laste); laste = e;
-					}
-				}
-			}
-			exh.activate(b);
-		}
-	}
+    // rebuild the heaps from scratch
+    // update the z variables while clearing the vertex and blossom heaps
+    for (let u = evh.findmin(); u; u = evh.findmin()) {
+        Z[u] = evh.key(u); evh.delete(u);
+    }
+    for (let u = ovh.findmin(); u; u = ovh.findmin(u)) {
+        Z[u] = ovh.key(u); ovh.delete(u);
+    }
+    for (let b = ebh.findmin(); b; b = ebh.findmin(b)) {
+        Z[b] = 2*ebh.key(b); ebh.delete(b);
+    }
+    for (let b = obh.findmin(); b; b = obh.findmin(b)) {
+        Z[b] = 2*obh.key(b); obh.delete(b);
+    }
+    exh.clear(); eeh.clear();
+    // rebuild vertex heaps and edge heaps, using new states
+    for (let b = bloss.firstOuter(); b; b = bloss.nextOuter(b)) {
+        if (bloss.state(b) == +1) {
+            if (b > g.n) ebh.insert(b, Z[b]/2);
+            // add ee edges to eeh
+            for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
+                evh.insert(u,Z[u]);
+                for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+                    let v = g.mate(u,e); let V = bloss.outer(v);
+                    if (V != b && bloss.state(V) == +1 && !eeh.contains(e))
+                        eeh.insert(e, slack(e)/2);
+                }
+            }
+        } else {
+            // build subheaps for unbound blossoms in exh
+            // order of edges with subheaps matches order of vertices within
+            // outer blossoms
+            let laste = 0;
+            for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
+                // insert dummy edge for u in b's subheap within exh
+                let e = u + g.edgeRange;
+                exh.insertAfter(e, b, Infinity, laste); laste = e;
+                for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+                    let v = g.mate(u,e); let V = bloss.outer(v);
+                    if (bloss.state(V) == +1) {
+                        exh.insertAfter(e, b, slack(e), laste); laste = e;
+                    }
+                }
+            }
+            exh.activate(b);
+        }
+    }
 }
 
 function relabel() {
-	let d1 = evh.empty() ? 0 : evh.key(evh.findmin());
+    let d1 = evh.empty() ? 0 : evh.key(evh.findmin());
 
-	let e = exh.findmin();
-	let d2 = (e && e <= g.edgeRange ? slack(e) : Infinity);
+    let e = exh.findmin();
+    let d2 = (e && e <= g.edgeRange ? slack(e) : Infinity);
 
-	e = eeh.findmin();
-	while (e && bloss.outer(g.left(e)) == bloss.outer(g.right(e))) {
-		eeh.delete(e); e = eeh.findmin();
-	}
-	let d3 = (e ? eeh.key(e) : Infinity);
+    e = eeh.findmin();
+    while (e && bloss.outer(g.left(e)) == bloss.outer(g.right(e))) {
+        eeh.delete(e); e = eeh.findmin();
+    }
+    let d3 = (e ? eeh.key(e) : Infinity);
 
-	let d4 = obh.empty() ? Infinity : obh.key(obh.findmin());
+    let d4 = obh.empty() ? Infinity : obh.key(obh.findmin());
 
-	let delta = Math.min(d1,d2,d3,d4);
+    let delta = Math.min(d1,d2,d3,d4);
 
-	evh.add2keys(-delta);   ovh.add2keys(+delta);
-	ebh.add2keys(+delta);   obh.add2keys(-delta);
-	eeh.add2keys(-delta);   exh.add2keys(-delta);
+    evh.add2keys(-delta);   ovh.add2keys(+delta);
+    ebh.add2keys(+delta);   obh.add2keys(-delta);
+    eeh.add2keys(-delta);   exh.add2keys(-delta);
 
-	if (delta == d4) {
-		let b = obh.deletemin();
-		Z[b] = 0; 
-		let subs = bloss.expandOdd(b);
-		for (let sb = subs.first(); sb; sb = subs.next(sb)) {
-			let next = subs.next(sb);
-			let e = (next ? firstVertex[next] + g.edgeRange : 0);
-			exh.divide(b, e, sb);
-		}
-		for (let sb = subs.first(); sb; sb = subs.next(sb)) {
-			if (bloss.state(sb) == -1) {
-				if (sb > g.n) obh.insert(sb,Z[sb]/2);
-			} else {
-				for (let u = bloss.firstIn(sb); u; u = bloss.nextIn(sb,u)) {
-					Z[u] = ovh.key(u); ovh.delete(u);
-					if (bloss.state(sb) == +1) evh.insert(u,Z[u]);
-				}
-				if (bloss.state(sb) == 0) {
-					exh.activate(sb);
-				} else {
-					if (sb > g.n) ebh.insert(sb,Z[sb]/2);
-					exh.clear(sb); addEXedges(sb);
-				}
-			}
-		}
-	}
+    if (delta == d4) {
+        let b = obh.deletemin();
+        Z[b] = 0; 
+        let subs = bloss.expandOdd(b);
+        for (let sb = subs.first(); sb; sb = subs.next(sb)) {
+            let next = subs.next(sb);
+            let e = (next ? firstVertex[next] + g.edgeRange : 0);
+            exh.divide(b, e, sb);
+        }
+        for (let sb = subs.first(); sb; sb = subs.next(sb)) {
+            if (bloss.state(sb) == -1) {
+                if (sb > g.n) obh.insert(sb,Z[sb]/2);
+            } else {
+                for (let u = bloss.firstIn(sb); u; u = bloss.nextIn(sb,u)) {
+                    Z[u] = ovh.key(u); ovh.delete(u);
+                    if (bloss.state(sb) == +1) evh.insert(u,Z[u]);
+                }
+                if (bloss.state(sb) == 0) {
+                    exh.activate(sb);
+                } else {
+                    if (sb > g.n) ebh.insert(sb,Z[sb]/2);
+                    exh.clear(sb); addEXedges(sb);
+                }
+            }
+        }
+    }
 
-	if (delta == d1) {
-		return true; // we have max weight matching
-	}
-	return false;
+    if (delta == d1) {
+        return true; // we have max weight matching
+    }
+    return false;
 }
 
 /** Add ex edges incident to an even blossom or sub-blossom.
@@ -3122,19 +3174,19 @@ function relabel() {
  *  to either eeh or exh as appropriate 
  */
 function addEXedges(b) {
-	let bb = bloss.outer(b);
-	for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
-		for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
-			steps++;
-			let v = g.mate(u,e); let V = bloss.outer(v);
-			if (V == bb) continue;
-			if (bloss.state(V) == +1)
-				eeh.insert(e,slack(e)/2);
-			else {// V is odd or unbound
-				exh.insertAfter(e, V, slack(e), v+g.edgeRange);
-			}
-		}
-	}
+    let bb = bloss.outer(b);
+    for (let u = bloss.firstIn(b); u; u = bloss.nextIn(b,u)) {
+        for (let e = g.firstAt(u); e; e = g.nextAt(u,e)) {
+            steps++;
+            let v = g.mate(u,e); let V = bloss.outer(v);
+            if (V == bb) continue;
+            if (bloss.state(V) == +1)
+                eeh.insert(e,slack(e)/2);
+            else {// V is odd or unbound
+                exh.insertAfter(e, V, slack(e), v+g.edgeRange);
+            }
+        }
+    }
 }
 
 /** Find the nearest common ancestor of two vertices in
@@ -3147,82 +3199,86 @@ function addEXedges(b) {
  *  @returns the nearest common ancestor of u and v or 0 if none
  */
 function nca(U, V) {
-	let result;
-	// first pass to find the nca
-	let X = U; let [x,ex] = bloss.link(X);
-	let Y = V; let [y,ey] = bloss.link(Y);
-	while (true) {
-		steps++;
-		if (X == Y) { result = X; break; }
-		if (mark[X]) { result = X; break; }
-		if (mark[Y]) { result = Y; break; }
-		if (!x && !y) { result = 0; break; }
-		if (x) {
-			mark[X] = true;
-			X = bloss.outer(g.mate(x,ex)); [x,ex] = bloss.link(X);
-		}
-		if (y) {
-			mark[Y] = true;
-			Y = bloss.outer(g.mate(y,ey)); [y,ey] = bloss.link(Y);
-		}
-	}
-	// second pass to clear mark bits
-	X = U; [x,ex] = bloss.link(X);
-	while (mark[X]) {
-		mark[X] = false;
-		X = bloss.outer(g.mate(x,ex)); [x,ex] = bloss.link(X);
-	}
-	Y = V; [y,ey] = bloss.link(Y);
-	while (mark[Y]) {
-		mark[Y] = false;
-		Y = bloss.outer(g.mate(y,ey)); [y,ey] = bloss.link(Y);
-	}
-	return result;
+    let result;
+    // first pass to find the nca
+    let X = U; let [x,ex] = bloss.link(X);
+    let Y = V; let [y,ey] = bloss.link(Y);
+    while (true) {
+        steps++;
+        if (X == Y) { result = X; break; }
+        if (mark[X]) { result = X; break; }
+        if (mark[Y]) { result = Y; break; }
+        if (!x && !y) { result = 0; break; }
+        if (x) {
+            mark[X] = true;
+            X = bloss.outer(g.mate(x,ex)); [x,ex] = bloss.link(X);
+        }
+        if (y) {
+            mark[Y] = true;
+            Y = bloss.outer(g.mate(y,ey)); [y,ey] = bloss.link(Y);
+        }
+    }
+    // second pass to clear mark bits
+    X = U; [x,ex] = bloss.link(X);
+    while (mark[X]) {
+        mark[X] = false;
+        X = bloss.outer(g.mate(x,ex)); [x,ex] = bloss.link(X);
+    }
+    Y = V; [y,ey] = bloss.link(Y);
+    while (mark[Y]) {
+        mark[Y] = false;
+        Y = bloss.outer(g.mate(y,ey)); [y,ey] = bloss.link(Y);
+    }
+    return result;
 }
 </textarea> <p>
 An example of trace output from a demonstration run is shown below.
 <p> <textarea rows="20" cols="80" readonly
         style="font-size: 95%;background-color:lightCyan">
 {
-a[b:3 h:1 j:3 k:3] b[a:3 f:2 g:1 j:3 p:2] c[f:1 m:1]
-d[g:2] e[f:2 g:3 i:2 n:1] f[b:2 c:1 e:2 l:2 o:3 p:1]
-g[b:1 d:2 e:3 k:1 o:1] h[a:1] i[e:2] j[a:3 b:3]
-k[a:3 g:1 p:3] l[f:2 o:1] m[c:1 o:2 p:1] n[e:1]
-o[f:3 g:1 l:1 m:2] p[b:2 f:1 k:3 m:1]
+a[b:3 h:1 j:3 k:3] b[a:3 f:2 g:1 j:3 p:2] c[f:1 m:1] d[g:2]
+e[f:2 g:3 i:2 n:1] f[b:2 c:1 e:2 l:2 o:3 p:1] g[b:1 d:2 e:3 k:1 o:1] h[a:1]
+i[e:2] j[a:3 b:3] k[a:3 g:1 p:3] l[f:2 o:1]
+m[c:1 o:2 p:1] n[e:1] o[f:3 g:1 l:1 m:2] p[b:2 f:1 k:3 m:1]
 }
 eligible: [ab bj aj ak kp eg fo]
 
-augment: {a,b,3} a-ab!-b
-augment: {e,g,3} e-eg!-g
-augment: {f,o,3} f-fo!-o
-augment: {k,p,3} k-kp!-p
-branch: j-aj-a-ab-b
+augment: {a,b,3} a--b
+augment: {e,g,3} e--g
+augment: {f,o,3} f--o
+augment: {k,p,3} k--p
+
+branch: j a b
 blossom: {b,j,3} j A[j a b]
-branch: A-ak-k-kp-p
+branch: Aa k p
 relab(1.5 1 0.5 Infinity)
-  [bp]
-blossom: {b,p,2} A B[A p k]
+    [bp]
+blossom: {b,p,2} A B[aAb p k]
 relab(1 0.5 0.5 Infinity)
-  [ei bf fl dg mo mp ah cm]
-augment: {m,p,1} m-mp!-B
-    {[B(A(!j a b) !p k)]}
-branch: i-ei-e-eg-g
+    [ei bf fl dg mo mp ah cm]
+augment: {m,p,1} m--pB
+	{[B(aAb(j a b) p! k)]}
+
+branch: i e g
 augment: {d,g,2}
     {[i(e(g))]}
-    d-dg!-g-eg-e-ei-i
-    [fo:3 mp:1 dg:2 ei:2] 14
-    {[B(A(!j a b) !p k)]}
-branch: l-fl-f-fo-o
-branch: o-mo-m-mp-B
+    d--g e i
+    [fo mp dg ei]
+	{[B(aAb(j a b) p! k)]}
+
+branch: l f o
+branch: o m pB
 augment: {a,h,1}
     {[l(f(o(m(B))))]}
-    l-fl-f-fo-o-mo-m-mp-B-ah!-h
-    [dg:2 ei:2 ah:1 mo:2 fl:2] 15
-    {[B(!A(!j a b) p k)]}
-branch: c-cm-m-mo-o
-branch: o-fo-f-fl-l
+    l f o m aBp--h
+    [dg ei ah mo fl]
+	{[B(aAb(j a! b) p k)]}
+
+branch: c m o
+branch: o f l
 relab(0.5 1 0.5 Infinity) and finished
-final matching: [dg:2 ei:2 ah:1 mo:2 fl:2 kp:3 bj:3] 15
+
+final matching: [dg ei ah mo fl kp bj]
 </textarea> <p>
 This is similar (but not identical) to the trace output for the original
 version of Edmond's algorithm.

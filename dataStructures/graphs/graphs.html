@@ -30,77 +30,80 @@
 <body bgcolor=ffffff>
 \(
 \newcommand{\this}{\textit{this}}
-\newcommand{\true}{\texttt{true}}
-\newcommand{\Graph}{\texttt{Graph}}
-\newcommand{\Digraph}{\texttt{Digraph}}
-\newcommand{\Flograph}{\texttt{Flograph}}
-\newcommand{\ListPair}{\texttt{ListPair}}
-\newcommand{\ListSet}{\texttt{ListSet}}
-\newcommand{\toString}{\texttt{toString}}
-\newcommand{\fromString}{\texttt{fromString}}
-\newcommand{\equals}{\texttt{equals}}
-\newcommand{\edgeRange}{\texttt{edgeRange}}
-\newcommand{\constructor}{\texttt{constructor}}
+\newcommand{\true}{\textit{true}}
+\newcommand{\Graph}{\textit{graph}}
+\newcommand{\Digraph}{\textit{digraph}}
+\newcommand{\Flograph}{\textit{flograph}}
+\newcommand{\ListPair}{\textit{list pair}}
+\newcommand{\ListSet}{\textit{list set}}
+\newcommand{\edges}{\textit{edges}}
+\newcommand{\toString}{\textit{toString}}
+\newcommand{\fromString}{\textit{fromString}}
+\newcommand{\equals}{\textit{equals}}
+\newcommand{\edgeRange}{\textit{edgeRange}}
+\newcommand{\constructor}{\textit{constructor}}
 \newcommand{\n}{\textit{n}}
 \newcommand{\m}{\textit{m}}
-\newcommand{\clear}{\texttt{clear}}
-\newcommand{\validVertex}{\texttt{validVertex}}
-\newcommand{\validEdge}{\texttt{validEdge}}
-\newcommand{\left}{\texttt{left}}
-\newcommand{\right}{\texttt{right}}
-\newcommand{\head}{\texttt{head}}
-\newcommand{\tail}{\texttt{tail}}
-\newcommand{\first}{\texttt{first}}
-\newcommand{\next}{\texttt{next}}
-\newcommand{\firstAt}{\texttt{firstAt}}
-\newcommand{\nextAt}{\texttt{nextAt}}
-\newcommand{\mate}{\texttt{mate}}
-\newcommand{\join}{\texttt{join}}
-\newcommand{\delete}{\texttt{delete}}
-\newcommand{\degree}{\texttt{degree}}
-\newcommand{\maxDegree}{\texttt{maxDegree}}
-\newcommand{\weight}{\texttt{weight}}
-\newcommand{\length}{\texttt{length}}
-\newcommand{\cost}{\texttt{cost}}
-\newcommand{\firstIn}{\texttt{firstIn}}
-\newcommand{\firstOut}{\texttt{firstOut}}
-\newcommand{\nextIn}{\texttt{nextIn}}
-\newcommand{\nextOut}{\texttt{nextOut}}
-\newcommand{\inDegree}{\texttt{inDegree}}
-\newcommand{\outDegree}{\texttt{outDegree}}
-\newcommand{\source}{\texttt{source}}
-\newcommand{\sink}{\texttt{sink}}
-\newcommand{\res}{\texttt{res}}
-\newcommand{\flow}{\texttt{flow}}
-\newcommand{\setCapacity}{\texttt{setCapacity}}
-\newcommand{\addFlow}{\texttt{addFlow}}
-\newcommand{\clearFlow}{\texttt{clearFlow}}
-\newcommand{\totalFlow}{\texttt{totalFlow}}
-\newcommand{\totalCost}{\texttt{totalCost}}
-\newcommand{\floor}{\texttt{floor}}
-\newcommand{\hasFloors}{\texttt{hasFloors}}
-\newcommand{\hasWeights}{\texttt{hasWeights}}
-\newcommand{\hasLengths}{\texttt{hasLengths}}
-\newcommand{\hasCosts}{\texttt{hasCosts}}
-\newcommand{\randomGraph}{\texttt{randomGraph}}
-\newcommand{\randomTree}{\texttt{randomTree}}
-\newcommand{\randomConnectedGraph}{\texttt{randomConnectedGraph}}
-\newcommand{\randomRegularGraph}{\texttt{randomRegularGraph}}
-\newcommand{\randomBigraph}{\texttt{randomBigraph}}
-\newcommand{\randomRegularBigraph}{\texttt{randomRegularBigraph}}
-\newcommand{\randomDigraph}{\texttt{randomDigraph}}
-\newcommand{\randomFlograph}{\texttt{randomFlograph}}
-\newcommand{\randomWeights}{\texttt{randomWeights}}
-\newcommand{\randomLengths}{\texttt{randomLengths}}
-\newcommand{\randomCosts}{\texttt{randomCosts}}
-\newcommand{\randomCapacities}{\texttt{randomCapacities}}
-\newcommand{\randomFloors}{\texttt{randomFloors}}
-\newcommand{\Random}{\texttt{Random}}
-\newcommand{\RandomGraph}{\texttt{RandomGraph}}
-\newcommand{\randomFraction}{\texttt{randomFraction}}
-\newcommand{\randomInteger}{\texttt{randomInteger}}
-\newcommand{\randomPareto}{\texttt{randomPareto}}
-\newcommand{\randomExp}{\texttt{randomExp}}
+\newcommand{\clear}{\textit{clear}}
+\newcommand{\validVertex}{\textit{validVertex}}
+\newcommand{\validEdge}{\textit{validEdge}}
+\newcommand{\left}{\textit{left}}
+\newcommand{\right}{\textit{right}}
+\newcommand{\head}{\textit{head}}
+\newcommand{\tail}{\textit{tail}}
+\newcommand{\first}{\textit{first}}
+\newcommand{\next}{\textit{next}}
+\newcommand{\firstAt}{\textit{firstAt}}
+\newcommand{\nextAt}{\textit{nextAt}}
+\newcommand{\mate}{\textit{mate}}
+\newcommand{\join}{\textit{join}}
+\newcommand{\delete}{\textit{delete}}
+\newcommand{\degree}{\textit{degree}}
+\newcommand{\maxDegree}{\textit{maxDegree}}
+\newcommand{\weight}{\textit{weight}}
+\newcommand{\length}{\textit{length}}
+\newcommand{\cost}{\textit{cost}}
+\newcommand{\firstInto}{\textit{firstInto}}
+\newcommand{\firstOutof}{\textit{firstOutof}}
+\newcommand{\nextInto}{\textit{nextInto}}
+\newcommand{\nextOutof}{\textit{nextOutof}}
+\newcommand{\inDegree}{\textit{inDegree}}
+\newcommand{\outDegree}{\textit{outDegree}}
+\newcommand{\source}{\textit{source}}
+\newcommand{\sink}{\textit{sink}}
+\newcommand{\res}{\textit{res}}
+\newcommand{\f}{\textit{f}\,}
+\newcommand{\flow}{\textit{flow}}
+\newcommand{\cap}{\textit{cap}}
+\newcommand{\setCapacity}{\textit{setCapacity}}
+\newcommand{\addFlow}{\textit{addFlow}}
+\newcommand{\clearFlow}{\textit{clearFlow}}
+\newcommand{\totalFlow}{\textit{totalFlow}}
+\newcommand{\totalCost}{\textit{totalCost}}
+\newcommand{\floor}{\textit{floor}}
+\newcommand{\hasFloors}{\textit{hasFloors}}
+\newcommand{\hasWeights}{\textit{hasWeights}}
+\newcommand{\hasLengths}{\textit{hasLengths}}
+\newcommand{\hasCosts}{\textit{hasCosts}}
+\newcommand{\randomGraph}{\textit{randomGraph}}
+\newcommand{\randomTree}{\textit{randomTree}}
+\newcommand{\randomConnectedGraph}{\textit{randomConnectedGraph}}
+\newcommand{\randomRegularGraph}{\textit{randomRegularGraph}}
+\newcommand{\randomBigraph}{\textit{randomBigraph}}
+\newcommand{\randomRegularBigraph}{\textit{randomRegularBigraph}}
+\newcommand{\randomDigraph}{\textit{randomDigraph}}
+\newcommand{\randomFlograph}{\textit{randomFlograph}}
+\newcommand{\randomWeights}{\textit{randomWeights}}
+\newcommand{\randomLengths}{\textit{randomLengths}}
+\newcommand{\randomCosts}{\textit{randomCosts}}
+\newcommand{\randomCapacities}{\textit{randomCapacities}}
+\newcommand{\randomFloors}{\textit{randomFloors}}
+\newcommand{\Random}{\textit{Random}}
+\newcommand{\RandomGraph}{\textit{RandomGraph}}
+\newcommand{\randomFraction}{\textit{randomFraction}}
+\newcommand{\randomInteger}{\textit{randomInteger}}
+\newcommand{\randomPareto}{\textit{randomPareto}}
+\newcommand{\randomExp}{\textit{randomExp}}
 \newcommand{\scale}{\textit{scale}}
 \)
 
@@ -153,8 +156,8 @@ edges expected.
 The implementation also includes a $\ListPair$ object that
 keeps track of which edge numbers are in use and which are available
 to be allocated. This allows edges to be easily deleted as well.
-The implementation does supports dynamic expansion of the space,
-if that becomes necessary.
+The implementation does supports dynamic expansion of the allocated memory
+space, if that becomes necessary.
 
 The $\Graph$ class supports the following methods.
 <ul>
@@ -187,8 +190,17 @@ the graph.
 Propertes $\length$ and $\cost$ are alternate names
 for $\weight$.
 The $\Graph$ class also supports the common methods,
-$\toString()$ $\fromString()$ and
-$\equals()$. The core of the <i>Javascript</i> implementation
+$\toString()$, $\fromString()$ and
+$\equals()$.
+<p>
+A $\graph$ can also be extended to define a <i>bipartition</i> on the vertices
+(a division of the vertices into two subsets, where all edges join vertices
+in different subsets). 
+In such a <i>bipartite</i> graph, vertices are divided into two subsets,
+referred to as <i>inputs</i> and <i>outputs</i>, and all edges join an input
+to an output. Methods are provided to iterate over the vertices in each subset.
+<p>
+The core of the <i>Javascript</i> implementation
 is shown below. This version is purposely abridged to give a clearer
 picture of the most essential features.
 Consult the web app for the complete source.
@@ -199,7 +211,7 @@ export default class Graph extends Top {
     firstEp;    // firstEp[v] is first edge endpoint at v
     edges;      // sets of in-use and free edges
     epLists;    // lists of the edge endpoints at each vertex
-    nabors;     // temporary list of neighbors used by fromString
+    io;         // optional ListPair defining bipartition
 
     Left;       // Left[e] is left endpoint of edge e
     Right;      // Right[e] is right endpoint of edge e
@@ -267,13 +279,13 @@ adding the following methods.
         edge $e$.
 <li>    $\head(e)$ returns the head of the directed
         edge $e$.
-<li>    $\firstIn(u)$ returns the first edge for which
+<li>    $\firstInto(u)$ returns the first edge for which
         $u$ is the head.  
-<li>    $\firstOut(u)$ returns the first edge for which
+<li>    $\firstOutof(u)$ returns the first edge for which
         $u$ is the tail.  
-<li>    $\nextIn(u, e)$ returns the next edge for which
+<li>    $\nextInto(u, e)$ returns the next edge for which
         $u$ is the head, following $e$.
-<li>    $\nextOut(u, e)$ returns the next edge for which
+<li>    $\nextOutof(u, e)$ returns the next edge for which
         $u$ is the tail, following $e$.
 <li>    $\inDegree(u)$ returns the number of incoming edges
         at $u$.
@@ -284,6 +296,8 @@ One can still use $\firstAt(u)$ and $\nextAt(u, e)$
 to iterate through all edges at $u$.
 
 The core of the <i>Javascript</i> implementation is shown below.
+This implementation places incoming edges before outgoing edges in
+the adjacency list of each vertex.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
@@ -294,17 +308,17 @@ export default class Digraph extends Graph {
     tail(e) { return this.left(e); }
     head(e) { return this.right(e); }
 
-    firstIn(u) {
+    firstInto(u) {
         let e = this.firstAt(u);
         return (u == this.tail(e) ? 0 : e);
     }
-    nextIn(u, e) {
+    nextInto(u, e) {
         e = this.nextAt(u, e);
         return (e == 0 || u == this.tail(e) ? 0 : e);
     }
 
-    firstOut(u) { return Math.trunc(this.firstEpOut[u]/2); }
-    nextOut(u, e) { return this.nextAt(u, e); }
+    firstOutof(u) { return Math.trunc(this.firstEpOut[u]/2); }
+    nextOutof(u, e) { return this.nextAt(u, e); }
 
     join(u, v, e=this.edges.first(2)) {
         if (u > this.n || v > this.n || this.edges.length(2) == 0) {
@@ -330,7 +344,7 @@ export default class Digraph extends Graph {
     delete(e) {
         let u = this.left(e);
         if (e == this.firstOut(u))
-            this.firstEpOut[u] = 2 * this.nextOut(u,e);
+            this.firstEpOut[u] = 2 * this.nextOutof(u,e);
         super.delete(e);
     }
 }
@@ -343,12 +357,12 @@ It also defines two special vertices, the <i>source</i> vertex and
 the <i>sink</i> vertex.
 Finally, it adds the following methods.
 <ul>
-<li>    $\texttt{f}(e,u)$ returns the flow leaving vertex $u$ on edge $e$.
+<li>    $\f(e,u)$ returns the flow leaving vertex $u$ on edge $e$.
         May be negative.
         If $u$ is omitted, it defaults to the tail of the edge.
 <li>    $\flow(e,f)$ sets the flow on edge $e$ to $f$.
 <li>    $\addFlow(e,u,f)$ adds $f$ units of flow leaving vertex $u$ on edge $e$.
-<li>    $\texttt{cap}(e,c)$ sets the capacity of edge $e$ to $c$,
+<li>    $\cap(e,c)$ sets the capacity of edge $e$ to $c$,
 		if the optional argument $c$ is present.
 		In any case, the capacity of $e$ is returned.
 <li>    $\res(e,u)$ returns the residual capacity of edge
@@ -433,9 +447,8 @@ It provides the following methods.
     incident to each vertex.
 <li> $\randomBigraph(n_i,d_i,n_o=n_i)$ returns a $\Graph$ object
     that defines a bipartite graph with $n_i+n_o$ vertices
-    where the first
-    $n_i$ vertices are referred to as &ldquo;inputs&rdquo; and
-    the remaining $n_o$ as &ldquo;outputs&rdquo;.
+    where the first $n_i$ are inputs and
+    the remaining $n_o$ are outputs.
     The number of edges is the product of $n_i$ and $d_i$,
     making $d_i$ the average vertex degree for the inputs.
 <li> $\randomRegularBigraph(n_i,d_i,n_o=n_i)$ returns a $\Graph$
