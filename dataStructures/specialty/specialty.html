@@ -30,6 +30,7 @@
 
 <body bgcolor=ffffff>
 \(
+\newcommand{\OrderedHeaps}{\textit{ordered heaps}}
 \newcommand{\key}{\textit{key}}
 \newcommand{\changekey}{\textit{changekey}}
 \newcommand{\addtokeys}{\textit{add2keys}}
@@ -57,11 +58,13 @@
 \newcommand{\join}{\textit{join}}
 \newcommand{\split}{\textit{split}}
 \newcommand{\cost}{\textit{cost}}
-\newcommand{\dmin}{\textit{dmin}}
-\newcommand{\dcost}{\textit{dcost}}
+\newcommand{\dmin}{\Delta\textit{min}}
+\newcommand{\dcost}{\Delta\textit{cost}}
 \newcommand{\mincost}{\textit{mincost}}
 \newcommand{\splay}{\textit{splay}}
 \newcommand{\rank}{\textit{rank}}
+\newcommand{\fromString}{\textit{fromString}}
+\newcommand{\toString}{\textit{toString}}
 \)
 
 <a id=groupHeap><h1>Specialty Data Structures<sup>&copy;</sup></h1></a>
@@ -97,8 +100,8 @@ within this ordering. The data structure defines the following methods.
 <li> $\deactivate(g)$ makes $g$ inactive.
 <li> $\findmin()$ returns an active item with the smallest key.
 <li> $\addtokeys(\Delta)$ adds $\Delta$ to the keys of all active items.
-<li> $\insertAfter(i,g,k,j)$ inserts item $i$ into group
-    $g$ with key $k$, immediately after item $j$.
+<li> $\insertAfter(i,k,j,g)$ inserts item $i$ with key $k$,
+     immediately after item $j$ in group $g$.
 <li> $\delete(i,g)$ removes item $i$ from group $g$.
 <li> $\divide(g,i,g_0)$ divides group $g$ into two
     parts, the items that precede $i$ and the remaining items.
@@ -109,38 +112,11 @@ The groups are identified by group numbers assigned by the client code;
 their values do not correspond to items within the groups.
 <p>
 The group heap can be implemented using an array heap $A$ to keep track
-of the active groups; the key of an active group $g$ is the smallest
+of the active groups and an
+<a href="../heaps/heaps.html#OrderedHeaps">$\OrderedHeaps$</a>data
+structure to keep track of the items within each group.
+The key of an active group $g$ in $A$ is the smallest
 key value assigned to any of the items in $g$.
-The collection of groups is implemented using a separate
-<i>ordered heaps</i> data structure, which represents a collection of
-heaps in which the items within each heap are ordered
-relative to one another; it provides the following methods.
-<ul>
-<li>    $\key(i,h)$ returns the key of item $i$
-        in heap $h$.
-<li>    $\changekey(i,h,k)$ changes the key of item $i$
-        in heap $h$ to $k$.
-<li>    $\addtokeys(\Delta,h)$ adds increment $\Delta$
-        to the keys of all items in heap $h$.
-<li>    $\insert(i,h,k)$ inserts item $i$ into heap
-        $h$ with key $k$.
-<li>    $\insertAfter(i,h,k,j)$ inserts item $i$ into heap
-        $h$ with key $k$, placing it immediately
-        after item $j$.
-<li>    $\delete(i,h)$ deletes item $i$ from heap $h$.
-<li>    $\findmin(h)$ returns an item of minimum key in
-        heap $h$.
-<li>    $\deletemin(h)$ deletes an item of minimum key from
-        heap $h$ and returns the pair $[i,h']$
-        where $i$ is the deleted item and
-        $h'$ is the id of the modified heap.
-<li>    $\divide(i,h)$ divides heap $h$ into two parts,
-        the items preceding item $i$ and the remaining items.
-        The relative order of items within the two new heaps is maintained.
-</ul>
-A complete description of the ordered heaps data structure appears
-in the next section. For now, let's focus on how it is used to implement
-the group heap.
 <p>
 The $\findmin$ operation for the group heap can be implemented by first
 finding the active group $g_0$ with the smallest key in
@@ -193,6 +169,8 @@ export default class GroupHeap extends Top {
     lastOffset;   // for an active group b, lastOffset[b] is the value of
                   // active.offset, when b was last modified or became active
 
+    steps;        // number of steps
+    
     empty(g=0) {
         return (g ? this.top[g] != 0 : this.active.empty() ||
                     this.active.key(this.active.findmin()) == Infinity);
@@ -212,13 +190,14 @@ export default class GroupHeap extends Top {
     updateKeys(g) {
         if (this.top[g]) {
             this.groups.add2keys(this.active.offset - this.lastOffset[g],
-                                 this.top[g]);
+                                  this.top[g]);
         }
         this.lastOffset[g] = this.active.offset;
     }
 
     activate(g) {
         let h = this.top[g];
+        ea && assert(h, 'GroupHeap.activate requires a non-empty heap');
         this.active.insert(g, h ? this.key(this.groups.findmin(h),g) :
                                            Infinity);
         this.lastOffset[g] = this.active.offset;
@@ -235,10 +214,10 @@ export default class GroupHeap extends Top {
 
     add2keys(delta) { this.active.add2keys(delta); }
 
-    insertAfter(i, g, k, i0) {
+    insertAfter(i, k, j, g) {
         if (this.isactive(g)) this.updateKeys(g);
         let h = this.top[g];
-        this.top[g] = this.groups.insertAfter(i, h, k, i0);
+        this.top[g] = this.groups.insertAfter(i, k, j, h);
         if (this.isactive(g) && k < this.active.key(g)) {
             this.active.changekey(g, k);
         }
@@ -271,7 +250,6 @@ export default class GroupHeap extends Top {
         if (this.isactive(g) && !this.top[g])
             this.deactivate(g);
     }
-}
 </textarea><p>
 The following script can be used to demonstrate the group heap in the web app.
 <pre style="padding-left:5%;">
@@ -285,7 +263,7 @@ gh.delete(5,2);
 log(gh.toString());
 gh.delete(3,2);
 log(gh.toString());
-log(gh.toString(0));
+log(gh.toString(2));
 </pre>
 This produces the output shown below.
 <pre style="padding-left:5%;">
@@ -299,201 +277,11 @@ e
 By default, the state of the data structure is shown as a collection of
 groups, with each group preceded by its group number and
 each item shown with its key.
-Active groups are marked with an at symbol &lsquo;@&rsquo;
+Active groups are marked with an at symbol &ldquo;@&rdquo;
 and the active group containing the smallest key is
-also marked with a exclamation point &lsquo;!&rsquo;.
+also marked with a exclamation point &ldquo;!&rdquo;.
 The last line shows a more concise representation in which the
 groups are hidden and only the active items are shown.
-
-<a id=OrderedHeaps><h2>Ordered Heaps</h2></a>
-
-The <i>ordered heaps</i> data structure was introduced in the last section.
-Recapping, it implements a collection of heaps in which the items within
-each heap are ordered relative to one another; it provides the following
-methods.
-<ul>
-<li>    $\key(i,h)$ returns the key of item $i$
-        in heap $h$.
-<li>    $\changekey(i,h,k)$ changes the key of item $i$
-        in heap $h$ to $k$.
-<li>    $\addtokeys(\Delta,h)$ adds increment $\Delta$
-        to the keys of all items in heap $h$.
-<li>    $\insert(i,h,k)$ inserts item $i$ into heap
-        $h$ with key $k$.
-<li>    $\insertAfter(i,h,k,j)$ inserts item $i$ into heap
-        $h$ with key $k$, placing it immediately
-        after item $j$.
-<li>    $\delete(i,h)$ deletes item $i$ from heap $h$.
-<li>    $\findmin(h)$ returns an item of minimum key in
-        heap $h$.
-<li>    $\deletemin(h)$ deletes an item of minimum key from
-        heap $h$ and returns the pair $[i,h']$
-        where $i$ is the deleted item and
-        $h'$ is the id of the modified heap.
-<li>    $\divide(i,h)$ divides heap $h$ into two parts,
-        the items preceding item $i$ and the remaining items.
-        The relative order of items within the two new heaps is maintained.
-</ul>
-Unlike most heaps, the ordered heaps data structure is not implemented
-using heap-ordered trees. Instead, it uses a balanced
-binary forest allowing it to support a list ordering on the heap items.
-To enable it to quickly find an item of minimum key, an auxiliary field
-$\minkey$ is maintained for each heap item, with
-$\minkey[u]$ equal to the smallest key in the subtree
-with root $u$. This is illustrated below.
-<p>
-<div  style="text-align:center;">
-<img width="55%" src="figs/oheaps1.png"><br>
-</div>
-The $\minkey$ field must be updated during rotations.
-It must also be <i>refreshed</i> following any other operation that
-changes a single key value, adds a heap item or deletes a heap item.
-The required $\refresh$ operation follows the path from a
-node to the root of the tree, updating the $\minkey$ fields
-along its path, based on the key of the current node and the
-$\minkey$ fields of its two children.
-<p>
-<div  style="text-align:center;">
-<img width="80%" src="figs/oheaps2.png"><br>
-</div>
-<p>
-The $\addtokeys$ method is implemented by adding the
-specified increment to a per-heap offset value.
-When an item is inserted into a heap, the saved key value is adjusted
-to reflect the offset, so that at all times the sum of the stored key value
-and the offset is equal to the user-specified key.
-The saved $\minkey$ values also reflect the offset,
-so the minimum key in the subtree of an item is equal to
-the sum of the stored value and the offset.
-<p>
-The $\divide$ method is implemented using the $\split$
-method of the underlying balanced binary forest data structure.
-Note that the split method uses $\join$ operations in its
-implementation, so the ordered heap method provides a $\join$ operation
-for this specific purpose. The provided $\join$ operation uses the
-$\refresh$ operation to maintain the
-validity of the $\minkey$ fields.
-The provided $\join$ operation does not work in general contexts, since
-it requires that the components being joined together all have
-the same offset.
-<p>
-The core of the <i>Javascript</i> implementation appears below.
-<p><textarea id="components" rows="20" cols="80" readonly
-          style="font-size: 95%;background-color:lightCyan">
-export default class OrderedHeaps extends BalancedForest {
-    Key;           // Key[i] is key of item i
-    Minkey;        // Minkey[i] is smallest key within subtree at i 
-    offset;        // offset[h] is a key offset for heap h
-
-    key(i, h=super.root(i)) {
-        return this.Key[i] + this.offset[h];
-    }
-
-    minkey(i, h=super.root(i)) {
-        return this.Minkey[i] + this.offset[h];
-    }
-
-    add2keys(delta, h) { if (h) this.offset[h] += delta; }
-
-    changekey(i, h, k) {
-        this.Key[i] = k - this.offset[h];
-        this.refresh(i);
-    }
-
-    insert(i, h, k) {
-        return this.insertAfter(i, h, k, this.last(h));
-    }
-
-    insertAfter(i, h, k, j) {
-        if (h == 0) {
-            this.Key[i] = this.Minkey[i] = k; return i;
-        }
-        let offset = this.offset[h];
-        this.Key[i] = k - offset; this.Minkey[i] = this.Key[i];
-        h = super.insertAfter(i, h, j, x => this.refresh(x));
-        this.offset[h] = offset;
-        return h;
-    }
-
-    delete(i, h=this.find(i)) {
-        if (this.singleton(i)) return;
-        let offset = this.offset[h];
-        // identify an item near the root that is not i
-        let hh = (i != h ? h : (this.left(h) ? this.left(h) : this.right(h)));
-        super.delete(i, h, pi => this.refresh(pi));
-        hh = this.find(hh);
-        this.offset[hh] = offset;
-        this.Key[i] += offset; this.Minkey[i] = this.Key[i];
-        this.offset[i] = 0;
-        return hh;
-    }
-
-    divide(i, h=this.find(i)) {
-        let offset = this.offset[h];
-        let [h1,h2] = super.split(i);
-        if (h1) this.offset[h1] = offset;
-        if (h2) this.offset[h2] = offset;
-        this.Minkey[i] = this.Key[i]; this.offset[i] = offset;
-        h2 = this.join(0,i,h2);
-        this.offset[h2] = offset;
-        return [h1,h2];
-    }
-
-    join(t1, u, t2) { return super.join(t1, u, t2, u => this.refresh(u)); }
-
-    refresh(i) {
-        while (i) {
-            let min = this.Key[i];
-            let l = this.left(i); let r = this.right(i);
-            if (l) min = Math.min(min, this.Minkey[l]);
-            if (r) min = Math.min(min, this.Minkey[r]);
-            this.Minkey[i] = min;
-            i = this.p(i);
-        }
-    }
-
-    findmin(h, which=0) {
-        if (!h) return 0;
-        let k = this.Minkey[h];
-        let i = h;
-        while (i) {
-            let l = this.left(i); let r = this.right(i);
-            if (this.Key[i] == k) {
-                if (which == 0 ||
-                    which == -1 && (!l || this.Minkey[l] != k) ||
-                    which == +1 && (!r || this.Minkey[r] != k)) {
-                    return i;
-                }
-            }
-            i = (l && this.Minkey[l] == k ? l : r);
-        }
-    }
-
-    /** Remove a miniminum key item from from the heap and return it.
-     *  @param h is a heap.
-     *  @return [u,h] where u is the min key item and h is the id of the
-     *  resulting heap
-     */
-    deletemin(h) {
-        let u = this.findmin(h); h = this.delete(u,h);
-        return [u,h];
-    }
-
-    /** Extend rotation operation to maintain minkey field. */
-    rotate(x) {
-        let y = this.p(x);
-        if (y == 0) return;
-        super.rotate(x);
-        this.Minkey[x] = this.Minkey[y]; 
-        let min = this.Key[y];
-        let l = this.left(y); let r = this.right(y);
-        if (l)  min = Math.min(min, this.Minkey[l]);
-        if (r) min = Math.min(min, this.Minkey[r]);
-        this.Minkey[y] = min;
-        if (!this.p(x)) this.offset[x] = this.offset[y];
-    }
-}
-</textarea><p>
 
 <a id=DynamicTrees><h2>Dynamic Trees</h2></a>
 The <i>dynamic trees</i> data structure represents a collection of
@@ -518,7 +306,7 @@ An example is shown below, illustrating the effects of a few
 of the operations.
 <p>
 <div  style="text-align:center;">
-<img width="35%" src="figs/dtrees1.png"><br>
+<img width="40%" src="figs/dtrees1.png"><br>
 </div>
 <p>
 In the maximum flow problem, the dynamic trees data structure is
@@ -541,7 +329,7 @@ tree that is represented in this way and the effect of an expose operation
 on that tree.
 <p>
 <div  style="text-align:center;">
-<img width="50%" src="figs/dtrees2.png"><br>
+<img width="55%" src="figs/dtrees2.png"><br>
 </div>
 <p>
 In the diagram, the solid edges define component paths of the tree
@@ -573,7 +361,7 @@ It supports the following methods.
 An example of a path set, with some operations is shown below.
 <p>
 <div style="text-align:center;">
-<img width="65%" src="figs/pathSet1.png"><br>
+<img width="70%" src="figs/pathSet1.png"><br>
 </div>
 <p>
 The path sets data structure can be implemented in a way that allows
@@ -598,7 +386,7 @@ The expose operation is the key to the dynamic trees data structure.
 The diagram below illustrates how it works.
 <p>
 <div  style="text-align:center;">
-<img width="50%" src="figs/expose.png"><br>
+<img width="55%" src="figs/expose.png"><br>
 </div>
 <p>
 An $\expose(u)$ operation proceeds up the path from $u$ to the root,
@@ -884,6 +672,34 @@ export default class PathSet extends SplayForest {
     }
 }
 </textarea><p>
+The following script can be used to demonstrate the data structure.
+<pre style="padding-left:5%;">
+let ps = new PathSet();
+ps.fromString('{[a:5 f:2 c:4]g [b:1] [d:2 g:3 e:4]}');
+log(ps.toString(0xe));
+let [r,c] = ps.findpathcost(3); log(r, c);
+log(ps.toString(0xe));
+ps.join(5, 2, 6);
+log(ps.toString(0xe));
+ps.split(5);
+log(ps.toString(0xe));
+</pre>
+The $\fromString()$ operation shows each path, with the cost of each
+node in the path. For paths with successors, the successor is shown
+after the closing bracket. By default, the $\toString()$ operation
+uses the same format. Running the script produces the output below.
+<pre style="padding-left:5%;">
+{b:1:1 [(a:5:3 f:2:0 -) *c:4:2:2 -]g [(d:2:0 g:3:0:1 -) *e:4:2:2 -]} 
+6 2 
+{b:1:1 [(d:2:0 g:3:0:1 -) *e:4:2:2 -] [a:5:3 *f:2:2 c:4:2]g} 
+{[((d:2:0 g:3:0:1 -) e:4:1:2 -) *b:1:1 (a:5:3 f:2:1 c:4:2)]g} 
+{[- *b:1:1 (a:5:3 f:2:1 c:4:2)] e:4:4 [d:2:0 *g:3:2:1 -]}
+</pre>
+Here, each path is shown as a binary tree and each node is shown with
+its $\cost$, $\dmin$ value and when non-zero, its $\dcost$.
+This allows one to easily check that the differential costs
+properly define the actual costs.
+<p>
 It's worth noting that the path sets data structure is similar
 to the ordered heaps data structure. Indeed, path sets can be
 viewed as almost an alternative implementation of ordered heaps,
@@ -941,7 +757,7 @@ Before proceeding with that analysis, it's useful to consider two
 alternate ways to look at dynamic trees, illustrated below.
 <p>
 <div  style="text-align:center;">
-<img width="55%" src="figs/viewpoints.png"><br>
+<img width="60%" src="figs/viewpoints.png"><br>
 </div>
 <p>
 The <i>tree of paths</i> viewpoint was used earlier, when describing how
@@ -970,7 +786,7 @@ with their individual weights, while those in the tree of trees are
 labeled with their total weights.
 <p>
 <div  style="text-align:center;">
-<img width="55%" src="figs/dtreeWeights.png"><br>
+<img width="60%" src="figs/dtreeWeights.png"><br>
 </div>
 <p>
 Observe that within each path tree, the rank of a node is no larger

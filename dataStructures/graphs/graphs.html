@@ -64,9 +64,9 @@
 \newcommand{\length}{\textit{length}}
 \newcommand{\cost}{\textit{cost}}
 \newcommand{\firstInto}{\textit{firstInto}}
-\newcommand{\firstOutof}{\textit{firstOutof}}
+\newcommand{\firstOutof}{\textit{firstOutof}\,}
 \newcommand{\nextInto}{\textit{nextInto}}
-\newcommand{\nextOutof}{\textit{nextOutof}}
+\newcommand{\nextOutof}{\textit{nextOutof}\,}
 \newcommand{\inDegree}{\textit{inDegree}}
 \newcommand{\outDegree}{\textit{outDegree}}
 \newcommand{\source}{\textit{source}}
@@ -193,10 +193,10 @@ The $\Graph$ class also supports the common methods,
 $\toString()$, $\fromString()$ and
 $\equals()$.
 <p>
-A $\graph$ can also be extended to define a <i>bipartition</i> on the vertices
+A $\Graph$ can also be extended to define a <i>bipartition</i> on the vertices
 (a division of the vertices into two subsets, where all edges join vertices
 in different subsets). 
-In such a <i>bipartite</i> graph, vertices are divided into two subsets,
+In such a <i>bipartite</i> graph, the two vertex subsets are
 referred to as <i>inputs</i> and <i>outputs</i>, and all edges join an input
 to an output. Methods are provided to iterate over the vertices in each subset.
 <p>
@@ -270,6 +270,26 @@ export default class Graph extends Top {
     }
 }
 </textarea>
+
+The $\Graph$ data structure also supports methods for working with
+bipartite graphs, in which the vertices can be split into two subsets,
+with all edges joining vertices in different subsets.
+The subsets are referred to as <i>inputs</i> and <i>outputs</i>
+and the following methods are provided.
+<ul>
+<li>	$\bipartite$. This property returns true if the graph is
+		bipartite, and computes a list pair data structure that defines the
+		bipartition on the vertices (assuming this was not done previously).
+<li>	$\bipartition()$ returns a reference to the list pair defining the
+		graph's bipartition.
+<li>	$\setBipartition(io)$ sets the bipartition for the graph to $io$,
+		a list pair data structure. If $io$ is omitted, a bipartition is
+		computed.
+</ul>
+The latter two methods are useful in situations where multiple
+graphs share the same bipartition.
+There are also methods for testing if a vertex is an input or output,
+and several iteration methods.
 
 <a id=Digraph><h2>Directed Graphs</h2></a>
 The $\Digraph$ class extends the $\Graph$ class,

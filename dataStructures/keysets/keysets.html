@@ -52,6 +52,8 @@
 \newcommand{\key}{\textit{key}}
 \newcommand{\Min}{\textit{min}}
 \newcommand{\getPair}{\textit{getPair}}
+\newcommand{\toString}{\textit{toString}}
+\newcommand{\fromString}{\textit{fromString}}
 \)
 
 <h1>Key Sets and Maps<sup>&copy</sup></h1>
@@ -63,7 +65,7 @@ with the order of the keys.
 Such a tree is called a <i>binary search tree</i>,
 since one can quickly lookup an item with a specified key $k$ by
 comparing $k$ to the key associated with a tree node $u$,
-to determine which of $u$'s subtrees contains an item with key $k$.
+to determine which of $u$'s subtrees might contain an item with key $k$.
 <p>
 A <i>map</i> is a collection of key-value pairs that allows one to
 efficiently retrieve a value corresponding to a specified key,
@@ -75,8 +77,7 @@ The $\KeySets$ data structure represents a collection of key sets,
 and can be implemented using a $\BinaryForest$.
 A typical implementation supports the following methods.
 <ul>
-<li> $\contains(i,s)$ returns true if item $i$ is
-    contained in set $s$.
+<li> $\textit{in}(i,s)$ returns true if item $i$ is contained in set $s$.
 <li> $\lookup(k,s)$ returns an item $i$ in set
     $s$ with key $k$, or 0 if there is no such item.
 <li> $\insert(i,s)$ inserts item $i$ into set
@@ -107,8 +108,12 @@ from the $\BalancedForest$) are shown below.
           style="font-size: 95%;background-color:lightCyan">
 export default class KeySets extends BalancedForest {
     Key;        // Key[u] is the key of item u
-    stringKey;  // true if the keys are strings
-    compare;    // function used to compare two strings
+    compare;    // function used to compare two keys
+
+    constructor(n=10, compare=((a,b)=>(a-b))) {
+        super(n); this.compare = compare;
+        this.Key = new Array(this.n+1);
+    }
 
     find(u) { return super.root(u); }
     
@@ -117,7 +122,7 @@ export default class KeySets extends BalancedForest {
         return this.Key[u];
     }
     
-    contains(u, s) { return s == this.find(u); }
+    in(u, s) { return s == this.find(u); }
     
     lookup(k, s) {
         return this.search(k, s, this.Key, (a,b) => this.compare(a,b));
@@ -126,22 +131,72 @@ export default class KeySets extends BalancedForest {
     insert(u, t, refresh=0) {
         if (u > this.n) this.expand(u);
         return super.insertByKey(u, t, this.Key,
-                                 (a,b) => this.compare(a,b), refresh);
+                                      (a,b) => {
+                                           let result = this.compare(a,b);
+                                           return result;
+                                      }, refresh);
     }
+}
 </textarea> <p>
+The implementation stores the keys in an internal array of keys.
+By default, keys are numbers.
+To demonstrate in the web app, use.
+<pre style="padding-left:5%;">
+let ks = new KeySets();
+ks.fromString('{[b:2 a:1 d:4 c:3] [h:8 g:7 j:10 i:7 f:6] e:5}');
+console.log(ks.toString());
+console.log(ks.toString(0x6));
+console.log(ks.toString(0xe));
+</pre>
+Notice that the argument to $\fromString$ just lists the elements of
+each set in some arbitrary order along with their keys.
+The default version of $\toString()$ uses the same format.
+The second version shows the structure of the underlying
+balanced binary trees, and the third also shows the
+ranks in the underlying balanced forest that are larger than one.
+<pre style="padding-left:5%;">
+{[a:1 b:2 c:3 d:4] e:5 [f:6 i:7 g:7 h:8 j:10]} 
+{[a:1 *b:2 (c:3 d:4 -)] e:5 [(f:6 i:7 g:7) *h:8 j:10]} 
+{[a:1 *b:2:2 (c:3 d:4 -)] e:5 [(f:6 i:7 g:7) *h:8:2 j:10]} 
+</pre>
+Adding the line
+<pre style="padding-left:5%;">
+ks.key(5,8); ks.insert(5, ks.find(6));
+</pre>
+produces the following.
+<pre style="padding-left:5%;">
+{[a:1 *b:2:2 (c:3 d:4 -)] [(f:6 i:7:2 (- g:7 e:8)) *h:8:2 j:10]}
+</pre>
+The following script can be used to
+demonstrate a key sets object using keys that are strings.
+<pre style="padding-left:5%;">
+let ks = new KeySets(10, (a,b) => a.localeCompare(b));
+ks.fromString('{[b:"twelve" c:"thirteen" a:"eleven"] d:"fourteen"}');
+log(ks.toString(0x6), ks.x2s(ks.lookup("twelve", 3)));
+</pre>
+This yields the following.
+<pre style="padding-left:5%;">
+{[a:"eleven" *c:"thirteen" b:"twelve"] d:"fourteen"} b
+</pre>
+Here is a similar example using arrays as keys.
+<pre style="padding-left:5%;">
+let ks = new KeySets(10, (a,b) => (a[0]!=b[0] ? a[0]-b[0] : a[1]-b[1]));
+ks.fromString('{[b:[1,2] c:[1,3] a:[1,1]] d:[1,4]}');
+log(ks.toString(0x6), ks.lookup([1,1], 2));
+</pre>
 
 <a id=dualkeySets><h2>Dual Key Sets</h2></a>
 
 The <i>dual key sets</i> data structure is an extension of the <i>key sets</i>
 data structure that includes a secondary key for each item $i$,
 referred to as $\key_2(i)$.
-The data structure is still organized principally around its primary
+The data structure is organized mainly around its primary
 key values, but it also provides a method
 $\findmin(limit)$ that returns an item of minimum
 $\key_2$ value from among the items with primary key
 values $\leq\limit$.
 <p>
-Hence, it can be viewed as a heap, with respect to the second key.
+Hence, it can be viewed as a generalized heap, with respect to the second key.
 It is implemented using an auxiliary field $\Min_2(u)$ that gives
 the smallest $\key_2$ value in the subtree of node $u$.
 An example appears below.
@@ -168,10 +223,9 @@ or the target is in
 $v$'s left subtree and can be quickly identified by a search
 of that subtree using just the $\Min_2$ values.
 <p>
-Note that rotation operations must be extended
-to update $\Min_2$ value.
-Also, $\insert$, $\delete$ and $\join$ must be
-modified to update the $\Min_2$ values.
+Note that rotation operation must be extended
+to update $\Min_2$ value, along with the
+$\insert$, $\delete$ and $\join$ operations.
 This can be done by traversing a
 path from a node to the root, updating $\Min_2$ values along the way.
 <p>
@@ -268,6 +322,32 @@ export default class DualKeySets extends KeySets {
     }
 }
 </textarea> <p>
+To demonstrate the $\DualKeySets$ data structure, start with
+<pre style="padding-left:5%;">
+let dk = new DualKeySets();
+dk.fromString('{[b:2:21 a:1:23 d:4:25 c:3:27] ' +
+              '[h:8:20 g:7:25 j:10:31 i:7:28 f:6:23] e:5:29}');
+log(dk.toString()); log(dk.toString(0xe));
+</pre>
+The argument to $\fromString$ lists the elements of
+each set along with both of their keys.
+The default version of $\toString()$ uses the same format.
+The second version shows the structure of the underlying
+balanced binary trees and the $\Min_2$ values, when those
+are different from the key values.
+<pre style="padding-left:5%;">
+{[a:1:23 b:2:21 c:3:27 d:4:25] e:5:29
+ [f:6:23 i:7:28 g:7:25 h:8:20 j:10:31]} 
+{[a:1:23 *b:2:21 (c:3:27 d:4:25 -)] e:5:29
+ [(f:6:23 i:7:28:23 g:7:25) *h:8:20 j:10:31]} 
+</pre>
+the operation $\join(b,e,h)$ produces the single tree
+<pre style="padding-left:5%;">
+{[(a:1:23 b:2:21 (c:3:27 d:4:25 -)) *e:5:29:20
+  ((f:6:23 i:7:28:23 g:7:25) h:8:20 j:10:31)]} 
+</pre>
+and the operation $\findmin(e)$ returns node $h$
+while $\findmin(e,7)$ returns $b$.
 
 <a id=map><h2>Maps</h2></a>
 
@@ -279,52 +359,56 @@ following methods.
 <li> $\put(k,v)$ adds the key-value pair $[k,v]$,
     possibly replacing an existing pair with key $k$.
 </ul>
-The provided <i>Javascript</i> implementation also provides the following
+The provided <i>Javascript</i> implementation assigns a unique
+integer identifier to every pair and provides the additional following
 methods.
 <ul>
 <li> $\getPair(k)$ returns an integer index for the pair
     with key $k$, or 0.
-<li> $\deletePair(p)$ removes pair $p$
-<li> $\first()$ returns first pair in the map.
-<li> $\next(p)$ returns the pair following $p$.
+<li> $\deletePair(p)$ removes pair with index $p$
+<li> $\first()$ returns index of first pair in the map.
+<li> $\next(p)$ returns index of next pair following $p$.
 <li> $\size$ is the number of pairs in the map.
 </ul>
 A map can be implemented using a key set to represent the collection
 of keys, with the values stored in a separate array.
 Consequently, the main operations are all $O(\log n)$.
-The provided implementation supports keys and values that are either numeric
-or strings and its core components appear below.
+The provided implementation supports keys and values that are either numbers,
+strings, arrays or objects and its core components appear below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class Map extends Top {
     keys;      // KeySet used to store keys
     top;       // id of the specific set in keys used to represent map
-    Value;     // Value[i] is value paired with key(i)
+    Value;     // Value[i] is value paired with key(i) in keys
     Size;      // number of key-value pairs
     free;      // list of unused pair ids
 
-    stringKey;    // true if keys are strings
-    stringValue;  // true if values are strings
-    
-    compare;       // function comparing two keys
+    compare;         // function for comparing two keys
+    eqValue;         // function for comparing two values
+
+    constructor(n=10, compare=((a,b)=>a-b), eqValue=((a,b)=>a===b)) {
+        super(n); this.compare = compare; this.eqValue = eqValue;
+        ...
+    }
 
     get size() { return this.Size; }
 
     empty() { return this.size == 0; }
 
     first() { return this.keys.first(this.top); }
+
     next(p) { return this.keys.next(p); }
 
     key(p) { return this.keys.key(p); }
+
     value(p,v) {
         if (v) this.Value[p] = v;
         return this.Value[p];
     }
 
-    getPair(k) {
-        return this.keys.lookup(k, this.top);
-    }
+    getPair(k) { return this.keys.lookup(k, this.top); }
     
     get(k) {
         let p = this.getPair(k);
@@ -345,9 +429,8 @@ export default class Map extends Top {
             this.expand(Math.max(this.n+10, ~~(1.5*this.n)));
             p = this.free.deq();
         }
-        this.keys.key(p, k);
-        this.top = this.keys.insert(p, this.top)
-        this.value(p,v);
+        this.keys.key(p,k); this.value(p,v);
+        this.top = (this.top ? this.keys.insert(p, this.top) : p);
         this.Size++;
         return p;
     }
@@ -364,6 +447,39 @@ export default class Map extends Top {
 }
 </textarea> <p>
 
+The following script demonstrates the basic operation.
+<pre style="padding-left:5%;">
+let map = new Map();
+map.fromString('{11:1 12:2 13:3 14:4 15:5}');
+log(map.toString(), map.x2s(map.get(14)));
+log(map.toString(0x1))
+</pre>
+The default $\toString$ operation uses the same format as $\fromString$.
+The second also shows the identifier for each key-value pair.
+The following example shows a map with keys that are strings and
+values that are objects.
+<pre style="padding-left:5%;">
+let map = new Map(10, (a,b)=>a.localeCompare(b), (a,b)=>(a.x==b.x && a.y==b.y));
+map.fromString('{"eleven":{"x":1, "y":1} "twelve":{"x":1, "y":2} ' +
+                '"thirteen":{"x":1, "y":3} "fourteen":{"x":1, "y":4}}');
+map.put('fifteen',{"a":1, "b":5});
+log(map.toString(), JSON.stringify(map.get('fourteen')));
+</pre>
+This produces the output below.
+<pre style="padding-left:5%;">
+{"eleven":{"x":1,"y":1} "fifteen":{"a":1,"b":5} "fourteen":{"x":1,"y":4}
+ "thirteen":{"x":1,"y":3} "twelve":{"x":1,"y":2}}
+{"x":1,"y":4} 
+</pre>
+In general, keys and values may have any type, so long as the user
+supplies a suitable function for comparing two keys and another
+for comparing two values. The first returns a negative number or
+a positive number, depending on whether the first argument appears
+before or after the second argument in a sorted list.
+The second function returns true if the two values should be considered
+equal. Note however, that the $\fromString$ method does not handle general
+arrays and objects; specifically, it handles only
+one-dimensional arrays and objects with no nested objects.
 
 <h2>References</h2>
 <dl>

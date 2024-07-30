@@ -50,6 +50,24 @@
 \newcommand{\FibHeaps}{\textit{Fibonacci heaps}}
 \newcommand{\LeftistHeaps}{\textit{leftist heaps}}
 \newcommand{\LazyHeaps}{\textit{lazy heaps}}
+\newcommand{\toString}{\textit{toString}}
+\newcommand{\fromString}{\textit{fromString}}
+\newcommand{\OrderedHeaps}{\textit{ordered heaps}}
+\newcommand{\key}{\textit{key}}
+\newcommand{\changekey}{\textit{changekey}}
+\newcommand{\addtokeys}{\textit{add2keys}}
+\newcommand{\insert}{\textit{insert}}
+\newcommand{\insertAfter}{\textit{insertAfter}}
+\newcommand{\delete}{\textit{delete}}
+\newcommand{\findmin}{\textit{findmin}}
+\newcommand{\deletemin}{\textit{deletemin}}
+\newcommand{\divide}{\textit{divide}}
+\newcommand{\minkey}{\textit{minkey}}
+\newcommand{\activate}{\textit{activate}}
+\newcommand{\deactivate}{\textit{deactivate}}
+\newcommand{\refresh}{\textit{refresh}}
+\newcommand{\split}{\textit{split}}
+\newcommand{\join}{\textit{join}}
 \)
 
 <h1>Heaps<sup>&copy;</sup></h1>
@@ -115,6 +133,7 @@ before the $\deletemin$ operation.
 Parentheses are used to indicate the tree structure.
 Specifically, each item with children in the tree is
 immediately followed by a parenthesized list of its children.
+So for example, $a$ and $d$ are the two children of $f$.
 The final line includes a more concise view of the heap,
 just listing all the remaining items and their keys, in some unspecified order.
 <p>
@@ -140,7 +159,8 @@ Consequently, the children of $i$ (if any) are stored starting at
 position $d(x-1)+2$ and continuing consecutively from there.
 If $i$ has $d$ children its &ldquo;rightmost&rdquo; is stored at
 position $dx+1$.
-A third array $pos$ is included to support a general <i>delete</i> method; 
+A third array $pos$ is included to support operations on arbitrary heap items
+(such as $\delete$);
 $pos[i]$ gives the position of item $i$ in the <i>item</i> array.
 <p>
 To insert a new item $u$ into a heap with key $k$, start at the
@@ -190,7 +210,7 @@ The core methods for the $\ArrayHeap$ class are shown below.
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class ArrayHeap extends Top {
-    D;          // base of heap
+    D;          // arity of heap
     Size;       // # of items in the heap
 
     pos;        // pos[i] gives position of i in the heap
@@ -306,7 +326,7 @@ of heaps that define a partition over a common index range $1\ldots n$.
 Each heap is identified by one of its items.
 The data structure supports an efficient <i>meld</i> operation which
 combines two heaps into a single heap.
-It also can implement a <i>changekey</i> operation that takes
+It can also implement a <i>changekey</i> operation that takes
 essentially constant time when the key value is reduced;
 operations that increase the key value take $O(\log n)$ time.
 More precisely, in a sequence of $m$ heap operations including
@@ -337,14 +357,14 @@ includes the following methods.
         to $k$.
 </ul>
 Each heap in the data structure is represented by a <i>collection</i>
-of heap-ordered trees.
+of heap-ordered trees, with one node per heap item.
 The trees forming a heap are implemented as a <i>tree group</i> in
 the <a href="./trees.html#forest"><i>forest</i></a> data structure.
-Each heap item has a <i>key</i> and two auxiliary fields,
-a <i>rank</i> and a <i>mark</i>. For each item $i$,
+Each node has a <i>key</i> and two auxiliary fields,
+a <i>rank</i> and a <i>mark</i>. For each node $i$,
 $\rank(i)$ equals the number of children of $i$.
 The figure below shows a single heap consisting of three trees.
-Note that marks are shown by the presence or absence of check symbol.
+Note that marks are shown by the presence of a check symbol.
 <p>
 <div  style="text-align:center;">
 <img width="40%" src="figs/fheaps1.png"><br>
@@ -353,7 +373,7 @@ Note that marks are shown by the presence or absence of check symbol.
 <p>
 The root of the first tree in the tree group defining a heap is
 used as the heap identifier.
-This is also an item with the smallest key.
+This is also a node with the smallest key.
 Two heaps can be melded simply by combining their groups.
 An insert is essentially just a meld of a singleton heap with another heap.
 <p>
@@ -447,7 +467,7 @@ $\insert$ and used to pay for the operation.
 <p>
 For the $\deletemin$ operation the time required is
 bounded by the number of trees at the start of the restructuring process.
-If the deleted item has rank $r$,
+If the deleted node has rank $r$,
 then the first step increases the number of trees by $r$, while the
 restructuring process may decrease the number of trees.
 If $p$ is the number of restructuring steps that involve a collision
@@ -476,12 +496,12 @@ implemented by first changing the key value, removing the subtree
 at $i$ and making it another tree in the heap's tree group.
 This is a perfectly fine way of implementing $\changekey$
 but has the unfortunate side effect of breaking the analysis just
-completed. In particular, the key lemma requires that no item ever
+completed. In particular, the key lemma requires that no node ever
 loses a child.
 <p>
 Fortunately, an alternate version of the lemma can be applied if
 the operation is modified to ensure that no non-root
-item loses more than one child.
+node loses more than one child.
 The new version sets the mark bit of
 a node $x$ whenever $x$ loses one of its children. If $x$ is
 already marked when $x$ loses a child,
@@ -500,12 +520,12 @@ This process is illustrated below.
 <p>
 Here is the new version of the lemma.
 <p>
-<i>Lemma 2</i>. Let $x$ be any item with rank $r$ and children $y_1,\ldots,y_r$,
+<i>Lemma 2</i>. Let $x$ be any node with rank $r$ and children $y_1,\ldots,y_r$,
 where the children are listed in the order that they became children of $x$.
 Then, $\rank(y_i) \geq i-2$.
 <p>
 <i>Proof</i>.
-As before, note that an item becomes the child of another during the
+As before, note that a node becomes the child of another during the
 restructuring process performed by the $\deletemin$ operation.
 Consequently, just before $y_i$ became a child of $x$, $x$ had
 at least $i-1$ children. Since $y_i$ became a child of $x$ it must have collided
@@ -513,7 +533,7 @@ with $x$ during the restructuring process and hence it must have had
 at least $i-1$ children, and since it has lost no more than one child
 since it became a child of $x$, it must still have at least $i-2$. $\Box$
 <p>
-<i>Corallary 2</i>. An item $x$ with rank $r$ has at least $F_r$ descendants in
+<i>Corallary 2</i>. A node $x$ with rank $r$ has at least $F_r$ descendants in
 its subtree, where $F_r$ is the $r$-th Fibonacci number.
 <p>
 <i>Proof</i>. 
@@ -532,7 +552,7 @@ extended to handle the decreasing $\changekey$ operation.
 Here is a modified version of the credit policy.
 <p style="padding-left:5%;">
 Maintain one credit on-hand for every tree in all the heaps
-plus two credits for every marked non-root item.
+plus two credits for every marked non-root node.
 <p>
 As before, if $2n$ credits are allocated
 for the initialization, $n$ can be used to pay for the computation,
@@ -540,18 +560,18 @@ and the remainder is enough to satisfy the credit policy.
 <p>
 Since an $\insert$ or $\meld$ operation takes
 constant time and does not change the number of trees or the number of
-marked item, a single credit can be allocated for each
+marked nodes, a single credit can be allocated for each
 $\insert$ or $\meld$ and used to pay for the operation.
 <p>
 Since the $\deletemin$ operation makes no change to the number
-of marked items, the previous argument can be applied directly.
+of marked nodes, the previous argument can be applied directly.
 The only change required is that the number of credits allocated to the step
 must increased to $1 +  2(2+\log_\phi n)$.
 <p>
 To determine the number of credits needed for
 a decreasing $\changekey$ operation,
 let $k$ be the number of new subtrees created by the
-operation. Observe that the number of marked non-root items decreases
+operation. Observe that the number of marked non-root nodes decreases
 by $k-1$, while the number of trees increases by $k$.
 Consequently, $k-2$ fewer credits are needed to satify the credit policy
 following the operation.
@@ -580,9 +600,9 @@ The core methods of the $\FibHeaps$ class are shown below.
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
 export default class FibHeaps extends Forest {
-    Key;        // Key[i] is key of item i
-    Rank;       // Rank[i] gives rank of item i
-    Mark;       // Mark[i] is true if item i is considered marked
+    Key;        // Key[i] is key of node/item i
+    Rank;       // Rank[i] gives rank of node/item i
+    Mark;       // Mark[i] is true if node/item i is considered marked
 
     rankVec;    // rankVec is an auxiliary array used during restructuring
     tmpq;       // tmpq is a List object used as a temporary queue 
@@ -698,7 +718,43 @@ export default class FibHeaps extends Forest {
         return r0;
     }
 }
-</textarea>
+</textarea> <p>
+To demonstrate in the web app, start with
+<pre style="padding-left:5%;">
+let fh = new FibHeaps();
+fh.fromString('{[a:2 b:4 c:1 d:3 e:4] [f:1 g:5 h:3 i:2 j:5]' +
+              '[k:1 l:5 m:3 n:2 o:4]}');
+fh.deletemin(3);
+log(fh.toString(0x1e));
+</pre>
+The $\fromString$ operation creates three heaps with five 
+single node trees in each. A key is specified for each node.
+The $\deletemin$ operation removes item $c$, from the first heap
+and restructures it as shown below.
+<pre style="padding-left:5%;">
+{a:2:2(b:4 d:3:1(e:4)) c:1 [f:1 g:5 h:3 i:2 j:5]
+                           [k:1 l:5 m:3 n:2 o:4]} 
+</pre>
+The format argument for the $\toString$ operation causes the structure
+of each tree to be shown explicitly, along with the key and rank of each node
+(ranks of zero are omitted).
+Note that brackets are omitted for heaps with a single tree
+and that a deleted node becomes a single node heap.
+Melding the three heaps and performing another $\deletemin$ yields
+<pre style="padding-left:5%;">
+{c:1 f:1 [k:1:2(l:5 n:2:1(m:3)) o:4
+          a:2:3(b:4 d:3:1(e:4) i:2:2(j:5 h:3:1(g:5)))]} 
+</pre>
+The large heap has three trees, with roots $k$, $o$ and $a$,
+with ranks 2, 0 and 3.
+The operation $\changekey(8,11,1)$ produces this.
+<pre style="padding-left:5%;">
+{c:1 f:1 [k:1:2(l:5 n:2:1(m:3)) o:4
+          a:2:3(b:4 d:3:1(e:4) i:2:1!(j:5)) h:1:1(g:5)]}
+</pre>
+This prunes the subtree at $h$, making it the fourth tree in the
+large heap. It also adds a mark to node $i$ ($h$'s former parent),
+which is indicated by an exclamation point.
 
 <a id=LeftistHeaps><h2>Leftist Heaps</h2></a>
 
@@ -712,7 +768,7 @@ is $O(\log n)$.
 The <i>Javascript</i> implementation includes the following methods.
 <ul>
 <li>    $\key(i,k)$ sets the key of item $i$
-        to $k$ if $k$ is provided;
+        to $k$ if optional argument $k$ is present;
         returns the key of $i$.
 <li>    $\findmin(h)$ returns the item of minimum key in the
         heap identified by item $h$.
@@ -730,8 +786,8 @@ The <i>Javascript</i> implementation includes the following methods.
 The data structure represents each heap using a heap-ordered binary tree
 and can be implemented using the
 <a href="./trees.html#binaryForest"><i>binary forest</i></a> data structure.
-Each item has an associated <i>rank</i> field.
-The item with index 0 is assigned a rank of 0.
+Each node has an associated <i>rank</i> field.
+The node with index 0 is assigned a rank of 0.
 For all other nodes, the rank value is one plus the minimum of
 the ranks of its two children.
 The trees are structured so that whenever a node's children have
@@ -849,12 +905,38 @@ export default class LeftistHeaps extends BinaryForest {
     }
 }
 </textarea></p>
+To demonstrate leftist heaps in the web app, start with
+<pre style="padding-left:5%;">
+let lh = new LeftistHeaps();
+lh.fromString('{[a:2 b:4 c:1 d:3 e:4] [f:1 g:5 h:3 i:2 j:5]' +
+              '[k:1 l:5 m:3 n:2 o:4]}');
+fh.deletemin(3);
+log(fh.toString(0x1e));
+</pre>
+The $\fromString$ operation creates three heaps
+with a key specified for each node.
+The $\deletemin$ operation removes item $c$, from the first heap
+and restructures it yielding this.
+<pre style="padding-left:5%;">
+{[b:4 *a:2:2 (e:4 d:3 -)] c:1 [(h:3 i:2:2 j:5) *f:1:2 g:5]
+                              [(m:3 n:2:2 o:4) *k:1:2 l:5]}
+</pre>
+The format argument for the $\toString$ operation causes the structure
+of each tree to be shown explicitly, along with the key and rank of each node
+(ranks of 1 are omitted).
+Note that in this case brackets are included for all but singleton heaps.
+Melding the three heaps and performing another $\deletemin$ yields
+<pre style="padding-left:5%;">
+{c:1 f:1 [((e:4 d:3:2 g:5) a:2:3 ((l:5 b:4:2 j:5) i:2:2 h:3))
+          *k:1:3 (m:3 n:2:2 o:4)]} 
+</pre>
 
 <h3>Lazy Variant</h3>
-The basic leftist heap data structure can be extended to include
+The basic leftist heap data structure does not support a general <i>delete</i>
+operation, but it can be extended to include
 a <i>lazy deletion</i> operation called $\retire$
 and a <i>lazy melding</i> operation.
-The $\retire$ operation can be implemented by marking the
+The $\retire$ operation is implemented by marking the
 tree node for an item, but leaving it in place.  
 The $\lazyMeld$ operation can be implemented similarly,
 using a <i>dummy node</i> with a key of minus infinity,
@@ -875,7 +957,7 @@ This is illustrated below, with retired/dummy nodes shown in green.
 This list of heaps is then merged into a single heap using $\heapify$.
 <p>
 Heap items can also be retired implicitly, using a
-a client-provided <i>retired</i> function.
+client-provided <i>retired</i> function.
 If such a function is provided, it is used to determine if a
 node should be considered retired, instead of consulting a stored bit.
 This eliminates the time spent marking nodes as retired and
@@ -955,12 +1037,251 @@ export default class LazyHeaps extends LeftistHeaps {
         this.cut(this.dummy);
         this.join(h1,d,h2);
         this.rank(d, this.rank(h2) + 1);
-        this.key(d, Number.NEGATIVE_INFINITY);
+        this.key(d, -Infinity);
         return d;
     }
 }
-</textarea>
+</textarea> <p>
+To demonstrate lazy heaps in the web app, start with
+<pre style="padding-left:5%;">
+let lazy = new LazyHeaps();
+lazy.fromString('{[a:2 b:4 c:1 d:3] [e:4 f:1 g:5 h:3] ' +
+                '[i:2 j:5 k:1 l:5 m:3]}');
+log(lazy.toString(6));
+lazy.retire(8);
+let h = lazy.lazyMeld (3,6); h = lazy.lazyMeld(h,11);
+log(lazy.toString(6));
+</pre>
+The $\fromString$ operation creates three heaps and the two lazy meld
+operations combine them into the single heap as shown below.
+<pre style="padding-left:5%;">
+{[(b:4 a:2 -) *c:1 d:3] [e:4 *f:1 (g:5 h:3 -)]
+ [(j:5 i:2 -) *k:1 (l:5 m:3 -)]} 
+{[(((b:4 a:2 -) c:1 d:3) D (e:4 f:1 (g:5 R -)))
+  *D ((j:5 i:2 -) k:1 (l:5 m:3 -))]}
+</pre>
+The tree structure is shown explicitly.
+Note that each of the dummy nodes added by lazy melds are shown as
+a capital &ldquo;D&rdquo, while the retired node is shown as
+a capital &ldquo;R&ldquo;.
 <p>
+A $\findmin$ operation eliminates the two dummy nodes
+from the top of the tree, and combines the resulting three subtrees giving
+<pre style="padding-left:5%;">
+{[(((g:5 R d:3) f:1 e:4) c:1 (b:4 a:2 (l:5 m:3 -)))
+  *k:1 (j:5 i:2 -)]}
+</pre>
+
+<a id=OrderedHeaps><h2>Ordered Heaps</h2></a>
+
+The <i>ordered heaps</i> data structure implements a collection of heaps
+in which the items within each heap are ordered relative to one another.
+It provides the following methods.
+<ul>
+<li>    $\key(i,h)$ returns the key of item $i$
+        in heap $h$.
+<li>    $\changekey(i,h,k)$ changes the key of item $i$
+        in heap $h$ to $k$.
+<li>    $\addtokeys(\Delta,h)$ adds increment $\Delta$
+        to the keys of all items in heap $h$.
+<li>    $\insert(i,k,h)$ inserts item $i$ with key $k$ into heap $h$,
+		making it the last item in $h$.
+<li>    $\insertAfter(i,k,j,h)$ inserts item $i$ with key $k$ into heap
+        $h$, immediately after item $j$.
+<li>    $\delete(i,h)$ deletes item $i$ from heap $h$.
+<li>    $\findmin(h)$ returns an item of minimum key in
+        heap $h$.
+<li>    $\deletemin(h)$ deletes an item of minimum key from
+        heap $h$ and returns the pair $[i,h']$
+        where $i$ is the deleted item and
+        $h'$ is the id of the modified heap.
+<li>    $\divide(i,h)$ divides heap $h$ into two parts,
+        the items preceding item $i$ and the remaining items.
+        The relative order of items within the two new heaps is maintained.
+</ul>
+Unlike most heaps, the ordered heaps data structure is not implemented
+using heap-ordered trees. Instead, it uses a balanced
+binary forest allowing it to support a list ordering on the heap items.
+To enable it to quickly find an item of minimum key, an auxiliary field
+$\minkey$ is maintained for each heap item, with
+$\minkey[u]$ equal to the smallest key in the subtree
+with root $u$. This is illustrated below.
+<p>
+<div  style="text-align:center;">
+<img width="60%" src="figs/oheaps1.png"><br>
+</div>
+The $\minkey$ field must be updated during rotations.
+It must also be <i>refreshed</i> following any other operation that
+changes a single key value, adds a heap item or deletes a heap item.
+The required $\refresh$ operation follows the path from a
+node to the root of the tree, updating the $\minkey$ fields
+along its path, based on the key of the current node and the
+$\minkey$ fields of its two children.
+<p>
+<div  style="text-align:center;">
+<img width="85%" src="figs/oheaps2.png"><br>
+</div>
+<p>
+The $\addtokeys$ method is implemented by adding the
+specified increment to a per-heap offset value.
+When an item is inserted into a heap, the saved key value is adjusted
+to reflect the offset, so that at all times the sum of the stored key value
+and the offset is equal to the user-specified key.
+The saved $\minkey$ values also reflect the offset,
+so the minimum key in the subtree of an item is equal to
+the sum of the stored value and the offset.
+<p>
+The $\divide$ method is implemented using the $\split$
+method of the underlying balanced binary forest data structure.
+Note that the split method uses $\join$ operations in its
+implementation, so the ordered heap method provides a $\join$ operation
+for this specific purpose. The provided $\join$ operation uses the
+$\refresh$ operation to maintain the
+validity of the $\minkey$ fields.
+The provided $\join$ operation does not work in general contexts, since
+it requires that the components being joined together all have
+the same offset.
+<p>
+The core of the <i>Javascript</i> implementation appears below.  <p><textarea id="components" rows="20" cols="80" readonly
+          style="font-size: 95%;background-color:lightCyan">
+export default class OrderedHeaps extends BalancedForest {
+    Key;           // Key[i] is key of item i
+    Minkey;        // Minkey[i] is smallest key within subtree at i 
+    offset;        // offset[h] is a key offset for heap h
+
+    key(i, h=super.root(i)) {
+        return this.Key[i] + this.offset[h];
+    }
+
+    minkey(i, h=super.root(i)) {
+        return this.Minkey[i] + this.offset[h];
+    }
+
+    add2keys(delta, h) { if (h) this.offset[h] += delta; }
+
+    changekey(i, k, h) {
+        this.Key[i] = k - this.offset[h];
+        this.refresh(i);
+    }
+
+    insert(i, k, h) {
+        return this.insertAfter(i, h, k, this.last(h));
+    }
+
+    insertAfter(i, h, k, j) {
+        if (h == 0) {
+            this.Key[i] = this.Minkey[i] = k; return i;
+        }
+        let offset = this.offset[h];
+        this.Key[i] = k - offset; this.Minkey[i] = this.Key[i];
+        h = super.insertAfter(i, h, j, x => this.refresh(x));
+        this.offset[h] = offset;
+        return h;
+    }
+
+    delete(i, h=this.find(i)) {
+        if (this.singleton(i)) return;
+        let offset = this.offset[h];
+        // identify an item near the root that is not i
+        let hh = (i != h ? h : (this.left(h) ? this.left(h) : this.right(h)));
+        super.delete(i, h, pi => this.refresh(pi));
+        hh = this.find(hh);
+        this.offset[hh] = offset;
+        this.Key[i] += offset; this.Minkey[i] = this.Key[i];
+        this.offset[i] = 0;
+        return hh;
+    }
+
+    divide(i, h=this.find(i)) {
+        let offset = this.offset[h];
+        let [h1,h2] = super.split(i);
+        if (h1) this.offset[h1] = offset;
+        if (h2) this.offset[h2] = offset;
+        this.Minkey[i] = this.Key[i]; this.offset[i] = offset;
+        h2 = this.join(0,i,h2);
+        this.offset[h2] = offset;
+        return [h1,h2];
+    }
+
+    join(t1, u, t2) { return super.join(t1, u, t2, u => this.refresh(u)); }
+
+    refresh(i) {
+        while (i) {
+            let min = this.Key[i];
+            let l = this.left(i); let r = this.right(i);
+            if (l) min = Math.min(min, this.Minkey[l]);
+            if (r) min = Math.min(min, this.Minkey[r]);
+            this.Minkey[i] = min;
+            i = this.p(i);
+        }
+    }
+
+    findmin(h, which=0) {
+        if (!h) return 0;
+        let k = this.Minkey[h];
+        let i = h;
+        while (i) {
+            let l = this.left(i); let r = this.right(i);
+            if (this.Key[i] == k) {
+                if (which == 0 ||
+                    which == -1 && (!l || this.Minkey[l] != k) ||
+                    which == +1 && (!r || this.Minkey[r] != k)) {
+                    return i;
+                }
+            }
+            i = (l && this.Minkey[l] == k ? l : r);
+        }
+    }
+
+    /** Remove a miniminum key item from from the heap and return it.
+     *  @param h is a heap.
+     *  @return [u,h] where u is the min key item and h is the id of the
+     *  resulting heap
+     */
+    deletemin(h) {
+        let u = this.findmin(h); h = this.delete(u,h);
+        return [u,h];
+    }
+
+    /** Extend rotation operation to maintain minkey field. */
+    rotate(x) {
+        let y = this.p(x);
+        if (y == 0) return;
+        super.rotate(x);
+        this.Minkey[x] = this.Minkey[y]; 
+        let min = this.Key[y];
+        let l = this.left(y); let r = this.right(y);
+        if (l)  min = Math.min(min, this.Minkey[l]);
+        if (r) min = Math.min(min, this.Minkey[r]);
+        this.Minkey[y] = min;
+        if (!this.p(x)) this.offset[x] = this.offset[y];
+    }
+}
+</textarea><p>
+To demonstrate the $\OrderedHeaps$ data structure, enter the following
+script in the web app.
+<pre style="padding-left:5%;">
+let oh = new OrderedHeaps(10);
+oh.fromString('{[b:2 a:1 d:4 c:3] [h:8 g:7 j:10 i:9 f:6] [e:5]}');
+log(oh.toString(4), oh.x2s(oh.findmin(oh.find(10)))); 
+oh.insertAfter(5,5.5,10,oh.find(10)); oh.add2keys(1,oh.find(1));
+log(oh.toString(4));
+</pre>
+This produces the output below.
+<pre style="padding-left:5%;">
+{[b:2 *a:1 (- d:4 c:3)] [h:8 *g:7 (j:10 i:9 f:6)]} f 
+{[b:3 *a:2 (- d:5 c:4)] [h:8 *g:7 ((- j:10 e:5.5) i:9 f:6)]} 
+</pre>
+<pre style="padding-left:5%;">
+</pre>
+<pre style="padding-left:5%;">
+</pre>
+<pre style="padding-left:5%;">
+</pre>
+<pre style="padding-left:5%;">
+</pre>
+<pre style="padding-left:5%;">
+</pre>
 
 <h2>References</h2>
 <dl>

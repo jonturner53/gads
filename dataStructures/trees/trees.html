@@ -29,6 +29,7 @@
 </head>
 <body bgcolor=ffffff>
 \(
+\newcommand{\ListSet}{\textit{list set}}
 \newcommand{\Forest}{\textit{forest}}
 \newcommand{\BinaryForest}{\textit{binary forest}}
 \newcommand{\BalancedForest}{\textit{balanced forest}}
@@ -46,8 +47,8 @@
 \newcommand{\equals}{\textit{equals}}
 \newcommand{\setEquals}{\textit{setEquals}}
 \newcommand{\listEquals}{\textit{listEquals}}
-\newcommand{\joinGroups}{\textit{joinGroups}}
-\newcommand{\ungroup}{\textit{ungroup}}
+\newcommand{\combineGroves}{\textit{combineGroves}}
+\newcommand{\remove}{\textit{remove}}
 \newcommand{\left}{\textit{left}}
 \newcommand{\right}{\textit{right}}
 \newcommand{\insertAfter}{\textit{insertAfter}}
@@ -62,6 +63,10 @@
 \newcommand{\key}{\textit{key}}
 \newcommand{\refresh}{\textit{refresh}}
 \newcommand{\property}{\textit{property}}
+\newcommand{\rank}{\textit{rank}}
+\newcommand{\aunt}{\textit{aunt}}
+\newcommand{\toString}{\textit{toString}}
+\newcommand{\fromString}{\textit{fromString}}
 \)
 
 <h1>Trees and Forests<sup>&copy;</sup></h1>
@@ -90,24 +95,27 @@ The class includes the methods listed below.
 <li>    $\p(u)$ returns the parent of vertex $u$.
 <li>    $\firstChild(u)$ returns the first child of $u$.
 <li>    $\nextSibling(u)$ returns the sibling of $u$ that comes next in
-		the sibling list containing $u$.
+        the sibling list containing $u$.
 <li>    $\root(u)$ returns the root of the tree containing $u$.
 <li>    $\first(u)$ returns the first vertex in the prefix ordering
         of the vertices within $u$'s subtree.
-<li>    $\next(u,r)$ returns the next vertex after $u$ in the
-        prefix ordering of the vertices within $r$'s subtree
-        where $r$ is an ancestor of $u$
-        (or the entire tree if $r$ is omitted).
+<li>    $\next(u,t)$ returns the next vertex after $u$ in the
+        prefix ordering of the vertices within $t$'s subtree
+        where $t$ is an ancestor of $u$
+        (or the entire tree if $t$ is omitted).
+		In a prefix ordering, each node appears immediately before
+		its descendants, and the subtrees of siblings appear
+		consecutively, in the order of their shared sibling list.
 <li>    $\firstLeaf(u)$ returns the first leaf in the
         prefix ordering of the vertices within $u$'s subtree.
-<li>    $\nextLeaf(u,r)$ returns the next leaf after $u$ in the
-        prefix ordering of the vertices within $r$'s subtree
-        (or the entire tree if $r$ is omitted).
+<li>    $\nextLeaf(u,t)$ returns the next leaf after $u$ in the
+        prefix ordering of the vertices within $t$'s subtree
+        (or the entire tree if $t$ is omitted).
 <li>    $\cut(u)$ cuts the link between $u$ and its
         parent, making $u$ the root of a separate tree.
-<li>    $\link(u,v)$ links the tree with root $u$
+<li>    $\link(t,v)$ links the tree $t$
         to the tree containing $v$, making $v$
-        the parent of $u$; $u$ is added at the
+        the parent of $t$; $t$ is added at the
         end of the sibling list that contains $v$'s children.
 <li>    $\setEquals(other)$ is similar to $\equals$
         but considers two $\Forest$ objects equal if the trees
@@ -115,11 +123,11 @@ The class includes the methods listed below.
 <li>    $\listEquals(other)$ is similar to $\equals$
         but considers two $\Forest$ objects equal if the trees
         define the same vertex sets and the order of the vertices within
-        the two trees are identical.
-<li>    $\joinGroups(g_1,g_2)$ combines two <i>tree groups</i>,
-        into a single group.
-<li>    $\ungroup(t,g)$ removes tree $t$ from the
-        group $g$ containing it.
+        two corresponding trees are identical.
+<li>    $\combineGroves(g_1,g_2)$ combines two groups of trees,
+		referred to as <i>groves</i>,
+        into a single grove.
+<li>    $\remove(t,g)$ removes tree $t$ from the grove $g$ containing it.
 </ul>
 The $\first$ and $\next$ methods can be used to iterate
 through all vertices in the tree. The time required to visit all vertices
@@ -127,10 +135,10 @@ is $O(n)$ although individual steps may take more than constant time.
 The $\firstLeaf$ and $\nextLeaf$ methods can be used
 to iterate through the leaf vertices in the tree.
 The last two methods allow subsets of trees to be grouped together.
-Trees in the same group are considered siblings of one another and
-each group is identified by the first tree in its sibling list.
+Trees in the same <i>grove</i> are considered siblings of one another and
+each grove is identified by the first tree in its sibling list.
 <p>
-The core of the <i>Javascript</i> implementation is shown below.
+An abridged <i>Javascript</i> implementation is shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
@@ -152,13 +160,13 @@ export default class Forest extends Top {
         return u;
     }
 
-    first(u) { return u; }
-    next(u,root=0) {
+    first(t) { return t; }
+    next(u,t=0) {
         if (this.firstChild(u)) return this.firstChild(u);
         do {
             if (this.nextSibling(u)) return this.nextSibling(u);
             u = this.P[u];
-        } while (u != root);
+        } while (u != t);
         return 0;
     }
 
@@ -166,8 +174,8 @@ export default class Forest extends Top {
         while (this.firstChild(u)) { u = this.firstChild(u); }
         return u;
     }
-    nextLeaf(u,root=0) {
-        while (u != root) {
+    nextLeaf(u,t=0) {
+        while (u != t) {
             if (this.nextSibling(u))
                 return this.firstLeaf(this.nextSibling(u));
             u = this.P[u];
@@ -185,22 +193,49 @@ export default class Forest extends Top {
         this.C[p] = this.Sibs.delete(u, firstSib);
         this.P[u] = 0;
     }
-    link(u, v) {
-        if (u > this.n || v > this.n) { this.expand(Math.max(u, v)); }
-        this.C[v] = this.Sibs.join(this.firstChild(v), u);
-        this.P[u] = v;
+    link(t, v) {
+        if (t > this.n || v > this.n) { this.expand(Math.max(t, v)); }
+        this.C[v] = this.Sibs.join(this.firstChild(v), t);
+        this.P[t] = v;
     }
 
-    joinGroups(r1,r2) { return this.Sibs.join(r1,r2); }
-    ungroup(r,r0) { return this.Sibs.delete(r,r0); }
-
-    rotate(f, c) {
-        this.Sibs.rotate(f, c); 
-        if (this.P[c]) this.C[this.P[c]] = c;
-        return c;
-    }
+    combineGroves(t1,t2) { return this.Sibs.join(t1,t2); }
+    remove(t,g) { return this.Sibs.delete(t,g); }
 }
-</textarea>
+</textarea><p>
+To demonstrate the data structure in the web app, start with the following
+script.
+<pre style="padding-left:5%;">
+let f = new Forest();
+f.fromString('{a(b(c d) e(f(g)) h) i(j k(l m) n)}');
+f.cut(5); f.combineGroves(1,9);
+log(f.toString());
+</pre>
+The $\fromString$ operation specifies two trees with roots $a$ and $i$.
+In the string argument, each node is shown with its descendants
+immediately following it, enclosed by paretheses.
+So, initially $a$ has children $b$, $e$ and $h$, with the first two
+each defining subtrees with two additional descendants.
+The $\cut$ operation removes $e$'s subtree from $a$ and the
+$\combineGroves$ operation pairs $i$'s tree with the remainder of $a$'s tree
+to form the grove shown below.
+<pre style="padding-left:5%;">
+{[a(b(c d) h) i(j k(l m) n)] e(f(g))} 
+</pre>
+Adding
+<pre style="padding-left:5%;">
+f.cut(11) f.link(11,6);
+</pre>
+produces
+<pre style="padding-left:5%;">
+{[a(b(c d) h) i(j n)] e(f(g k(l m)))} 
+</pre>
+Adding an argument of 0 to the $\toString$ method causes it to 
+omit the tree structure, showing each grove or stand-alone tree
+as just a list of vertices in prefix order.
+<pre style="padding-left:5%;">
+{[a b c d h i j n] [e f g k l m]} 
+</pre>
 
 <a id=BinaryForest><h2>Binary Forest</h2></a>
 
@@ -223,8 +258,11 @@ More details follow the list.
 <li>    $\first(u)$ returns the first vertex in
         $u$'s subtree.
 <li>    $\next(u,t)$ returns the next vertex following
-        $u$ within $t$'s subtree (or the entire
+        $u$ in the infix ordering within $t$'s subtree (or the entire
         tree containing $u$ if $t$ is omitted.
+		In the infix ordering, the descendants of a vertex $v$'s left child
+		come immediately before $v$ and the descendants of its
+		right child come after.
 <li>    $\root(u)$ returns the root of the tree containing
         $u$.
 <li>    $\cut(u)$ cuts the link between $u$ and its
@@ -233,14 +271,14 @@ More details follow the list.
         to the tree containing $v$, making $v$
         the parent of $u$; $u$ is added as the left
         child of $v$ if $\side=-1$ and as the right
-        child of $\side=+1$.
+        child if $\side=+1$.
 <li>    $\insertAfter(u,t,v)$ inserts singleton
         $u$ into tree $t$,
         immediately after vertex $v$ (in the infix ordering).
 <li>    $\delete(u,t)$ removes vertex
         $u$ from tree $t$.
 <li>    $\join(t_1,u,t_2)$ combines two trees
-        $\t_1$ and $\t_2$ at a singleton $u$.
+        $t_1$ and $t_2$ at a singleton $u$.
         In the resulting tree, the vertices in $t_1$ come before
         $u$ in the left-right ordering while the vertices
         in $t_2$ come after.
@@ -324,9 +362,9 @@ The operation $\search(k,t,key)$ uses the provided key values to
 locate a vertex with the specified key. It starts at the root and
 at each step compares the key of the current vertex with that of 
 $u$. In the example above $\search(5,c,key)$
-follows the path $\[c,a,i,h,e]$ from the root, at each
+follows the path $[c,a,i,h,e]$ from the root, at each
 step comparing the key of the current vertex to the target key value
-and selecting the left or subtree based on that comparison.
+and selecting the left or right subtree based on that comparison.
 <p>
 The operation $\insertByKey(u,t,key)$ is intended for
 use in this situation. It starts by using the provided keys to find
@@ -369,7 +407,7 @@ both rotations are done at $x$.
 <img width="45%" src="figs/bstRotate2b.png"><br>
 </div>
 <p>
-The core of the <i>Javascript</i> implementation appears below.
+An abridged <i>Javascript</i> implementation appears below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
@@ -434,7 +472,7 @@ export default class BinaryForest extends Top {
         }
     }
     
-    insertAfter(u, t=this.root(v), v, refresh=0) {
+    insertAfter(u, t, v, refresh=0) {
         if (t == u) return u;
         if (!v)
             this.link(u, this.first(t), -1);
@@ -467,7 +505,7 @@ export default class BinaryForest extends Top {
         return tt;
     }
 
-	/** Swap the positions of two tree nodes. */
+    /** Swap the positions of two tree nodes. */
     swap(u, v) {
         // save pointer fields for nodes u and v
         let lu = this.left(u); let ru = this.right(u);
@@ -580,18 +618,64 @@ provide an optional function argument called $\refresh$.
 These functions can be used to assist in balancing the data structure,
 and/or maintaining client data that may be affected by the
 tree structure.
+<p>
+To demonstrate the data structure, start with the following
+script.
+<pre style="padding-left:5%;">
+let bf = new BinaryForest();
+bf.fromString('{[(a b -) *c (d e f)] [(g h (- i j)) *k l] [m *n (o p r)]}');
+bf.insertAfter(17,11,8);
+log(f.toString()); log(f.toString(0));
+</pre>
+The $\fromString$ operation specifies three trees with roots $c$, $k$ and $n$.
+Note that in this case, each tree is surrounded by square brackets and the
+roots are highlighed with an asterisk
+(brackets are omtted for single vertex trees).
+Also, for any non-leaf node a
+&ldquo;missing child&rdquo; is shown explicitly.
+The $\insertAfter$ operation inserts $q$ in the tree with root $k$,
+just after $h$.
+The $\toString$ operations produce the output below.
+<pre style="padding-left:5%;">
+{[(a b -) *c (d e f)] [(g h (q i j)) *k l] [m *n (o p r)]} 
+{[a b c d e f] [g h q i j k l] [m n o p r]}
+</pre>
+Adding
+<pre style="padding-left:5%;">
+bf.split(9); bf.join(3,9,14);
+</pre>
+divides the tree containing $i$ into three parts and
+then joins the trees with roots $c$ and $n$ to $i$.
+This yields
+<pre style="padding-left:5%;">
+{[((a b -) c (d e f)) *i (m n (o p r))] [g *h q] [j *k l]} 
+</pre>
+Adding two rotate operations at $e$ produces
+<pre style="padding-left:5%;">
+{[((a b -) c d) *e (f i (m n (o p r)))] [g *h q] [j *k l]} 
+</pre>
 
 <a id=BalancedForest><h2>Balanced Forest</h2></a>
-The <i>balanced forest</i> data structure extends the <i>binary forest</i>
-in order to improve its worst-case performance.
-There are many ways to keep the trees balanced, so that the maximum
-height of the trees is $O(\log n)$. One method [Bayer72, Tarjan87] assigns
-a <i>rank</i> to every node, so that the ranks satisfy two properties.
+While in some applications, the specific structure of the trees in a forest
+is important, in others the trees are simply used to represent a collection
+of lists or sets. So they are comparable to the $\ListSet$ data structure,
+but can implement certain operations more efficiently.
+For example, they can identify the list containing a certain item
+in time proportional to the maximum depth of a tree, rather than
+the length of a list.
+<p>
+The $\BalancedForest$ data structure is designed to handle such
+applications efficiently by limiting the depth of its trees to
+at most $2\lg n $.
+There are many ways to keep trees balanced.
+The $\BalancedForest$ uses a  method described in
+[Bayer72, Tarjan87], which assigns a $\rank$ to every node,
+and ensures that the ranks satisfy two properties.
 $$
-rank(u) \leq rank(p(u)) \leq rank(u) +1 \\
-rank(u) < rank(gp(u))
+\rank(u) \leq \rank(p(u)) \leq \rank(u) +1 \\
+\rank(u) < \rank(p^2(u))
 $$
-where $gp(u)$ is the grandparent of $u$.
+where $p^2(u)$ is the grandparent of $u$.
 Vertices with fewer than two children are assigned a rank of 1.
 An example of such a tree is shown below.
 <p>
@@ -607,9 +691,9 @@ is $\leq 2 \lfloor\lg (n+1)\rfloor$.
 Operations that modify a tree must be extended to
 to ensure that the conditions on the ranks are maintained.
 Following an insertion of a node $x$, one must compare
-$rank(x)$ with $rank(gp(x))$. If $rank(x)$ is smaller,
+$\rank(x)$ with $\rank(p^2(x))$. If $\rank(x)$ is smaller,
 nothing further needs to be done. If the two ranks are equal,
-but $x$'s aunt (the sibling of its parent) has smaller rank,
+but $x$'s <i>aunt</i> (the sibling of its parent) has smaller rank,
 the rank conditions can be
 satisfied by doing one or two rotations.
 Specifically, if $x$ is an outer grandchild,
@@ -622,8 +706,8 @@ This is illustrated below.
 <img width="50%" src="figs/bstbBalanced1.png"><br>
 </div>
 <p>
-If $rank(x)=rank(gp(x))=rank(aunt(x))$, $rank(gp(x))$ is
-incremented and the checking procedure is repeated at $gp(x)$
+If $\rank(x)=\rank(p^2(x))=\rank(\aunt(x))$, $\rank(p^2(x))$ is
+incremented and the checking procedure is repeated at $p^2(x)$
 <p>
 The procedure for balancing after a deletion is a bit more involved.
 It starts at the vertex $x$ that took the place of the deleted node.
@@ -642,7 +726,7 @@ but because $x$'s new sibling has rank $r+1$, the violation can
 now be addressed using one of the three remaining cases.
 <p>
 (Case 2) If $x$'s sibling has rank $r+1$ and both of its children have
-rank $r$, then $rank(p(x))$ is decremented, eliminating the rank
+rank $r$, then $\rank(p(x))$ is decremented, eliminating the rank
 violation at $x$, but possibly creating a new violation between
 $p(x)$ and its parent. In this case, the checking procedure is repeated,
 with $p(x)$ replacing $x$.
@@ -662,8 +746,8 @@ are changed to $r+1$ and $r+2$ respectively.
 </div>
 <p>
 (Case 4) Finally, if $x$'s sibling has rank $r+1$
-and its <i>neice</i> has rank $r+1$, a double rotation is performed at
-the neice and the ranks of $x$'s parent and grandparent
+and its <i>niece</i> has rank $r+1$, a double rotation is performed at
+the niece and the ranks of $x$'s parent and grandparent
 are changed to $r+1$ and $r+2$.
 <p>
 <div  style="text-align:center;">
@@ -677,10 +761,10 @@ of the second case, there can be no remaining violation of the
 rank condition at that point.
 <p>
 The operation $join(t_1,i,t_2)$ can be performed as before,
-if $rank(t_1)=rank(t_2)$. In this case, $rank(i)$ is set to $rank(t_1)+1$.
-If $rank(t_1) \neq rank(t_2)$, things get more complicated.
-If $rank(t_1) > rank(t_2)$, the first step is to follow right pointers
-from $t_1$ looking for the first vertex $v$ with $rank(v)=rank(t_2)$.
+if $\rank(t_1)=\rank(t_2)$. In this case, $\rank(i)$ is set to $\rank(t_1)+1$.
+If $\rank(t_1) \neq \rank(t_2)$, things get more complicated.
+If $\rank(t_1) > \rank(t_2)$, the first step is to follow right pointers
+from $t_1$ looking for the first vertex $v$ with $\rank(v)=\rank(t_2)$.
 The subtree at $v$ is then joined to $i$ and $t_2$ and the
 resulting subtree takes the original place of $v$ in $t_1$.
 This is illustrated below.
@@ -696,7 +780,7 @@ starting at $i$.
 The <i>split</i> operation is done as before, but uses the balanced
 version of the <i>join</i> operation in place of the original.
 <p>
-The core of the $\BalancedForest$ class is shown below.
+Here is the abridged <i>Javascript</i> implementation.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
@@ -774,7 +858,7 @@ export default class BalancedForest extends BinaryForest {
         let pair = super.split(u, refresh); this.rank(u,1); return pair;
     }
 
-	/** Adjust ranks after a node rank increases. */
+    /** Adjust ranks after a node rank increases. */
     rerankUp(x) {
         let rx = this.rank(x);
         while (this.gp(x) != 0 && this.rank(this.gp(x)) == rx &&
@@ -787,7 +871,7 @@ export default class BalancedForest extends BinaryForest {
         else this.rotate2(x);
     }
 
-	/** Adjust ranks after the rank of a node decreases. */
+    /** Adjust ranks after the rank of a node decreases. */
     rerankDown(x, px) {
         let r = this.rank(x);
         while (this.rank(px) == r+2) {
@@ -821,16 +905,51 @@ export default class BalancedForest extends BinaryForest {
 </textarea> <p>
 Observe how the $\refresh$ function arguments are used
 to implement the re-balancing.
+<p>
+To demonstrate the data structure, start with the following
+script.
+<pre style="padding-left:5%;">
+let bf = new BalancedForest();
+bf.fromString('{[a b c d e] [h i j k l m n o p q r]}');
+log(bf.toString(0xc));
+</pre>
+The $\fromString$ operation specifies two lists that are implemented as
+trees by the data structure. Vertices that do not appear in either list
+($f$ and $g$, in the example) are treated as singleton lists.
+However, with the inclusion of the appropriate format argument,
+the $\toString$ method can show the detailed tree structure as shown below.
+<pre style="padding-left:5%;">
+{[(a b c) *d:2 e] [(h i:2 j) *k:3 (l m:2 ((n o p) q:2 r))]}
+</pre>
+Note that ranks of one are omitted.
+Adding the operations
+<pre style="padding-left:5%;">
+let [t1,t2] = bf.split(15); bf.join(4,15,t1);
+</pre>
+splits the second tree at $o$ and then
+joins the tree with root $d$ to the first tree produced
+by the $\split$ yields
+<pre style="padding-left:5%;">
+{[(((a b c) d:2 e) o:3 (h i:2 j)) *k:3 (l m:2 n)] [p *q:2 r]}
+</pre>
+Deleting $d$ from the first tree yields
+<pre style="padding-left:5%;">
+{[(((a b -) c:2 e) o:3 (h i:2 j)) *k:3 (l m:2 n)] [p *q:2 r]} 
+</pre>
+and re-inserting it after $a$ in the second tree yields
+<pre style="padding-left:5%;">
+{[(((a d b) c:2 e) o:3 (h i:2 j)) *k:3 (l m:2 n)] [p *q:2 r]} 
+</pre>
 
 <a id=SplayForest><h2>Splay Forest</h2></a>
 
-Another way to improve the performance of binary trees is using
+Another way to limit the depth of binary trees is using
 <i>splay trees</i> [Tarjan87].
 Splay trees require no explicit balance information, but by restructuring
 trees routinely during normal operations they can perform an arbitrary
-sequence of $m$ tree operations in $O(m\log n)$ time.
-While some individual operations may still be expensive,
-the time for the sequence remains bounded.
+sequence of $m$ operations in $O(m\log n)$ time.
+While some individual operations may be expensive,
+the average time per operation is $O(\log n)$.
 <p>
 The key to this approach is a restructuring operation called a <i>splay</i>.
 A splay at a vertex $u$ consists of a series of double rotations at $u$,
@@ -843,19 +962,17 @@ An example is shown below.
 </div>
 <p>
 To understand why the splay is helpful,
-note that any double-rotation at a vertex $u$ brings the descendants of $u$
+observe that any double-rotation at a node $u$ brings all descendants of $u$
 at least one step closer to the root of the search tree.
-Consequently, a splay at a vertex $u$ that is far from the root reduces
-the depth of $u$'s original descendants by roughly a factor of two
-(possibly more for some of them).
-A similar thing happens for $u$'s original ancestors.
-Once an ancestor becomes a descendant of $u$, it benefits in the same way.
-That is, its distance to the root is reduced by roughly a factor of two.
-Even a vertex $p$ that is not an ancestor of $u$ can benefit, since it also
-starts moving closer to the tree root, once $u$ passes $p$'s first ancestor on
-the original path from $u$ to the root.
+Consequently, if the nearest common ancestor of $u$ with a node $v$ has
+depth $d$ before the splay, then after the splay, the depth of $v$
+is reduced by at least $\lfloor d/2 \rfloor -2$.
+For ancestors of $u$, this implies that their depth is roughly halved
+by the splay operation.
+Also note that the more expensive the splay is,
+the greater benefit it delivers.
 <p>
-When a <i>search</i> operation reaches a vertex with the target key,
+When a <i>search</i> operation reaches a vertex with the target key value,
 a splay is performed at that vertex, improving the performance of future
 operations while only increasing the cost of the search by a
 constant factor.
@@ -878,36 +995,36 @@ To ensure that there are always enough credits on hand,
 credits are allocated so as to satisfy the following credit policy.
 <p style="padding-left:5%;">
 For each vertex of $u$, maintain
-$rank(u)= \lfloor \lg (\textrm{the number of descendants of }u)\rfloor$
+$\rank(u)= \lfloor \lg (\textrm{the number of descendants of }u)\rfloor$
 credits.
 <p>
 To determine the number of credits that must be allocated to
 a splay operation at vertex $u$,
 let's first determine the number needed for one double-rotation.
 Let $v$ be the parent of $u$ and $w$ its grandparent and let
-$rank'$ denote the rank values after the rotation
-(note that $rank'(u)=rank(w)$).
+$\rank'$ denote the rank values after the rotation
+(note that $\rank'(u)=\rank(w)$).
 The number of credits needed to satisfy the credit policy following a double
 rotation is 
 \begin{eqnarray*}
-(rank'(u)-rank(u)) &+& (rank'(v)-rank(v)) + (rank'(w)-rank(w)) \\
-&=&(rank'(w)+rank'(v)) - (rank(u)+rank(v)) \\
-&\leq& 2(rank(w) - rank(u))
+(\rank'(u)-\rank(u)) &+& (\rank'(v)-\rank(v)) + (\rank'(w)-\rank(w)) \\
+&=&(\rank'(w)+\rank'(v)) - (\rank(u)+\rank(v)) \\
+&\leq& 2(\rank(w) - \rank(u))
 \end{eqnarray*}
-If $rank(u) < rank(w)$ and $3(rank(w) - rank(u))$ credits are allocated
+If $\rank(u) < \rank(w)$ and $3(\rank(w) - \rank(u))$ credits are allocated
 for the double rotation, there will be at least one credit available
 to pay for the operation, while still satisfying the credit policy.
 <p>
-Now consider the case where $rank(u)=rank(w)$.
+Now consider the case where $\rank(u)=\rank(w)=r$.
 If $u$ is an inner grandchild, then after the double-rotation,
 $v$ and $w$ are its children, meaning that at least one of them has a smaller
 rank after the operation. This implies that there is one less credit needed to
 satisfy the credit policy after the operation, and this credit can
 be used to pay for it.
 If $u$ is an outer grandchild, then $u$ has at least $2^r$ descendants and 
-$w$ has has fewer than $2^r$ descendants outside of $u$'s subtree.
+$w$ has fewer than $2^r$ descendants outside of $u$'s subtree.
 This implies that after the operation $w$ has fewer than
-$2^r$ descendants, making $rank'(w) < r$.
+$2^r$ descendants, making $\rank'(w) < r$.
 <p>
 <div  style="text-align:center;">
 <img width="50%" src="figs/bstCredit1.png"><br>
@@ -915,22 +1032,22 @@ $2^r$ descendants, making $rank'(w) < r$.
 <p>
 So again, one less credit is needed to satisfy the credit policy and
 that credit can be used to pay for the operation.
-Summarizing, if $3(rank(w)-rank(u))$ credits are allocated to each
+Summarizing, if $3(\rank(w)-\rank(u))$ credits are allocated to each
 double rotation, the operation can be paid for while continuing to
 satisfy the credit policy.
 <p>
 If a single rotation is required to complete a splay, the number of
 credits needed to satisfy the credit policy after the operation is
 $$
-(rank'(u)-rank(u)) + (rank'(v)-rank(v)) 
-=rank'(v) - rank(u) \leq rank(v) - rank(u)
+(\rank'(u)-\rank(u)) + (\rank'(v)-\rank(v)) 
+=\rank'(v) - \rank(u) \leq \rank(v) - \rank(u)
 $$
-If $3(rank(v) - rank(u))+1$ credits are allocated for the rotation,
+If $3(\rank(v) - \rank(u))+1$ credits are allocated for the rotation,
 it can be paid for while still satisfying the credit policy.
 These observations are summarized in the following lemma.
 <p>
 <i>Lemma</i>. Let $u$ be a vertex in a tree with root $v$.
-If $3(rank(v)-rank(u))+1$ credits are allocated to a splay operation
+If $3(\rank(v)-\rank(u))+1$ credits are allocated to a splay operation
 at $u$, the operation can be fully paid for while continuing to
 satisfy the credit policy.
 <p>
@@ -939,8 +1056,8 @@ are needed for each splay.
 The next step in the analysis of splay trees is to determine the number
 of credits that must be allocated to each operation in addition to those
 required for splays.
-For an <i>insert</i> operation, the vertex along the path from the inserted
-vertex to the root all acquire a new descendant and consequently,
+For an <i>insert</i> operation, each vertex along the path from the inserted
+vertex to the root acquires a new descendant and consequently,
 the ranks will increase for those vertices that have
 exactly $2^k-1$ descendants before the insertion.
 There are at most $\lfloor \lg n \rfloor+1$ such vertices, so the
@@ -962,15 +1079,14 @@ credits allocated is $O(n + m \log n)$, the time required for the operations
 is also $O(n + m \log n)$.
 <p>
 The splay lemma is also true using a more general
-definition of the $rank$. Specifically, if each vertex $u$ is assigned some
+definition of the $\rank$. Specifically, if each vertex $u$ is assigned some
 arbitrary <i>weight</i> $w(u)$ and $tw(u)$ is defined as the total weight
-of the subtree with root $u$, then $rank(u)$ can be defined as
+of the subtree with root $u$, then $\rank(u)$ can be defined as
 $\lfloor \lg tw(u) \rfloor$. The argument used earlier still works with
-this definition. The more general version is used in a later section
+this definition. The more general version is used in a later chapter
 to analyze the performance of the dynamic trees data structure.
 <p>
-The core of the <i>Javascript</i> implementation of the
-$\SplayForest$ class is shown below.
+An abridged <i>Javascript</i> implementation is shown below.
 <p>
 <textarea id="components" rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
@@ -1007,6 +1123,22 @@ export default class SplayForest extends BinaryForest {
     split(u) { this.splay(u); return super.split(u); }
 }
 </textarea> <p>
+To demonstrate splay trees, run the following script.
+script.
+<pre style="padding-left:5%;">
+let sf = new SplayForest();
+sf.fromString('{[((((((((a b -) c -) d -) e -) f -) g -) h -) i -) *j -]}');
+sf.splay(1); log(sf.toString());
+sf.splay(3); log(sf.toString());
+sf.splay(5); log(sf.toString());
+</pre>
+The $\fromString$ operation creates a highly unbalanced tree
+and the each splay improves the balance, as shown below.
+<pre style="padding-left:5%;">
+{[- *a (((((- b c) d e) f g) h i) j -)]} 
+{[(- a b) *c (((- d e) f (g h i)) j -)]} 
+{[((- a b) c d) *e ((- f (g h i)) j -)]}
+</pre>
 In most situtions, balanced binary trees are more efficient than
 splay trees, since they requires far fewer rotations.
 While a single rotation does take constant time, it is a

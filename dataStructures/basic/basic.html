@@ -154,25 +154,27 @@ value is in the list. A list like this could be used to represent a queue
 containing some of the vertices in a graph. The linked representation allows
 one to easily remove the first element or add a new element to the end.
 <p>
-Here is another example of an index-based data structure, which defines a
+Here is another example of an index-based data structure, that defines a
 collection of disjoint lists that partition the index set $1\ldots 12$ into
 the six subsets $\{[1, 6, 3], [4], [2, 7], [8], [11, 9], [5, 12, 10]\}$. This list is doubly-linked with the $\next$ and $\prev$
 arrays defining the neighbors of each list item.
+The colors different highlight items in the same list.
 <p>
 <div  style="text-align:center;">
 <img width="55%" src="figs/dlists.png"><br>
 </div>
 <p>
-Observe that the colors highlight items in the same list.
-Also, note that the $\next$ value for the last item on each list is 0 to mark
+Note that the $\next$ value for the last item on each list is 0 to mark
 the end of the list. However, the $\prev$ value of the first
-item on each list is not 0. Instead, it points to the last item in the list.
-This data structure is called a $\ListSet$.
+item on each list is not 0. Instead, it points to the last item in the list,
+enabling easy access to the last item from the first.
+This data structure is called a $\ListSet$; the provided operations
+on list set objects are described below.
 <p>
 All the algorithms and data structures described here have been
 implemented as <i>Javascript</i> modules.
-The example below illustrates the use of these two data structures,
-plus another data structure for an undirected graph.
+The example below illustrates the use of the index list and list set
+data structures plus another data structure for an undirected graph.
 Note that the code below is enclosed in a scrollable text area.
 <p>
 <textarea rows="20" cols="80" readonly
@@ -238,14 +240,14 @@ code for any of the provided modules and run the code in a browser.
 <p>
 When the app is first opened, the top text area is available
 as a scratch pad that you can use to enter and run programs.
-To run the $\components$ module first enter the following text
-in the top window.
+To run the $\components$ module first copy and paste the following text
+into the top window.
 <pre style="padding-left:5%">
 let g = new Graph();
-g.fromString('{a[b d e] b[a c f] c[b d f] d[a c e] e[a d] f[b c] ' +
-             'g[h] h[g i] i[h]}');
+g.fromString('{a[b d e] b[a c f] c[b d f] d[a c e] e[a d] f[b c] '
+             + 'g[h] h[g i] i[h]}');
 log(g);
-let [ count, comps ] = components(g)
+let [count,comps] = components(g)
 log(count + ' ' + comps);
 </pre>
 The $\fromString$ method initializes the graph object $g$
@@ -254,6 +256,11 @@ lists.
 So for example, the initial portion of the provided argument
 ($a[b\;d\;e]$), specifies edges connecting vertex $a$ to
 vertices $b$, $d$ and $e$.
+One can use the more concise form
+<pre style="padding-left:5%">
+g.fromString('{a[b d e] b[c f] c[d f] d[e] g[h] h[i]}');
+</pre>
+in which each edge appears just once.
 The <i>log</i>() method can be viewed as a shorthand for
 <i>console.log</i>(). Its output appears in the bottom window.
 If you click on the $\run$ button at right, the following text
@@ -302,8 +309,9 @@ left, causing the selected item to be displayed.
 Selecting an item from a different menu activates that menu.
 Go back to the scratch pad by clicking on its button.
 <p>
-If you load the unit test for the components module,
-you can run it by clicking on the <i>run</i> button,
+If you display the module <i>testComponents</i>
+and click on the <i>run</i> button, the program will run.
+By default, the only output is a brief informational message.
 The lines
 <pre style="padding-left:5%">
 let [k, ls, ts] = components(g, trace);
@@ -327,14 +335,15 @@ to 3, you will get the message
 Mismatch: a1 2 3 
 </pre>
 <p>
-If you spend some time reviewing the code for the $\List$
-module, you will be able to see for yourself how it is implemented.
-You will also see some features that are common to most of the data
-structures in this collection.
-For example, most have $\toString$, $\fromString$
-and $\equals$ methods.
+If you type &ldquo;trace&rdquo; into the textbox just above the run
+button and click it again, you will also see the trace string produced
+by the <i>components</i> module.
+This is an example of a general mechanism for supplying
+command-line arguments to unit tests that support them.
+Reviewing the code for the various code modules,
+will allow you to see exactly how they are implemented.
 <p>
-The application, is available at
+The web application, is available at
 <pre style="padding-left:5%">
 www.cse.wustl.edu/~jon.turner/grafalgo/js
 </pre>
@@ -344,10 +353,10 @@ library, which can be downloaded from
 https://github.com/jonturner53/grafalgo
 </pre>
 The library includes <i>C</i>++ implementations of most of the code described
-here, in addition to the <i>javascript</i> version.
-The <i>C</i>++ version pre-dates the <i>javascript</i> version.
+here, in addition to the <i>Javascript</i> version.
+The <i>C</i>++ version pre-dates the <i>Javascript</i> version.
 Do not expect them to fully consistent.
-There is also the beginnings of a <i>java</i> version, which may (or may not)
+There is also the beginnings of a <i>Java</i> version, which may (or may not)
 be completed at some point.
 
 <h2>Common Methods</h2>
@@ -469,7 +478,7 @@ The assigned values are often simply numbers, but may be strings, arrays
 or objects.
 This extension can be enabled implicitly, by setting the value of an item
 using the $\value()$ method.
-The core methods for the $\List# class are shown below.
+The core methods for the $\List$ class are shown below.
 <p>
 <textarea rows="20" cols="80" readonly
           style="font-size: 95%;background-color:lightCyan">
@@ -976,7 +985,13 @@ export default class ListSet extends Top {
         return f1;
     }
 }
-</textarea>
+</textarea><p>
+Note that the usual per-method comments have been omitted above,
+as they are somewhat repetitious in this context, and can distract
+attention from the actual code. In general, the code modules that appear in
+the remainder of the text are similarly abridged. One can always review
+the complete code of any module using the web app.
+
 <a id=ReverseLists><h2>Reversible Lists</h2></a>
 <p>
 The $\ReverseLists$ class is similar to $\ListSet$ in
@@ -1114,7 +1129,39 @@ export default class MergeSets extends Top {
         return i;
     }
 }
-</textarea>
+</textarea><p>
+Here's a script that demonstrates how the two heuristics
+combine to reduce the depth of the trees used to represent the
+sets.
+<p><pre style="padding-left:5%">
+let ms = new MergeSets();
+ms.fromString('{o}');
+ms.merge(1,2); ms.merge(3,4); ms.merge(5,6); ms.merge(7,8);
+ms.merge(9,10); ms.merge(11,12); ms.merge(13,14);
+console.log(ms.toString(0xe));
+ms.merge(1,3); ms.merge(5,7); ms.merge(9,11); ms.merge(13,15);
+console.log(ms.toString(0xe));
+ms.merge(1,5); ms.merge(9,13); console.log(ms.toString(0xe));
+ms.merge(1,9); console.log(ms.toString(0xe));
+ms.find(4); ms.find(8); console.log(ms.toString(0xe));
+ms.find(12); ms.find(15); console.log(ms.toString(0xe));
+</pre><p>
+Here is the output produced when the script is run in the web app.
+<p><pre style="padding-left:5%">
+{a:1(b) c:1(d) e:1(f) g:1(h) i:1(j) k:1(l) m:1(n) o} 
+{a:2(b c:1(d)) e:2(f g:1(h)) i:2(j k:1(l)) m:1(n o)} 
+{a:3(b c:1(d) e:2(f g:1(h))) i:2(j k:1(l) m:1(n o))} 
+{a:3(b c:1(d) e:2(f g:1(h)) i:2(j k:1(l) m:1(n o)))} 
+{a:3(b c:1 d e:2(f) g:1 h i:2(j k:1(l) m:1(n o)))} 
+{a:3(b c:1 d e:2(f) g:1 h i:2(j) k:1 l m:1(n) o)} 
+</pre><p>
+Note that the $\toString()$ method is called with a format argument
+that causes it to show the implementation details (specifically, the
+structure of the trees and the non-zero ranks).
+In each tree, the children of a node are shown
+within a parenthesized list that immediately follows it.
+Without the format argument, only the sets represented by
+the trees are shown.
 
 <h3>Performance Analysis</h3>
 (The analysis in this section is an expanded version of
@@ -1601,7 +1648,7 @@ $m\geq n \beta(n)$.
 
 <a id=Scanner><h2>Scanner</h2></a>
 The $\Scanner$ class is a utility class used by the various
-data structures to implement their $\fromString$  methods.
+data structure modules to implement their $\fromString$  methods.
 It is initialized with a string and
 provides a variety of helper methods for incrementally parsing that string.
 It maintains a <i>cursor</i> that defines the current position
@@ -1636,7 +1683,7 @@ The most commonly used methods are listed below.
         and returns the string up to and including the newline.
         If there is no complete line remaining in the string,
         it returns an empty string and leaves the cursor unchanged.
-<li>    $\nextIndex(prop=0)$ scans the string for a either a single
+<li>    $\nextIndex(prop=0)$ scans the string for either a single
         lower-case letter or an integer, skipping
         past leading space characters. If it finds a letter, it returns
         the letter's position in the alphabet
