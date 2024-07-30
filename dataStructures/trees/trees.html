@@ -1124,7 +1124,6 @@ export default class SplayForest extends BinaryForest {
 }
 </textarea> <p>
 To demonstrate splay trees, run the following script.
-script.
 <pre style="padding-left:5%;">
 let sf = new SplayForest();
 sf.fromString('{[((((((((a b -) c -) d -) e -) f -) g -) h -) i -) *j -]}');
@@ -1133,7 +1132,7 @@ sf.splay(3); log(sf.toString());
 sf.splay(5); log(sf.toString());
 </pre>
 The $\fromString$ operation creates a highly unbalanced tree
-and the each splay improves the balance, as shown below.
+and each splay improves the balance, as shown below.
 <pre style="padding-left:5%;">
 {[- *a (((((- b c) d e) f g) h i) j -)]} 
 {[(- a b) *c (((- d e) f (g h i)) j -)]} 
