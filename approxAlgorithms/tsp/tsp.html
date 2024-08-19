@@ -1,0 +1,716 @@
+<html>
+<head>
+<title>Traveling Salesman Problem</title>
+<link type="text/css" rel="stylesheet" href="../../main.css">
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41SPK9725S"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-41SPK9725S');
+</script>
+</head>
+<body bgcolor=ffffff>
+\(
+\newcommand{\selectLimit}{\textit{selectLimit}}
+\)
+
+<h1>Traveling Salesman Problem<sup>&copy;</sup></h1>
+
+The <i>traveling salesman problem</i> (TSP) is perhaps the best-known,
+and certainly one of the most studied
+<i>NP</i>-hard combinatorial optimization problems [LLRS95].
+An instance consists of a set of cities with inter-city distances
+$d_{ij}\geq 0$ defined for each distinct pair.
+Distances may be <i>symmetric</i> ($d_{ij} = d_{ji}$) or <i>asymmetric</i>,
+and will often satisfy the <i>triangle inequality</i>
+($d_{ik} \leq d_{ij} + d_{jk}$).
+The objective is to find a cycle passing through all the cities
+(called a <i>tour</i>) that has minimum total length.
+<p>
+One can also represent the problem using a graph, where the vertices
+represent cities and the edge weights represent inter-city distances.
+For non-adjacent vertices, the inter-city distances can be defined
+using some rule.
+For example, one might define them to be the shortest path distances
+in the graph, or one might make them infinite.
+<p>
+A solution to a TSP instance can be expressed as a list of vertices
+that includes every vertex exactly once. The length of the tour is
+the sum of the distances linking successive vertices.
+Alternatively, it can be expressed as a list of the graph edges used
+to pass through the cities in the list.
+<p>
+<div  style="text-align:center;">
+<img width="30%" src="figs/tspExample1.png"><br>
+</div>
+<p>
+Not only is the problem of finding an optimum TSP solution $NP$-hard,
+the problem of finding a good worst-case approximation is also $NP$-hard.
+Fortunately, there are important special cases for which approximate
+solutions are possible, and even in the more general case,
+there are algorithms that work well on random graphs.
+
+<h2>Symmetric TSP with Triangle Inequality</h2>
+When the inter-city distances are symmetric and satisfy the triangle
+inequality, is possible to get good approximations to an optimal tour.
+One such approximation is based on the observation that a minimum spanning tree
+on the weighted graph defined by a TSP instance has total weight
+no larger than the minimum tour length (since removing any edge from
+a TSP tour yields an MST). 
+<p>
+Doubling the edges of an MST yields an Eulerian graph in which every
+vertex has even degree. An Euler tour of a such a graph is a cycle
+that uses all its edges, and can be constructed in time
+proportional to the number of edges.
+An Euler tour can be converted to a TSP tour by simply listing the
+vertices in the order in which they first appear in the Euler tour.
+Since the TSP distances satisfy the triangle inequality, the length
+of the TSP tour can be no more than the length of the Euler tour,
+and consequently no more than twice the length of an optimal TSP tour.
+<p>
+Christofides algorithm [Christofides76] is a refinement of the MST
+approximation that uses a different Eulerian graph.
+Specifically, Christofides algorithm computes a complete graph on the
+MST vertices of odd degree and assigning each edge a weight equal to
+the shortest path distance joining its endpoints in the TSP graph.
+If the edges in a perfect matching on this graph are added to the
+edges in the MST, the resulting graph is Eulerian. If the perfect matching
+has minimum weight, its weight is at most half the length of
+an optimal TSP tour. So the weight of the Eulerian graph constructed
+using a minimum weight matching is at most
+50% larger than the optimal tour length.
+<p>
+A <i>Javascript</i> implementation of this algorithm appears below.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function tspC(g ..) {
+    let [mst] = mstP(g);
+    let mstWeight = 0;
+    for (let e of mst) mstWeight += g.length(e);
+
+    // compute a list of odd degree vertices in mst
+    let deg = new Int32Array(g.n+1);
+    for (let i = 0; i < mst.length; i++) {
+        let e = mst[i]; deg[g.left(e)]++; deg[g.right(e)]++;
+    }
+    let odds = new List(g.n);
+    for (let u = 1; u <= g.n; u++)
+        if (deg[u]&1) odds.enq(u);
+    let [link,dist] = allpairs(g);
+
+    let match = matchpairs(g, odds, dist);
+
+    // build eulerian graph h by combining edges in mst and match;
+    // note: h has same vertex numbers as g but different edge numbers
+    let h = new Graph(g.n+1, mst.length + match.size());
+    for (let i = 0; i < mst.length; i++) {
+        let e = mst[i]; h.join(g.left(e),g.right(e));
+    }
+    for (let e = match.first(); e; e = match.next(e)) {
+        h.join(match.left(e),match.right(e));
+    }
+
+    // compute euler tour (List of edges) and then shortcutTour
+    // (List of vertices in tsp tour)
+    let u0 = h.left(h.first());
+    let euler = eulerTour(h, u0);
+    let sctour = shortcutTour(h, u0, euler);
+
+    // create list of edges in tsp tour, adding edges as needed
+    // to account for shortcuts
+    let tour = new Int32Array(g.n);
+    let tourLength = 0; let i = 0;
+    for (let u = sctour.first(); u; u = sctour.next(u)) {
+        let v = (u == sctour.last() ? sctour.first() : sctour.next(u));
+        let e = g.findEdge(u,v);
+        if (!e) { e = g.join(u,v); g.length(e, dist[u][v]); }
+        tour[i++] = e; tourLength += g.length(e);
+    }
+    
+    return [[u0,tour] ..];
+}
+
+/** Compute all pairs shortest paths in an undirected graph.
+ *  @param g is an undirected graph
+ *  @return [link,dist] where link[u][v] is the edge joining v to its parent
+ *  in the shortest path tree rooted at u and dist[u][v] is the shortest path
+ *  distance from u to v.
+ */
+function allpairs(g) {
+    // convert g to equivalent digraph dg and compute shortest paths in dg
+    let dg = new Digraph(g.n, Math.min(2*g.edgeRange+1));
+    for (let e = g.first(); e; e = g.next(e)) {
+        let de = dg.join(g.left(e), g.right(e), 2*e);
+                    dg.length(de, g.length(e));
+            de = dg.join(g.right(e), g.left(e), 2*e+1);
+                    dg.length(de, g.length(e));
+    }
+    let [link,dist] = allpairsF(dg);
+    // now convert edge numbers in link to match edge numbers in g
+    for (let u = 1; u <= g.n; u++) {
+        for (let v = 1; v <= g.n; v++)
+            link[u][v] = ~~(link[u][v]/2);
+    }
+    return [link,dist];
+}
+
+/** Compute minium weight matching on a set of vertices
+ *  @param g is a graph
+ *  @param vset is a List defining a subset of g's vertices
+ *  @param dist is an array where dist[u][v] defines the distance between
+ *  vertices u and v
+ *  @return a pair [match, mg] where the edges in match define a
+ *  minimum weight matching on graph mg
+ */
+function matchpairs(g, vset, dist) {
+    let mg = new Graph(g.n,g.edgeRange); let maxWt = 0;
+    for (let u = vset.first(); u; u = vset.next(u)) {
+        for (let v = vset.next(u); v; v = vset.next(v)) {
+            ea && assert(dist[u][v] >= 0 && dist[u][v] != Infinity);
+            let e = mg.join(u,v); mg.weight(e, dist[u][v]);
+            maxWt = Math.max(mg.weight(e), maxWt);
+        }
+    }
+    // complement weights to obtain minimum weight matching
+    maxWt++;
+    for (let e = mg.first(); e; e = mg.next(e))
+        mg.weight(e, maxWt - mg.weight(e));
+    let [match] = wmatchE(mg);
+    // restore original weights
+    for (let e = mg.first(); e; e = mg.next(e))
+        mg.weight(e, maxWt - mg.weight(e));
+    return match;
+}
+
+/** Construct an Euler tour from a specified starting point.
+ *  @param h0 is an Eulerian graph
+ *  @param u is a vertex in g with at least one edge
+ *  @return a List of edges that forms an Euler tour of g starting at u
+ */
+function eulerTour(h0,u) {
+    let h = new Graph(); h.assign(h0); // working copy that can be deconstructed
+    let tour = new List(h.edgeRange);
+    let visited = new List(h.n);
+    let arrivalEdge = new Int32Array(h.n+1);
+
+    visited.enq(u); arrivalEdge[u] = 0;
+    while (h.m) {
+        let e = h.firstAt(u);
+        if (e) {
+            tour.insert(e, arrivalEdge[u]);
+            let v = h.mate(u,e); arrivalEdge[v] = e; h.delete(e);
+            if (!h.firstAt(u)) visited.delete(u);
+            if (!h.firstAt(v) && visited.contains(v))
+                visited.delete(v);
+            if (h.firstAt(v) && !visited.contains(v))
+                visited.enq(v);
+            u = v;
+        } else {
+            u = visited.first();
+        }
+    }
+    return tour;
+}
+
+/** Compute shortcut tour from euler.
+ *  @param h is Eulerian graph
+ *  @param u0 is first vertex in tour
+ *  @param euler is a List of edges in the Euler tour of h
+ *  @return a List of vertices, where the vertices are listed in the
+ *  order they first appear in euler
+ */
+function shortcutTour(h, u0, euler) {
+    let tour = new List(h.n);
+    let u = u0; tour.enq(u);
+    for (let e = euler.first(); e; e = euler.next(e)) {
+        u = h.mate(u, e);
+        if (!tour.contains(u)) tour.enq(u);
+    }
+    return tour;
+}
+</textarea><p>
+Note that the TSP problem is specified as a graph which need not be complete
+and the returned value includes all the edges on the computed tour.
+If the provided graph is not complete, the tour may include
+&ldquo;implicit edges&rdquo; that were not explicitly present in the
+graph. Any such edges that are needed to complete the tour are
+added to the graph and assigned a length equal to the
+shortest path distance between the endpoints.
+This ensures that the graph and the tour are consistent with one another.
+<p>
+The following script can be used to demonstrate the program.
+<p> <pre style="padding-left:5%">
+let n = 12; let d = 3; let scale = .5; let wtmax = 9;
+let [g,seed,seedLength] = tspRandom(n,d,scale,[randomInteger,1,wtmax]);
+let [[u0,tour], ts, stats] = tspC(g, 1);
+log(ts + `\nseed: ${g.elist2string(seed,0,0,1)} ${seedLength}\n` +
+         `\nfinal graph: ${g.toString(1)}`);
+</pre> <p>
+The function <code>tspRandom</code> generates a random graph with a
+built-in &ldquo;seed tour&rdquo;.
+Edges are assigned a random weight and the edge weights
+on the tour are then multipled by a scale factor of 0.5.
+Finally, any edge weights that violate the triangle inequality are
+adjusted to comply with it. The returned value includes the generated
+graph and the length of the built-in tour.
+Here is a sample output from the script.
+<p> <pre style="padding-left:5%">
+graph: {
+a[d:4 f:4] b[c:2 e:4] c[b:2 k:2] d[a:4 i:3]
+e[b:4 f:5 j:5] f[a:4 e:5 h:1 j:4 l:4] g[i:3 k:7 l:1] h[f:1 k:1]
+i[d:3 g:3] j[e:5 f:4 k:2 l:4] k[c:2 g:7 h:1 j:2 l:6] l[f:4 g:1 j:4 k:6]
+}
+
+mst: [bc ck ad eb fa ig hf di jk kh gl] 27
+matching: [ek jl] 11
+tsp tour: b [bc ck jk lj gl ig di ad fa hf he eb] 36
+
+seed: [fa ad di ig gl lj je eb bc ck kh hf] 34
+
+final graph: {
+a[d:4 f:4] b[c:2 e:4] c[b:2 k:2] d[a:4 i:3]
+e[b:4 f:5 h:6 j:5] f[a:4 e:5 h:1 j:4 l:4] g[i:3 k:7 l:1] h[e:6 f:1 k:1]
+i[d:3 g:3] j[e:5 f:4 k:2 l:4] k[c:2 g:7 h:1 j:2 l:6] l[f:4 g:1 j:4 k:6]
+}
+</pre> <p>
+The trace output shows the edges in the MST and their total weight,
+the edges in the matching and the final tour. The seed tour
+built into the random graph is also shown, along with the final
+version of the graph. Note that the tour includes edge $he$
+which was not explicitly represented in the original graph, but is included
+in the final version of the graph.
+<p>
+The length of the computed tour is about 6% less than the total
+weight of the MST and matching and about 6% larger than the length
+of the seed.
+The MST implies a lower bound of 27 on the length of an
+optimal tour.
+The actual optimal tour length lies somewhere between this
+lower bound and the length of the seed.
+<p>
+Here are some results for a larger graph (100 vertices and 500 edges)
+with a scale factor of .1 and a maximum edge weight of 99.
+The resulting seed tour lengths range from 493 to 547.
+<p> <pre style="padding-left:5%">
+100 10 0.1 99 547 {"mst":412,"match":191,"tour":587} 
+100 10 0.1 99 493 {"mst":357,"match":191,"tour":544} 
+100 10 0.1 99 501 {"mst":365,"match":169,"tour":524} 
+100 10 0.1 99 527 {"mst":392,"match":189,"tour":561} 
+</pre> <p>
+The computed tour lengths range from 524 to 587 and the ratios
+of the tour lengths to the lower bounds range from 1.39 to 1.43.
+The ratios of the computed tour lengths to the seed tour lengths
+range from 1.05 to 1.1.
+
+<h2>Unrestricted TSP</h2>
+
+In the unrestricted version of the traveling salesman problem,
+distances between cities may be asymmetric and the triangle inequality
+may be be violated. This makes the problem considerably more difficult
+in the worst-case. In fact, if there were a polynomial time algorithm that
+could guarantee a solution with length within any constant factor of
+the optimum tour length, it would imply that <i>P=NP</i>.
+So in this case, the only recourse is algorithms that can be expected
+to work well in practice. One such algorithm was devoloped by Karp,
+who showed that on large random TSP instances, it could produce tours
+close to optimal in length with high probability [Karp79].
+<p>
+Karp's algorithm starts by first solving a weighted
+bipartite matching problem. Specifically, if the TSP is defined by
+a weighted graph $G=(V,E)$ with $n$ vertices and $m$ edges,
+the bipartite graph $B=(W,F)$ has $2n$ vertices and $m$ edges,
+where for each edge $(v_i,v_j)\in E$ there is a corresponding edge
+$(w_i,w_{n+j})\in F$. A minimum weight matching in $B$ defines
+a minimum length collection of vertex-disjoint cycles in $G$.
+Since a TSP tour is a special case of such a collection,
+the length of the optimum TSP tour can be no smaller than
+the weight of such a matching. This is illustrated below.
+Note that the edge lengths are identified by the edge colors.
+<p>
+<div  style="text-align:center;">
+<img width="80%" src="figs/tspExample2.png"><br>
+</div>
+<p>
+What remains is to combine the cycles into a single tour using a
+<i>patching operation</i>. If two distinct cycles contain edges
+$(u,v)$ and $(x,y)$ and there are also edges
+<i>cross edges</i> $(u,y)$ and $(x,v)$, the cycles can be combined
+by replacing $(u,v)$ and $(x,y)$ with the cross edges, at a cost
+equal to the difference in length between the two edge pairs.
+This is illustrated below
+<p>
+<div  style="text-align:center;">
+<img width="25%" src="figs/tspExample3.png"><br>
+</div>
+<p>
+Karp showed how to select the patching operations by solving a
+second bipartite matching problem $P$ with a vertex for each
+of the &ldquo;small cycles&rdquo; and
+another for each of the edges in the large cycle. For every edge $(u,v)$
+in a small cycle $c$ that can be used with an edge $(x,y)$ in the large
+cycle to combine the two, an edge from $c$ to $(x,y)$ is included in $P$.
+The weight of this edge is the incremental cost of the patching operation.
+If a maximum size matching of minimum weight on $P$ matches every
+small cycle, then the matching gives a minimum cost strategy for patching
+all the small cycles into the large one.
+The earlier example is continued below, showing the patching graph with edges
+joining the cycle [<i>de ed</i>] to the large cycle at edge $ca$ and
+cycle [<i>gf$\,$ fg</i>] at edge $bc$. In this case the patching graph is a
+matching, and both small cycles can be patched into the large one.
+The right side of the figure shows how one patching operation replaces
+the cycle edges $ed$ and $ca$ with the cross edges $ea$ and $cd$.
+<p>
+<div  style="text-align:center;">
+<img width="60%" src="figs/tspExample4.png"><br>
+</div>
+<p>
+Completing the second patching operation produces the tour
+[<i>ab bf fg gc cd de ea</i>] with a total length of 15.
+Note that the optimum tour is [<i>ae ed dc cg gf fb ba</i>] 
+which has length 12 and that Karp's algorithm produces the same result
+even if the lengths of edges $cd$ and $gc$ are arbitrarily large.
+So, it cannot approximate the optimum tour within any constant bound.
+On the other hand,
+Karp showed that for very large complete random graphs with uniformly
+distributed edge weights, the largest cycle defined by the matching includes
+most of the vertices in the graph with high probability and that the
+limited number of smaller cycles can patched into the largest with only a
+small cost penalty.
+<p>
+A <i>Javascript</i> implementation of Karp's algorithm is shown below.
+This implementation extends Karp's algorithm in two ways. First, if
+the standard matching process is unable to combine all the cycles into one,
+then a second attempt is made to merge the remaining small cycles.
+This second attempt repeatedly looks for the least cost patching opportunity
+between the small cycles and the large one, and carries out the corresponding
+patching operation. It can sometimes succeed when the original algorithm
+fails, since it can take advantage of new patching opportunities that
+may arise from earlier patching operations.
+<p>
+If the second attempt to complete the tour fails,
+the remaining cycles are merged with the large one by extending the
+initial graph with edges of infinite length that can be used as
+cross edges in patching operations. This is equivalent to the
+interpretation that the &ldquo;missing edges&rdquo; are just a
+way of representing infinite inter-city distances.
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+let g;      // shared reference to tsp graph
+let csets;  // MergeSets of vertices in cycles
+let clist;  // List of smaller cycles
+let link;   // link[u] is edge to next vertex in u's cycle
+let rlink;  // rlink[u] is edge to previous vertex
+let size;   // size[u] is size of u's cycle
+let C;      // vertex that identifies the cycle with the most edges
+ 
+export default function tspK(G ..) {
+    g = G;
+
+    let cyclesLength = initialCycles(); clist.delete(C);
+
+    if (clist.length > 0) cyclesLength = merge1(cyclesLength);
+    if (clist.length > 0) cyclesLength = merge2(cyclesLength);
+    if (clist.length > 0) cyclesLength = merge3(cyclesLength);
+
+    // create vector of edges in tour
+    let tour = new Int32Array(g.n); let i = 0; let u = C;
+    do { let e = link[u]; tour[i++] = e; u = g.head(e); } while (u != C);
+    
+    return [[C,tour] ..];
+}
+
+/** Use match to construct initial set of cycles.
+ *  @return pair [len,C] where len is the total length of the initial
+ *  set of cycles and C is the id of the initial cycle with the most edges.
+ */
+function initialCycles() {
+    // determine edges that define cycles
+    let mg = new Graph(2*g.n, g.edgeRange);
+    for (let e = g.first(); e; e = g.next(e)) {
+        mg.join(g.tail(e), g.n+g.head(e), e); mg.weight(e, g.weight(e));
+    }
+    let [match] = wperfectE(mg);
+
+    // initialize data structures used to represent cycles
+    csets = new MergeSets(g.n);    
+    clist = new List(g.n);         
+    link = new Int32Array(g.n+1); 
+    rlink = new Int32Array(g.n+1); 
+    size = new Int32Array(g.n+1).fill(1); 
+
+    // build csets and get total weight of selected edges
+    let totalLength = 0;
+    for (let u = 1; u <= g.n; u++) {
+        let e = match.at(u); let v = g.head(e);
+        link[u] = rlink[v] = e; totalLength += g.length(e);
+        let cu = csets.find(u); let cv = csets.find(v);
+        if (cu != cv)
+            size[csets.merge(cu,cv)] = size[cu] + size[cv];
+    }
+
+    // identify largest cycle
+    C = 0; 
+    for (let u = 1; u <= g.n; u++) {
+        let c = csets.find(u);
+        if (!clist.contains(c)) clist.enq(c);
+        if (C == 0 || size[c] > size[C]) C = c;
+    }
+    return totalLength;
+}
+
+/** Use matching to merge smaller cycles with largest.
+ *  @param cyclesLength is total length of current set of cycles
+ *  @param cyclesLength is updated length of cycles
+ */
+function merge1(cyclesLength) {
+    // use matching to identify best patching operations to perform
+    let mg = new Graph(2*g.n, g.edgeRange);
+    for (let c = clist.first(); c; c = clist.next(c)) {
+        // find all ways to merge c with C
+        let u = c;
+        do {
+            let uv = link[u]; let v = g.head(uv);
+            for (let uy = g.firstOutof(u); uy; uy = g.nextOutof(u,uy)) {
+                let y = g.head(uy);
+                if (csets.find(y) != C) continue;
+                let xy = rlink[y]; let x = g.tail(xy);
+                let xv = g.findEdge(x,v);
+                if (!xv) continue;
+                mg.join(c, g.n+y, uy);
+                    // number in g of the cross-edge uy is used to identify 
+                    // specific patching operation (along with cycle info)
+                mg.weight(uy, (g.length(uy) + g.length(xv)) -
+                              (g.length(xy) + g.length(uv)));
+            }
+            u = v;
+        } while (u != c);
+    }
+    if (!mg.m) return cyclesLength;
+
+    let [match] = wperfectE(mg, Math.min(mg.m,clist.length));
+
+    for (let uy = match.first(); uy; uy = match.next(uy)) {
+        let [u,y] = [g.tail(uy),g.head(uy)];
+        let uv = link[u];  let v = g.head(uv);
+        let xy = rlink[y]; let x = g.tail(xy);
+        let xv = g.findEdge(x,v);
+        link[u] = rlink[y] = uy; link[x] = rlink[v] = xv;
+        cyclesLength += mg.weight(uy);
+        let c = csets.find(u);
+        C = csets.merge(c, C);
+        clist.delete(c);
+    }
+    return cyclesLength;
+}
+
+/** Attempt to merge any remaining smaller cycles into C.
+ *  @param cyclesLength is total length of current collection of cycles
+ *  @return updated length of cycles
+ */
+function merge2(cyclesLength) {
+    // merge remaining smaller cycles into C
+    while (clist.length > 0) {
+        let [uy,xv,cost] = bestMerge(C);
+        cyclesLength += cost;
+        if (!uy) return cyclesLength;
+        let [u,y] = [g.tail(uy),g.head(uy)];
+        let [x,v] = [g.tail(xv),g.head(xv)];
+        link[u] = rlink[y] = uy; link[x] = rlink[v] = xv;
+        let c = csets.find(u);   // smaller cycle
+        C = csets.merge(c, C); size[C] += size[c];
+        clist.delete(c);
+    }
+    return cyclesLength;
+}
+
+/** Find least cost merge of a smaller cycle into the largest.
+ *  @param C is the largest cycle
+ *  @return triple [uy,xv,cost] where uy and xv are "cross-edges" linking
+ *  a small cycle containing edge uv and the large cycle which includes xy;
+ *  cost is the cost of merging the cycles by replacing edges uv and xy
+ *  with uy and xv.
+ */
+function bestMerge() {
+    let bestCost = Infinity; let bestPair = [0,0];
+    for (let c = clist.first(); c; c = clist.next(c)) {
+        // look for best way to merge c with C
+        let u = c;
+        do {
+            let uv = link[u]; let v = g.head(uv);
+            for (let uy = g.firstOutof(u); uy; uy = g.nextOutof(u,uy)) {
+                let y = g.head(uy);
+                if (csets.find(y) != C) continue;
+                let xy = rlink[y]; let x = g.tail(xy);
+                let xv = g.findEdge(x,v);
+                if (!xv) continue;
+                let cost = (g.length(uy) + g.length(xv)) -
+                           (g.length(xy) + g.length(uv));
+                if (cost < bestCost) {
+                    bestCost = cost; bestPair = [uy,xv];
+                }
+            }
+        } while (u != c);
+    }
+    let [uy,xv] = bestPair;
+    return [uy,xv,bestCost];
+}
+
+/** Complete a tour by adding infinite length cross edges.
+ *  @param cyclesLength is total length of current collection of cycles
+ *  @return updated length of cycles (infinity)
+ */
+function merge3(cyclesLength) {
+    while (clist.length > 0) {
+        let c = clist.deq();
+        let uv = link[c]; let [u,v] = [g.tail(uv),g.head(uv)];
+        let xy = link[C]; let [x,y] = [g.tail(xy),g.head(xy)];
+        let uy = g.findEdge(u,y);
+        if (!uy) { uy = g.join(u,y); g.length(uy,Infinity); }
+        let xv = g.findEdge(x,v);
+        if (!xv) { xv = g.join(x,v); g.length(xv,Infinity); }
+        link[u] = rlink[y] = uy; link[x] = rlink[v] = xv;
+        C = csets.merge(C, c); size[C] += size[c];
+    }
+    return Infinity;
+}
+</textarea> <p>
+
+The program can be demonstrated using the following script.
+<p> <pre style="padding-left:5%">
+let n = 12; let d = 4; let scale = .5;
+let [g,seed,seedLength] = tspRandom(n,d,scale,[randomInteger,1,9],1,0);
+let [[u0,tour],ts] = tspK(g,1);
+log(ts + `\nseed: ${g.elist2string(tour,0,0,1)} ${seedLength}\n`);
+</pre> <p>
+The <code>tspRandom</code> function call uses two additional arguments.
+The first specifies that the returned graph should define an
+asymmetric instance (implying a directed graph).
+The second specifies that the edge lengths need not satisfy
+the triangle inequality.
+A sample result appear below.
+<p> <pre style="padding-left:5%">
+graph: {
+a[e:1] b[c:3 k:5] c[d:3 g:4 h:5 i:3 j:3]
+d[b:1 e:4 f:5 h:5 k:4] e[c:6 h:6 i:5 k:2] f[a:5 b:4 c:4 i:6]
+g[a:8 c:4 f:6 i:8 j:5 k:3 l:5] h[d:6 g:6 i:3] i[c:7 j:3 k:8 l:4]
+j[b:4 c:3] k[b:4 e:6 f:2 h:2 i:2] l[a:7 f:5 g:3 h:6 i:1 k:7]
+}
+
+initial cycles: b[bc cd dh hi ij jb] a[ae ek kf fa] g[gl lg] 39
+
+potential patching edge sets
+    ek bc ec bk 6
+    ek dh eh dk 3
+    kf dh kh df 0
+    gl ij gj il 1
+    lg hi li hg 1
+
+updated cycle sets
+    a[ae ek kh hi ij jb bc cd df fa] g[gl lg] 39
+    a[ae ek kh hg gl li ij jb bc cd df fa] 40
+
+tsp tour: a[ae ek kh hg gl li ij jb bc cd df fa] 40
+
+seed: a[ae ek kh hg gl li ij jb bc cd df fa] 40
+</pre> <p>
+In this case, the intial collection of cycles includes three cycles,
+with a total length of 39.
+Each cycle is shown as a list of edges, preceded by its initial vertex.
+The edge groups that define potential patching operations are shown,
+along with the incremental cost of each operation.
+The first of the small cycles can be
+patched into the large one in three different ways.
+The second can be patched in two different ways.
+The collection of cycles is shown after each patching operation,
+with the updated length. The computed tour turns out to be the seed tour.
+<p>
+The following script can be used to explore how the algorithm performs
+under different conditions.
+<p> <pre style="padding-left:5%">
+let n = 100; let d = 15; let scale = .1; let wtmax = 99;
+let [g,seed,seedLength] = tspRandom(n,d,scale,[randomInteger,1,wtmax],1,0);
+let t = Date.now(); let [[u0,tour], ts, stats] = tspK(g); t = Date.now() - t;
+log(n, d, scale, wtmax, 'cycleStats=['+stats.cycleStats+']', 
+    'perfRatio='+(stats.tourLength/stats.cycleStats[2]).toFixed(2), 
+    'seedLength='+seedLength, t+'ms');
+</pre> <p>
+Some sample results are shown below. Each group of four uses the same
+parameters and gives some sense of the performance variability.
+As the graph density is increased, the scale factor for the seed tour
+is decreased. The <code>cycleStats</code> include the initial length
+of the largest cycle, the number of cycles and the total length of the initial
+set of cycles. The performance ratio
+is the ratio of the computed tour length to the length of the initial cycles.
+<p> <pre style="padding-left:5%">
+100  2 0.5  99 cycleStats=[100,1,2215] perfRatio=1.00     seedLength=2215 27ms 
+100  2 0.5  99 cycleStats=[100,1,2267] perfRatio=1.00     seedLength=2267 27ms 
+100  2 0.5  99 cycleStats=[100,1,2635] perfRatio=1.00     seedLength=2635 27ms 
+100  2 0.5  99 cycleStats=[ 68,3,2600] perfRatio=Infinity seedLength=2684 30ms 
+
+100  5 0.25 99 cycleStats=[ 54,5,1257] perfRatio=Infinity seedLength=1263 28ms 
+100  5 0.25 99 cycleStats=[ 90,2,1274] perfRatio=Infinity seedLength=1299 38ms 
+100  5 0.25 99 cycleStats=[ 40,3,1163] perfRatio=1.06     seedLength=1177 38ms 
+100  5 0.25 99 cycleStats=[ 78,2,1238] perfRatio=1.08     seedLength=1289 38ms
+ 
+100 10 0.15 99 cycleStats=[ 51,4, 717] perfRatio=Infinity seedLength= 738 43ms 
+100 10 0.15 99 cycleStats=[ 38,4, 732] perfRatio=1.07     seedLength= 744 37ms 
+100 10 0.15 99 cycleStats=[ 81,3, 734] perfRatio=1.11     seedLength= 781 43ms 
+100 10 0.15 99 cycleStats=[ 97,2, 725] perfRatio=1.00     seedLength= 737 40ms 
+
+100 15 0.1  99 cycleStats=[ 55,3, 447] perfRatio=1.16     seedLength= 462 33ms 
+100 15 0.1  99 cycleStats=[ 49,3, 467] perfRatio=1.03     seedLength= 508 44ms 
+100 15 0.1  99 cycleStats=[ 43,4, 466] perfRatio=1.23     seedLength= 487 43ms 
+100 15 0.1  99 cycleStats=[ 48,4, 493] perfRatio=1.12     seedLength= 532 51ms 
+
+100 99 0.05 99 cycleStats=[ 46,4, 234] perfRatio=1.12     seedLength= 256 76ms 
+100 99 0.05 99 cycleStats=[ 89,4, 233] perfRatio=1.26     seedLength= 261 63ms 
+100 99 0.05 99 cycleStats=[ 43,3, 248] perfRatio=1.03     seedLength= 289 67ms 
+100 99 0.05 99 cycleStats=[ 68,3, 226] perfRatio=1.04     seedLength= 274 62ms 
+</pre> <p>
+At very low densities, the algorithm usually discovers the seed tour in
+the first step. However, when the initial set of cycles is shorter than
+the seed tour, it is likely to be unable to patch the cycles together
+without adding infinite length cross edges.
+This occurs more often at slightly higher densities, but then becomes less
+frequent as the densities continue to increase (as there are more cross edges
+available for patching).
+When the algorithm produces a finite length tour, its length is usually
+close to the lower bound, regardless of the graph density.
+
+<h2>References</h2>
+<dl>
+<dt> [Christofides76]
+<dd> &ldquo;Worst-case analysis of a new heuristic for the traveling salesman
+    problem,&rdquo; by Nicos Christofides. Report 388, Graduate School of
+    Industrial Administration, Carnegie-Mellon University, 1976.
+	Also, in <i>Operations Research Forum</i> 2023.
+<dt> [Karp79]
+<dd> &ldquo;A patching algorithm for the nonsymmetric traveling-salesman
+    problem,&rdquo; by Richard Karp.
+    In <i>SIAM Journal on Computing</i> 1979. 
+<dt> [LLRS85]
+<dd> <i>The Traveling Salesman Problem</i>, edited by EL Lawler, JK Lenstra,
+    AHG Rinnooy Kan and DB Shmoys, Wiley, 1985.
+</dl>
+<hr> <h4>&copy; Jonathan Turner - 2024</h4>
+<script src="../../googleAnalytics.js"></script>
+</body>
+</html>
