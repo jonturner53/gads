@@ -1,0 +1,320 @@
+<html>
+<head>
+<title>Set Cover Problem</title>
+<link type="text/css" rel="stylesheet" href="../../main.css">
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41SPK9725S"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-41SPK9725S');
+</script>
+</head>
+<body bgcolor=ffffff>
+\(
+\newcommand{\selectLimit}{\textit{selectLimit}}
+\)
+
+<h1>Set Cover Problem<sup>&copy;</sup></h1>
+
+An instance of the <i>set cover</i> problem consists of a
+<i>base set</i> $A$ and a collection $S$ of subsets of $A$,
+where each subset $s$ has a non-negative <i>weight</i> $w_s$.
+The objective is to find a minimum weight selection of 
+subsets that <i>covers</i> the base set. That is, every
+item in the base set is included in at least one of the
+selected subsets.
+<p>
+One can visualize the problem as a bipartite graph, where
+the inputs represent the subsets, the outputs represent the
+items in the base set and the edges define the items belonging
+to each subset.
+<p>
+<div  style="text-align:center;">
+<img width="20%" src="figs/setCover.png"><br>
+</div>
+In this example, subsets $A$, $B$ and $C$ define a cover with weight 15.
+Selecting $D$ in place of $B$ yields a cover of weight 10.
+<p>
+The set cover problem is $NP$-complete, hence it is useful to consider
+approximation algorithms.
+
+<h2>Lower Bounds </h2>
+<p> <textarea rows="3" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+xxx
+</textarea> <p>
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+xxx
+</textarea>
+
+Lower bounds are useful for gauging how far a given solution is from
+an optimum solution.
+For the example in the introduction, it's easy to see that any
+cover must have at least two subsets. Also, the lightest pair of
+subsets has a combined weight of 5, so no cover can have a weight less than 5.
+In general, one can determine the smallest number of subsets required,
+by adding the largest set sizes until the total size is at least equal
+to the size of the base set. If $q$ subsets are required, no cover can
+have a weight less than that of the $q$ lightest subsets.
+<p>
+Another lower bound can be obtained using an alternate version of
+the problem. Consider the graph representation of the set cover problem.
+Now, replace the input weights with edge weights. Specifically, divide
+the weight of each input equally among its incident edges.
+The objective of this <i>split weights</i> variant is to find a 
+least cost subset of the edges that includes at least one edge at
+each output.
+The figure below shows our earlier example on the left with the
+subsets in one solution highlighted. The split weights version is shown
+on the right, with the edges of a solution highlighted.
+<p>
+<div  style="text-align:center;">
+<img width="50%" src="figs/lowerBound.png"><br>
+</div>
+<p>
+It's trivial to compute an optimal solution to the split weights problem.
+Simply select the least-cost edge at each output. An optimal solution to
+the set cover problem can be viewed as a solution to the split weights
+version that has the same or smaller cost.
+Consequently, the cost of the split weights solution yields a
+lower bound.
+<p>
+One can get a third lower bound by formulating the set cover problem
+as an integer linear program.
+\begin{eqnarray*}
+\textrm{minimize} && \sum_{1\leq j \leq k} w_j x_j \\
+\textrm{subject to} &&
+\sum_{j:a_i\in s_j} x_j \geq 1 \qquad \textrm{for all $i$}
+\end{eqnarray*}
+where $S=\{s_j | 1\leq j \leq k\}$ is the collection of subsets on
+the base set $A=\{a_i | 1 \leq i \leq h\}$,
+$w_j$ is the weight of $s_j$ and
+$x_j$ is a 0-1 selection variable that is set to 1 to include $s_j$ in a
+solution.
+The constraints ensure that each $a_i$ is included in at least one
+subset of the solution.
+The ordinary linear program obtained by relaxing the
+integer requirement on the $x_j$s has an optimal solution
+no larger than that of the integer program. Hence, the optimum value
+of the LP objective function is a lower bound on the optimum set cover weight.
+
+<h2>Using Linear Programs to Approximate Set Covers</h2>
+
+The LP relaxation of the set cover integer program can be used to obtain
+set covers that are close to optimal. The approximation takes
+an LP solution and &ldquo;rounds&rdquo; its variables up or down
+to obtain an integer solution.
+Specifically, if $\mu$ is the maximum number of times that any item
+appears in a subset, then every $x_j \geq 1/\mu$ is rounded up to 1,
+while the rest are rounded down to 0.
+The LP constraint for each item $a_i$ requires that
+$\sum_{j:a_i\in s_j} x_j \geq 1$ and since this sum has at
+most $\mu$ terms, at least one of the terms is $\geq 1/\mu$.
+Consequently, the rounding operation ensures that the constraints
+are satisfied in the integer solution as well and hence define
+a set cover. Since each weight that is rounded up is increased by at
+most a factor of $\mu$, the value of the integer solution is at most $\mu$
+times that of the optimal LP solution.
+This implies that the computed cover is most $\mu$ times heavier than
+the optimal cover.
+<p>
+The rounding algorithm requires an optimal solution to the
+LP relaxation, which can be time-consuming to compute.
+Fortunately, there is also a primal-dual algorithm that achieves
+the same bound without that computation.
+
+The dual for the LP relaxation of the set cover problem is
+\begin{eqnarray*}
+\textrm{maximize} \sum_{1\leq i \leq n} y_i && \\
+\textrm{subject to}
+\sum_{i:a_i\in s_j} y_i &\leq& w_j \qquad \textrm{for all $j$} \\
+y_i &\geq& 0 \qquad \textrm{for all $i$}
+\end{eqnarray*}
+where the dual variable $y_i$ is referred to as the <i>label</i>
+of $y_i$.
+The summation in the first constraint is referred to as the
+<i>label sum</i> of $s_j$.
+So the objective is to maximize the sum of the labels while
+constraining each subset's label sum to be no more than its weight.
+<p>
+The primal-dual algorithm uses the dual constraints to guide the selection
+of subsets. 
+To be more specific, it starts by setting the $y_i$ to zero and
+then repeats the following step.
+<p style="padding-left:5%">
+Select an item $a_i$ that is not yet covered and increase its 
+label $y_i$ until the dual constraint for some subset $s_j$
+containing $a_i$ is tight. Add $s_j$ to the cover.
+<p>
+When the algorithm halts, every subset in the cover has a tight
+dual constraint, which implies that the weight of the cover is equal to
+the combined total of the cover's label sums. Since each label appears
+in at most $\mu$ label sums, this total is at most $\mu$ times the sum
+of all labels. Because the sum of all labels is a lower bound on the
+optimal cover weight, the computed cover's weight is at most $\mu$ times
+the optimal weight.
+<p>
+Note that each step adds a subset to the cover and covers at least
+one new item. So the number of steps is bounded by both $h$ and $k$.
+The algorithm can be implemented to run in time bounded by the
+total sum of the subset sizes.
+A <i>Javascript</i> implementation of the algorithm is shown below.
+
+
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+export default function setCoverBYE(g, weight) {
+    let k = g.inputCount(); let h = g.outputCount();
+
+    let cover = new List(k);        // list of sets in current cover
+    let y = new Float32Array(h+1);     // for set item i, y[i] is i's label
+    let uncovered = new List(h);    // list of uncovered items
+    for (let i = 1; i <= h; i++) uncovered.enq(i);
+    let slack = new Float32Array(k+1);    // slack[j] is slack of dual
+                                         // constraint for subset j
+    for (let j = 1; j <= k; j++) slack[j] = weight[j];
+
+    while (!uncovered.empty()) {
+        let i = uncovered.deq(); let vi = i+k; // vertex for item i
+
+        // find smallest slack among constraints involving i
+        let minSlack = Infinity;
+        for (let e = g.firstAt(vi); e; e = g.nextAt(vi,e)) {
+            let j = g.mate(vi,e);
+            minSlack = Math.min(minSlack, slack[j]);
+        }
+
+        // increase y[i], reduce slack of all subsets containing i
+        // and identify one subset with a tight dual constraint
+        y[i] += minSlack; labelSum += minSlack;
+        let newSubset = 0;
+        for (let e = g.firstAt(vi); e; e = g.nextAt(vi,e)) {
+            let j = g.mate(vi,e); slack[j] -= minSlack;
+            if (!newSubset && slack[j] == 0) newSubset = j;
+        }
+        // add newSubset to cover and remove its items from uncovered
+        cover.enq(newSubset); coverWt += weight[newSubset];
+        for (let ee = g.firstAt(newSubset); ee; ee = g.nextAt(newSubset,ee)) {
+            let ii = g.mate(newSubset,ee)-k;
+            if (uncovered.contains(ii)) uncovered.delete(ii);
+        }
+    }
+
+    return [cover ..];
+}
+</textarea><p>
+This implementation uses the bipartite graph representation of the
+set cover; subsets are represented by the first $k$ positive
+integers and the items by the next $h$.
+To demonstrate the algorithm, enter the following script
+in the web app.
+
+<p> <pre style="padding-left:5%">
+let [g, weight, props] = setCoverRandom(6,18,3,.5,randomInteger,2,9);
+let [cover, weight, ts] = setCoverBYE(g, weight, 1);
+log(ts, props.sizeBound, props.splitBound, props.labelBound,
+        props.seedWeight, props.maxCover);
+</pre> <p>
+The function <i>setCoverRandom</i> returns a bipartite graph and
+an array of subset weights. In this example, there are 6 subsets
+and 18 items in the base set. The weights are random integers
+between 2 and 9 and a cover with three subsets is
+&ldquo;seeded&rdquo; within the instance and the weights of its subsets are
+multiplied by 0.5. <i>SetCoverRandom</i> also returns five properties,
+the first three are lower bounds on the minimum cover weight,
+the label bound is the sum of the labels in the solution computed
+by the primal-dual algorithm. The last two properties are the weight
+of the &ldquo;seed&rdquo; and the number of subsets
+that contain each item.
+
+Some sample trace output appears below.
+<p> <pre style="padding-left:5%">
+graph: {
+A:3[h i m p r s v w]
+B:4[g l t]
+C:1[j l o q s v]
+D:4[i m n p r x]
+E:1[g h k t u w]
+F:5[j k n o q u x]
+g[B E] h[A E] i[A D] j[C F] k[E F] l[B C]
+m[A D] n[D F] o[C F] p[A D] q[C F] r[A D]
+s[A C] t[B E] u[E F] v[A C] w[A E] x[D F]
+}
+
+uncovered items, slacks of first item's subsets, partial cover
+[g h i j k l m n o p q r s t u v w x] [B:4 E:1] [] 0
+[i j l m n o p q r s v x] [A:3 D:4] [E:1] 1
+[j l n o q x] [C:1 F:5] [E:1 A:3] 4
+[n x] [D:1 F:4] [E:1 A:3 C:1] 5
+
+cover: [E A C D] 9
+</pre> <p>
+The subsets are identified by upper case letters, the items in
+the base set by lower case. So, the second subset $B$ has weight 4
+and contains items $g$, $l$ and $t$ and item $g$ is contained in
+subsets $B$ and $E$.
+
+<p>
+<div  style="text-align:center;">
+<img width="30%" src="figs/xxx.png"><br>
+</div>
+
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+</textarea><p>
+
+<p> <pre style="padding-left:5%">
+</pre> <p>
+
+<div  style="text-align:center;">
+<img width="30%" src="figs/xxx.png"><br>
+</div>
+
+
+<h2>Chvatal's Algorithm</h2>
+
+<p>
+<div  style="text-align:center;">
+<img width="30%" src="figs/xxx.png"><br>
+</div>
+
+<p> <textarea rows="20" cols="80" readonly
+        style="font-size: 95%;background-color:lightCyan">
+</textarea><p>
+
+<p> <pre style="padding-left:5%">
+</pre> <p>
+
+
+
+<h2>References</h2>
+<dl>
+<dt> [Christofides76]
+<dd> &ldquo;Worst-case analysis of a new heuristic for the traveling salesman
+    problem,&rdquo; by Nicos Christofides. Report 388, Graduate School of
+    Industrial Administration, Carnegie-Mellon University, 1976.
+    Also, in <i>Operations Research Forum</i> 2023.
+</dl>
+<hr> <h4>&copy; Jonathan Turner - 2025</h4>
+<script src="../../googleAnalytics.js"></script>
+</body>
+</html>
